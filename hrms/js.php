@@ -45,9 +45,9 @@
       if (btn) {
         const icon = btn.querySelector('i');
         if (icon) {
-          btn.innerHTML = icon.outerHTML + item.underlineHtml;
+          btn.innerHTML = icon.outerHTML + '<span>' + item.underlineHtml + '</span>';
         } else {
-          btn.innerHTML = item.underlineHtml;
+          btn.innerHTML = '<span>' + item.underlineHtml + '</span>';
         }
       }
     });

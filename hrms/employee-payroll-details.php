@@ -610,6 +610,8 @@ include 'header.php';
 
 <style>
   /* Light blue background for the tab content window */
+
+
   .bg-legacy-blue {
     background-color: #e5e7eb !important;
     border-color: #9ca3af !important;

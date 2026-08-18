@@ -494,13 +494,14 @@ if (isset($_SESSION['selected_company_id']) && intval($_SESSION['selected_compan
                       </a>
                     </li>
 
-                    <li class="menu-item"><a href="#" class="menu-link">
+                    <li class="menu-item"><a href="import-employee" class="menu-link">
                         <div data-i18n="Import Employee From Excel Sheet">Import Employee From Excel Sheet</div>
                       </a></li>
-                    <li class="menu-item"><a href="#" class="menu-link">
+
+                    <li class="menu-item"><a href="import-payroll" class="menu-link">
                         <div data-i18n="Import Payroll From Excel Sheet">Import Payroll From Excel Sheet</div>
                       </a></li>
-                    <li class="menu-item menu-divider-bottom"><a href="#" class="menu-link">
+                    <li class="menu-item menu-divider-bottom"><a href="employee-code-change" class="menu-link">
                         <div data-i18n="Employee Code Change From Excel">Employee Code Change From Excel</div>
                       </a></li>
 

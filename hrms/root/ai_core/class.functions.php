@@ -668,6 +668,128 @@ class AI_Core
 
 		return $slug;
 	}
+
+	public function aiParseImportFile($file_path, $original_filename)
+	{
+		$ext = strtolower(pathinfo($original_filename, PATHINFO_EXTENSION));
+
+		if ($ext === 'xlsx') {
+			if (!class_exists('ZipArchive')) {
+				return false;
+			}
+			$zip = new ZipArchive();
+			if ($zip->open($file_path) !== TRUE) {
+				return false;
+			}
+
+			$shared_strings = [];
+			$shared_strings_xml = $zip->getFromName('xl/sharedStrings.xml');
+			if ($shared_strings_xml) {
+				$xml = @simplexml_load_string($shared_strings_xml);
+				if ($xml) {
+					foreach ($xml->si as $si) {
+						if (isset($si->t)) {
+							$shared_strings[] = (string) $si->t;
+						} elseif (isset($si->r)) {
+							$text = '';
+							foreach ($si->r as $r) {
+								$text .= (string) $r->t;
+							}
+							$shared_strings[] = $text;
+						} else {
+							$shared_strings[] = '';
+						}
+					}
+				}
+			}
+
+			$sheet_xml = $zip->getFromName('xl/worksheets/sheet1.xml');
+			if (!$sheet_xml) {
+				$zip->close();
+				return false;
+			}
+
+			$xml = @simplexml_load_string($sheet_xml);
+			if (!$xml) {
+				$zip->close();
+				return false;
+			}
+
+			$rows = [];
+			foreach ($xml->sheetData->row as $row) {
+				$row_data = [];
+				foreach ($row->c as $cell) {
+					$cell_ref = (string) $cell['r'];
+					preg_match('/^[A-Z]+/', $cell_ref, $matches);
+					$col_letter = $matches[0] ?? '';
+
+					$col_idx = 0;
+					$len = strlen($col_letter);
+					for ($i = 0; $i < $len; $i++) {
+						$col_idx = $col_idx * 26 + (ord($col_letter[$i]) - 64);
+					}
+					$col_idx = $col_idx - 1;
+
+					$val = '';
+					if (isset($cell->v)) {
+						$val = (string) $cell->v;
+						$t = (string) $cell['t'];
+						if ($t === 's') {
+							$val = $shared_strings[(int) $val] ?? '';
+						}
+					} elseif (isset($cell->is->t)) {
+						$val = (string) $cell->is->t;
+					}
+					$row_data[$col_idx] = $val;
+				}
+
+				if (!empty($row_data)) {
+					$max_idx = max(array_keys($row_data));
+					for ($i = 0; $i <= $max_idx; $i++) {
+						if (!isset($row_data[$i])) {
+							$row_data[$i] = '';
+						}
+					}
+					ksort($row_data);
+					$rows[] = $row_data;
+				}
+			}
+
+			$zip->close();
+			return $rows;
+		} elseif ($ext === 'xls') {
+			$temp_csv = tempnam(sys_get_temp_dir(), 'xls_to_csv');
+			$py_script = __DIR__ . '/xls_to_csv.py';
+			$cmd = "python " . escapeshellarg($py_script) . " " . escapeshellarg($file_path) . " " . escapeshellarg($temp_csv);
+			exec($cmd, $output, $return_var);
+
+			$rows = [];
+			if ($return_var === 0 && file_exists($temp_csv)) {
+				$handle = fopen($temp_csv, "r");
+				if ($handle) {
+					while (($data = fgetcsv($handle, 10000, ",")) !== FALSE) {
+						$rows[] = $data;
+					}
+					fclose($handle);
+				}
+			}
+			if (file_exists($temp_csv)) {
+				@unlink($temp_csv);
+			}
+			return $rows;
+		} else {
+			// Fallback to CSV parsing
+			$rows = [];
+			$handle = fopen($file_path, "r");
+			if ($handle) {
+				while (($data = fgetcsv($handle, 10000, ",")) !== FALSE) {
+					$rows[] = $data;
+				}
+				fclose($handle);
+			}
+			return $rows;
+		}
+	}
 }
 
 $ai_core = new AI_Core();
