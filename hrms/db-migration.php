@@ -447,5 +447,261 @@ if ($ai_db->aiQuery($esicComponentsTableSql)) {
     echo "<p style='color: red;'>[ERROR] Failed to verify / create table 'hrms_esic_branch_components'.</p>\n";
 }
 
+// 17. Create hrms_tds_codes table
+$tdsCodesTableSql = "CREATE TABLE IF NOT EXISTS hrms_tds_codes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL DEFAULT 0,
+    section_code VARCHAR(50) NOT NULL,
+    section_name VARCHAR(255) NOT NULL,
+    max_limit DECIMAL(12,2) DEFAULT 0.00,
+    regime VARCHAR(20) DEFAULT 'BOTH',
+    status VARCHAR(20) DEFAULT 'active',
+    created_by VARCHAR(100) DEFAULT '',
+    updated_by VARCHAR(100) DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_comp_sec (company_id, section_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+if ($ai_db->aiQuery($tdsCodesTableSql)) {
+    echo "<p style='color: green;'>[OK] Table 'hrms_tds_codes' verified / created successfully.</p>\n";
+
+    // Seed default standard IT TDS sections if empty
+    $checkTdsCount = $ai_db->aiGetQuery("SELECT COUNT(*) as cnt FROM hrms_tds_codes WHERE company_id = 0");
+    if (empty($checkTdsCount) || intval($checkTdsCount[0]['cnt']) == 0) {
+        $defaultSections = [
+            ['80C', 'Life Insurance, PPF, EPF, ELSS, NSC, Tuition Fees, Principal Repayment of Home Loan', 150000.00, 'OLD'],
+            ['80CCC', 'Contribution to certain Pension Funds', 150000.00, 'OLD'],
+            ['80CCD(1)', 'Employee Contribution to NPS (under 80CCE limit)', 150000.00, 'OLD'],
+            ['80CCD(1B)', 'Additional NPS Contribution Deduction (Over & above 80C)', 50000.00, 'BOTH'],
+            ['80CCD(2)', 'Employer Contribution to NPS (up to 10%/14% of salary)', 0.00, 'BOTH'],
+            ['80D', 'Medical Insurance / Health Checkup (Self, Family & Parents)', 100000.00, 'OLD'],
+            ['80DD', 'Medical Treatment / Maintenance of Dependent with Disability', 125000.00, 'OLD'],
+            ['80DDB', 'Medical Treatment for Specified Diseases / Ailments', 100000.00, 'OLD'],
+            ['80E', 'Interest on Higher Education Loan (No upper limit for 8 years)', 0.00, 'OLD'],
+            ['80EE', 'Interest on Home Loan (First time home buyer - FY 2016-17)', 50000.00, 'OLD'],
+            ['80EEA', 'Interest on Affordable Home Loan (Sanctioned between Apr 2019-Mar 2022)', 150000.00, 'OLD'],
+            ['80EEB', 'Interest on Loan taken for purchase of Electric Vehicle', 150000.00, 'OLD'],
+            ['80G', 'Donations to Charitable Organizations & Relief Funds', 0.00, 'OLD'],
+            ['80GGA', 'Donations for Scientific Research or Rural Development', 0.00, 'OLD'],
+            ['80GGC', 'Contribution to Political Parties or Electoral Trust', 0.00, 'OLD'],
+            ['80TTA', 'Interest on Savings Bank Accounts (Non-Senior Citizens)', 10000.00, 'OLD'],
+            ['80TTB', 'Interest on Bank / Post Office Deposits for Senior Citizens', 50000.00, 'OLD'],
+            ['80U', 'Deduction for Person with Physical Disability', 125000.00, 'OLD'],
+            ['24(B)', 'Interest on Home Loan for Self-Occupied House Property', 200000.00, 'OLD'],
+            ['10(13A)', 'House Rent Allowance (HRA) Exemption', 0.00, 'OLD'],
+            ['10(14)', 'Special Allowances / Conveyance / Helper / Uniform Allowance Exemption', 0.00, 'OLD'],
+            ['OTHER', 'Other Tax Exemptions & Deductions', 0.00, 'BOTH']
+        ];
+        foreach ($defaultSections as $sec) {
+            $s_code = mysqli_real_escape_string($ai_conn, $sec[0]);
+            $s_name = mysqli_real_escape_string($ai_conn, $sec[1]);
+            $s_limit = floatval($sec[2]);
+            $s_regime = mysqli_real_escape_string($ai_conn, $sec[3]);
+            $ai_db->aiQuery("INSERT INTO hrms_tds_codes (company_id, section_code, section_name, max_limit, regime, status, created_by) VALUES (0, '$s_code', '$s_name', $s_limit, '$s_regime', 'active', 'System')");
+        }
+        echo "<p style='color: green;'>[OK] Standard TDS Section Codes seeded successfully.</p>\n";
+    }
+} else {
+    echo "<p style='color: red;'>[ERROR] Failed to verify / create table 'hrms_tds_codes'.</p>\n";
+}
+
+// 18. Create hrms_tds_exemptions table
+$tdsExemptionsTableSql = "CREATE TABLE IF NOT EXISTS hrms_tds_exemptions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    employee_id INT NOT NULL,
+    financial_year VARCHAR(20) NOT NULL,
+    regime VARCHAR(20) DEFAULT 'OLD',
+    section_code VARCHAR(50) NOT NULL,
+    section_name VARCHAR(255) DEFAULT '',
+    declared_amount DECIMAL(12,2) DEFAULT 0.00,
+    verified_amount DECIMAL(12,2) DEFAULT 0.00,
+    remarks VARCHAR(255) DEFAULT '',
+    created_by VARCHAR(100) DEFAULT '',
+    updated_by VARCHAR(100) DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_comp_emp_fy (company_id, employee_id, financial_year),
+    UNIQUE KEY idx_emp_fy_sec (employee_id, financial_year, section_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+if ($ai_db->aiQuery($tdsExemptionsTableSql)) {
+    echo "<p style='color: green;'>[OK] Table 'hrms_tds_exemptions' verified / created successfully.</p>\n";
+} else {
+    echo "<p style='color: red;'>[ERROR] Failed to verify / create table 'hrms_tds_exemptions'.</p>\n";
+}
+
+// 19. Create hrms_employee_increments table
+$incrementsTableSql = "CREATE TABLE IF NOT EXISTS hrms_employee_increments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    employee_id INT NOT NULL,
+    effective_date DATE NOT NULL,
+    increment_type VARCHAR(20) DEFAULT 'AMOUNT',
+    basic_inc DECIMAL(12,2) DEFAULT 0.00,
+    hra_inc DECIMAL(12,2) DEFAULT 0.00,
+    other_inc DECIMAL(12,2) DEFAULT 0.00,
+    old_basic DECIMAL(12,2) DEFAULT 0.00,
+    new_basic DECIMAL(12,2) DEFAULT 0.00,
+    old_gross DECIMAL(12,2) DEFAULT 0.00,
+    new_gross DECIMAL(12,2) DEFAULT 0.00,
+    remarks VARCHAR(255) DEFAULT '',
+    created_by VARCHAR(100) DEFAULT '',
+    updated_by VARCHAR(100) DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_comp_emp_date (company_id, employee_id, effective_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+if ($ai_db->aiQuery($incrementsTableSql)) {
+    echo "<p style='color: green;'>[OK] Table 'hrms_employee_increments' verified / created successfully.</p>\n";
+} else {
+    echo "<p style='color: red;'>[ERROR] Failed to verify / create table 'hrms_employee_increments'.</p>\n";
+}
+
+// 20. Create hrms_shifts table
+$shiftsTableSql = "CREATE TABLE IF NOT EXISTS hrms_shifts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    shift_code VARCHAR(50) NOT NULL,
+    shift_name VARCHAR(100) NOT NULL,
+    start_time TIME NOT NULL DEFAULT '09:00:00',
+    end_time TIME NOT NULL DEFAULT '18:00:00',
+    grace_time INT DEFAULT 15,
+    half_day_hours DECIMAL(4,2) DEFAULT 4.00,
+    full_day_hours DECIMAL(4,2) DEFAULT 8.00,
+    status VARCHAR(20) DEFAULT 'active',
+    created_by VARCHAR(100) DEFAULT '',
+    updated_by VARCHAR(100) DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY idx_comp_shift (company_id, shift_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+if ($ai_db->aiQuery($shiftsTableSql)) {
+    echo "<p style='color: green;'>[OK] Table 'hrms_shifts' verified / created successfully.</p>\n";
+} else {
+    echo "<p style='color: red;'>[ERROR] Failed to verify / create table 'hrms_shifts'.</p>\n";
+}
+
+// 21. Create hrms_employee_shifts table
+$empShiftsTableSql = "CREATE TABLE IF NOT EXISTS hrms_employee_shifts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    employee_id INT NOT NULL,
+    shift_code VARCHAR(50) NOT NULL,
+    shift_name VARCHAR(100) DEFAULT '',
+    start_time VARCHAR(20) DEFAULT '09:00',
+    end_time VARCHAR(20) DEFAULT '18:00',
+    effective_date DATE NOT NULL,
+    remarks VARCHAR(255) DEFAULT '',
+    created_by VARCHAR(100) DEFAULT '',
+    updated_by VARCHAR(100) DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_comp_emp_eff (company_id, employee_id, effective_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+if ($ai_db->aiQuery($empShiftsTableSql)) {
+    echo "<p style='color: green;'>[OK] Table 'hrms_employee_shifts' verified / created successfully.</p>\n";
+} else {
+    echo "<p style='color: red;'>[ERROR] Failed to verify / create table 'hrms_employee_shifts'.</p>\n";
+}
+
+// 22. Create hrms_holidays table
+$holidaysTableSql = "CREATE TABLE IF NOT EXISTS hrms_holidays (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    resume_date DATE NULL,
+    leave_days DECIMAL(5,2) DEFAULT 1.00,
+    branch_id INT DEFAULT 0,
+    dept_id INT DEFAULT 0,
+    employee_id INT DEFAULT 0,
+    paid_holiday TINYINT(1) DEFAULT 1,
+    reason VARCHAR(255) DEFAULT 'HOLIDAY',
+    created_by VARCHAR(100) DEFAULT '',
+    updated_by VARCHAR(100) DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_comp_dates (company_id, start_date, end_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+if ($ai_db->aiQuery($holidaysTableSql)) {
+    echo "<p style='color: green;'>[OK] Table 'hrms_holidays' verified / created successfully.</p>\n";
+} else {
+    echo "<p style='color: red;'>[ERROR] Failed to verify / create table 'hrms_holidays'.</p>\n";
+}
+
+// 23. Create hrms_employee_leave_balance table
+$leaveBalanceTableSql = "CREATE TABLE IF NOT EXISTS hrms_employee_leave_balance (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    employee_id INT NOT NULL,
+    year INT NOT NULL,
+    pl_balance DECIMAL(5,2) DEFAULT 0.00,
+    cl_balance DECIMAL(5,2) DEFAULT 0.00,
+    sl_balance DECIMAL(5,2) DEFAULT 0.00,
+    other_balance DECIMAL(5,2) DEFAULT 0.00,
+    remarks VARCHAR(255) DEFAULT '',
+    created_by VARCHAR(100) DEFAULT '',
+    updated_by VARCHAR(100) DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY idx_emp_yr (company_id, employee_id, year)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+if ($ai_db->aiQuery($leaveBalanceTableSql)) {
+    echo "<p style='color: green;'>[OK] Table 'hrms_employee_leave_balance' verified / created successfully.</p>\n";
+} else {
+    echo "<p style='color: red;'>[ERROR] Failed to verify / create table 'hrms_employee_leave_balance'.</p>\n";
+}
+
+// 24. Create hrms_employee_delete_log table
+$empDeleteLogSql = "CREATE TABLE IF NOT EXISTS hrms_employee_delete_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    employee_id INT NOT NULL,
+    emp_code VARCHAR(50) NOT NULL,
+    emp_name VARCHAR(255) NOT NULL,
+    dept_name VARCHAR(100) DEFAULT '',
+    desig_name VARCHAR(100) DEFAULT '',
+    deleted_by VARCHAR(100) DEFAULT '',
+    deleted_reason VARCHAR(255) DEFAULT '',
+    deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_comp_emp (company_id, employee_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+if ($ai_db->aiQuery($empDeleteLogSql)) {
+    echo "<p style='color: green;'>[OK] Table 'hrms_employee_delete_log' verified / created successfully.</p>\n";
+} else {
+    echo "<p style='color: red;'>[ERROR] Failed to verify / create table 'hrms_employee_delete_log'.</p>\n";
+}
+
+// 25. Create hrms_salary_delete_log table
+$salDeleteLogSql = "CREATE TABLE IF NOT EXISTS hrms_salary_delete_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    employee_id INT NOT NULL,
+    emp_code VARCHAR(50) NOT NULL,
+    emp_name VARCHAR(255) NOT NULL,
+    salary_month INT NOT NULL,
+    salary_year INT NOT NULL,
+    gross_salary DECIMAL(12,2) DEFAULT 0.00,
+    net_salary DECIMAL(12,2) DEFAULT 0.00,
+    deleted_by VARCHAR(100) DEFAULT '',
+    deleted_reason VARCHAR(255) DEFAULT '',
+    deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_comp_sal (company_id, salary_year, salary_month)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+if ($ai_db->aiQuery($salDeleteLogSql)) {
+    echo "<p style='color: green;'>[OK] Table 'hrms_salary_delete_log' verified / created successfully.</p>\n";
+} else {
+    echo "<p style='color: red;'>[ERROR] Failed to verify / create table 'hrms_salary_delete_log'.</p>\n";
+}
+
 echo "<h3>Migration completed successfully.</h3>\n";
 ?>

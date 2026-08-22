@@ -142,7 +142,7 @@
       height: auto !important;
       min-height: auto !important;
       top: 28px !important;
-      z-index: 999 !important;
+      z-index: 1200 !important;
     }
 
     #layout-menu.menu-horizontal .container-fluid {
@@ -190,7 +190,7 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
     margin-top: -4px !important;
     min-width: 260px !important;
-    z-index: 9999 !important;
+    z-index: 99999 !important;
     overflow: visible !important;
   }
 

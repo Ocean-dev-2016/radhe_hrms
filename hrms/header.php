@@ -178,13 +178,13 @@ if (isset($_SESSION['selected_company_id']) && intval($_SESSION['selected_compan
                       </a>
                     </li>
                     <li class="menu-item <?php echo ($current_page == 'tds-code-master.php') ? 'active' : ''; ?>">
-                      <a href="#" class="menu-link">
+                      <a href="tds-code-master" class="menu-link">
                         <div data-i18n="TDS Code Master">TDS Code Master</div>
                       </a>
                     </li>
                     <li
                       class="menu-item menu-divider-bottom <?php echo ($current_page == 'tds-exemption-entry.php') ? 'active' : ''; ?>">
-                      <a href="#" class="menu-link">
+                      <a href="tds-exemption-entry" class="menu-link">
                         <div data-i18n="TDS Exemption Entry">TDS Exemption Entry</div>
                       </a>
                     </li>
@@ -481,7 +481,7 @@ if (isset($_SESSION['selected_company_id']) && intval($_SESSION['selected_compan
                 </li>
                 <!-- Utility -->
                 <li
-                  class="menu-item <?php echo (in_array($current_page, ['change-password.php'])) ? 'active open' : ''; ?>">
+                  class="menu-item <?php echo (in_array($current_page, ['change-password.php', 'import-employee.php', 'import-payroll.php', 'employee-code-change.php', 'import-tds-exemption.php', 'import-nominee.php', 'import-increment.php', 'import-shift.php', 'import-hour-rate.php', 'import-holiday.php', 'import-leave-balance.php', 'import-resign-date.php', 'payslip-mail.php', 'employee-delete-log.php', 'salary-delete-log.php'])) ? 'active open' : ''; ?>">
                   <a href="javascript:void(0)" class="menu-link menu-toggle">
                     <i class="menu-icon tf-icons ti ti-settings"></i>
                     <div data-i18n="Utility"><u>U</u>tility</div>
@@ -494,46 +494,61 @@ if (isset($_SESSION['selected_company_id']) && intval($_SESSION['selected_compan
                       </a>
                     </li>
 
-                    <li class="menu-item"><a href="import-employee" class="menu-link">
+                    <li class="menu-item <?php echo ($current_page == 'import-employee.php') ? 'active' : ''; ?>"><a
+                        href="import-employee" class="menu-link">
                         <div data-i18n="Import Employee From Excel Sheet">Import Employee From Excel Sheet</div>
                       </a></li>
 
-                    <li class="menu-item"><a href="import-payroll" class="menu-link">
+                    <li class="menu-item <?php echo ($current_page == 'import-payroll.php') ? 'active' : ''; ?>"><a
+                        href="import-payroll" class="menu-link">
                         <div data-i18n="Import Payroll From Excel Sheet">Import Payroll From Excel Sheet</div>
                       </a></li>
-                    <li class="menu-item menu-divider-bottom"><a href="employee-code-change" class="menu-link">
+                    <li
+                      class="menu-item menu-divider-bottom <?php echo ($current_page == 'employee-code-change.php') ? 'active' : ''; ?>">
+                      <a href="employee-code-change" class="menu-link">
                         <div data-i18n="Employee Code Change From Excel">Employee Code Change From Excel</div>
                       </a></li>
 
-                    <li class="menu-item"><a href="#" class="menu-link">
+                    <li class="menu-item <?php echo ($current_page == 'import-tds-exemption.php') ? 'active' : ''; ?>">
+                      <a href="import-tds-exemption" class="menu-link">
                         <div data-i18n="Import TDS Exemption From Excel Sheet">Import TDS Exemption From Excel Sheet
                         </div>
                       </a></li>
-                    <li class="menu-item menu-divider-bottom"><a href="#" class="menu-link">
+                    <li
+                      class="menu-item menu-divider-bottom <?php echo ($current_page == 'import-nominee.php') ? 'active' : ''; ?>">
+                      <a href="import-nominee" class="menu-link">
                         <div data-i18n="Import Nominee From Excel">Import Nominee From Excel</div>
                       </a></li>
 
-                    <li class="menu-item"><a href="#" class="menu-link">
+                    <li class="menu-item <?php echo ($current_page == 'import-increment.php') ? 'active' : ''; ?>"><a
+                        href="import-increment" class="menu-link">
                         <div data-i18n="Import Increment From Excel Sheet">Import Increment From Excel Sheet</div>
                       </a></li>
-                    <li class="menu-item"><a href="#" class="menu-link">
+                    <li class="menu-item <?php echo ($current_page == 'import-shift.php') ? 'active' : ''; ?>"><a
+                        href="import-shift" class="menu-link">
                         <div data-i18n="Import Shift For Timing">Import Shift For Timing</div>
                       </a></li>
-                    <li class="menu-item menu-divider-bottom"><a href="#" class="menu-link">
+                    <li
+                      class="menu-item menu-divider-bottom <?php echo ($current_page == 'import-hour-rate.php') ? 'active' : ''; ?>">
+                      <a href="import-hour-rate" class="menu-link">
                         <div data-i18n="Per Hour Rate Import From Excel Sheet">Per Hour Rate Import From Excel Sheet
                         </div>
                       </a></li>
 
-                    <li class="menu-item"><a href="#" class="menu-link">
+                    <li class="menu-item <?php echo ($current_page == 'import-holiday.php') ? 'active' : ''; ?>"><a
+                        href="import-holiday" class="menu-link">
                         <div data-i18n="Import Holiday From Excel Sheet">Import Holiday From Excel Sheet</div>
                       </a></li>
-                    <li class="menu-item"><a href="#" class="menu-link">
+                    <li class="menu-item <?php echo ($current_page == 'import-leave-balance.php') ? 'active' : ''; ?>"><a
+                        href="import-leave-balance" class="menu-link">
                         <div data-i18n="Leave Balance Upload">Leave Balance Upload</div>
                       </a></li>
-                    <li class="menu-item"><a href="#" class="menu-link">
+                    <li class="menu-item <?php echo ($current_page == 'import-resign-date.php') ? 'active' : ''; ?>"><a
+                        href="import-resign-date" class="menu-link">
                         <div data-i18n="Resign Date Update from Excel Sheet">Resign Date Update from Excel Sheet</div>
                       </a></li>
-                    <li class="menu-item"><a href="#" class="menu-link">
+                    <li class="menu-item <?php echo ($current_page == 'payslip-mail.php') ? 'active' : ''; ?>"><a
+                        href="payslip-mail" class="menu-link">
                         <div data-i18n="Payslip Mail to Employee">Payslip Mail to Employee</div>
                       </a></li>
                     <li class="menu-item menu-divider-bottom"><a href="javascript:void(0)" class="menu-link"
@@ -551,10 +566,12 @@ if (isset($_SESSION['selected_company_id']) && intval($_SESSION['selected_compan
                           </a></li>
                       </ul>
                     </li>
-                    <li class="menu-item"><a href="#" class="menu-link">
+                    <li class="menu-item <?php echo ($current_page == 'employee-delete-log.php') ? 'active' : ''; ?>"><a
+                        href="employee-delete-log" class="menu-link">
                         <div data-i18n="Employee Delete Log">Employee Delete Log</div>
                       </a></li>
-                    <li class="menu-item"><a href="#" class="menu-link">
+                    <li class="menu-item <?php echo ($current_page == 'salary-delete-log.php') ? 'active' : ''; ?>"><a
+                        href="salary-delete-log" class="menu-link">
                         <div data-i18n="Salary Delete Log">Salary Delete Log</div>
                       </a></li>
                   </ul>

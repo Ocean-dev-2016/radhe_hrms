@@ -37,7 +37,7 @@ if ($action === 'get_employee') {
     if (count($res) > 0) {
         $employee = $res[0];
         $branch_id = intval($employee['branch_id']);
-        
+
         // Fetch branch-wise PF rate configuration
         $pf_rates = $ai_db->aiGetQuery("SELECT * FROM hrms_pf_rates WHERE company_id = $company_id AND branch_id = $branch_id ORDER BY effective_date DESC, id DESC LIMIT 1");
         $employee['pf_rate_config'] = (count($pf_rates) > 0) ? $pf_rates[0] : null;
@@ -304,6 +304,27 @@ if ($action === 'delete') {
     if ($id <= 0) {
         echo json_encode(['status' => 'error', 'message' => 'Invalid ID.']);
         exit;
+    }
+
+    $existing = $ai_db->aiGetQuery("SELECT p.*, e.emp_code, e.emp_name 
+                                    FROM hrms_employee_payroll p
+                                    JOIN hrms_employeemaster e ON p.employee_id = e.id
+                                    WHERE p.id = $id LIMIT 1");
+    if (!empty($existing)) {
+        $p_rec = $existing[0];
+        $e_id = intval($p_rec['employee_id']);
+        $e_code = mysqli_real_escape_string($ai_conn, $p_rec['emp_code']);
+        $e_name = mysqli_real_escape_string($ai_conn, $p_rec['emp_name']);
+        $s_month = intval(date('n'));
+        $s_year = intval(date('Y'));
+        $gross_sal = floatval($p_rec['total_earn'] ?? 0);
+        $net_sal = floatval($p_rec['net_amount'] ?? 0);
+        $u_name = isset($_SESSION['username']) ? mysqli_real_escape_string($ai_conn, $_SESSION['username']) : 'System';
+
+        $ai_db->aiQuery("INSERT INTO hrms_salary_delete_log 
+                        (company_id, employee_id, emp_code, emp_name, salary_month, salary_year, gross_salary, net_salary, deleted_by, deleted_reason)
+                        VALUES 
+                        ($company_id, $e_id, '$e_code', '$e_name', $s_month, $s_year, $gross_sal, $net_sal, '$u_name', 'Payroll structure deleted')");
     }
 
     $sql = "DELETE FROM hrms_employee_payroll WHERE id = $id";

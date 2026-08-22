@@ -1,0 +1,363 @@
+<?php
+$pageTitle = "Per Hour Rate Import - Payroll System";
+include 'header.php';
+
+$current_year = intval(date('Y'));
+$current_month = intval(date('n'));
+?>
+
+<!-- Content wrapper -->
+<div class="container-fluid flex-grow-1 container-p-y position-relative" style="min-height: calc(100vh - 120px);">
+
+  <!-- Floating Dialog Card -->
+  <div class="card shadow-lg border-1"
+    style="max-width: 1400px; margin: 0 auto; width: 100%; border-radius: 8px !important; border: 1px solid #c9c8cc !important; background-color: #ffffff;">
+
+    <!-- Dialog Header -->
+    <div class="card-header p-2 px-3 text-white d-flex align-items-center justify-content-between"
+      style="background: linear-gradient(90deg, #135ca3 0%, #00a2e8 100%); border-top-left-radius: 7px !important; border-top-right-radius: 7px !important; border-bottom: 1px solid #104f9b; user-select: none;">
+      <h6 class="m-0 text-white fw-bold d-flex align-items-center" style="font-size: 14px;">
+        <i class="ti ti-hourglass me-2" style="font-size: 16px;"></i>PER HOUR RATE IMPORT FROM EXCEL SHEET
+      </h6>
+      <span class="badge bg-danger px-2 py-1" style="font-size: 10px; font-weight: 600;"># Press [F5] For List, [Esc]
+        For Cancel</span>
+    </div>
+
+    <div class="card-body p-3 bg-white">
+      <!-- Tab bar style -->
+      <ul class="nav nav-tabs mb-0 border-bottom-0" id="importTabs" role="tablist"
+        style="margin-left: 0 !important; margin-right: 0 !important; padding-left: 4px !important;">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active fw-bold py-1 px-3" id="import-tab" type="button" style="font-size: 11px;">Per
+            Hour Rate Import</button>
+        </li>
+      </ul>
+
+      <!-- Toolbar container -->
+      <div class="border p-3 rounded-bottom bg-legacy-blue">
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+          <div class="d-flex align-items-center gap-1">
+            <label class="fw-bold text-dark-blue" style="font-size: 11px;">Year:</label>
+            <select id="yearSelect" class="form-select form-select-sm bg-white border"
+              style="font-size: 11px; height: 28px; width: 85px; border-color: #a3b8cc !important;">
+              <?php for ($y = $current_year - 2; $y <= $current_year + 2; $y++): ?>
+                <option value="<?php echo $y; ?>" <?php echo ($y === $current_year) ? 'selected' : ''; ?>><?php echo $y; ?>
+                </option>
+              <?php endfor; ?>
+            </select>
+
+            <label class="fw-bold text-dark-blue ms-1" style="font-size: 11px;">Month:</label>
+            <select id="monthSelect" class="form-select form-select-sm bg-white border"
+              style="font-size: 11px; height: 28px; width: 105px; border-color: #a3b8cc !important;">
+              <?php
+              $month_names = [1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April', 5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August', 9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'];
+              foreach ($month_names as $num => $name): ?>
+                <option value="<?php echo $num; ?>" <?php echo ($num === $current_month) ? 'selected' : ''; ?>>
+                  <?php echo $name; ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+
+          <a href="actions/import-hour-rate-action.php?action=download_current" id="btnDownloadCurrent" target="_blank"
+            class="btn btn-sm btn-outline-secondary px-3"
+            style="font-size: 11px; height: 28px; border-color: #a3b8cc !important; background-color: #ffffff; color: #135ca3; font-weight: 600;">
+            <i class="ti ti-download me-1"></i>Download Current Rates
+          </a>
+          <a href="actions/import-hour-rate-action.php?action=format_file" target="_blank"
+            class="btn btn-sm btn-outline-secondary px-3"
+            style="font-size: 11px; height: 28px; border-color: #a3b8cc !important; background-color: #ffffff; color: #135ca3; font-weight: 600;">
+            <i class="ti ti-file-code me-1"></i>Format File
+          </a>
+
+          <div class="d-flex align-items-center ms-auto" style="max-width: 620px; width: 100%;">
+            <input type="text" id="fileNameDisplay" class="form-control form-control-sm bg-white border me-2" readonly
+              placeholder="No file chosen (.xlsx, .xls, .csv)"
+              style="font-size: 11px; height: 28px; border: 1px solid #135ca3 !important;">
+            <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display: none;">
+
+            <button type="button" id="btnBrowse" class="btn btn-sm btn-outline-secondary px-3 me-2"
+              style="font-size: 11px; height: 28px; border-color: #a3b8cc !important; background-color: #ffffff; color: #135ca3; font-weight: 600; white-space: nowrap;">
+              <i class="ti ti-folder-open me-1"></i>Browse File
+            </button>
+            <button type="button" id="btnLoadExcel" class="btn btn-sm btn-outline-secondary px-3 me-2"
+              style="font-size: 11px; height: 28px; border-color: #a3b8cc !important; background-color: #ffffff; color: #135ca3; font-weight: 600; white-space: nowrap;">
+              <i class="ti ti-eye me-1"></i>Load Excel
+            </button>
+            <button type="button" id="btnUploadData" class="btn btn-sm btn-outline-secondary px-3"
+              style="font-size: 11px; height: 28px; border-color: #a3b8cc !important; background-color: #ffffff; color: #135ca3; font-weight: 600; white-space: nowrap;"
+              disabled>
+              <i class="ti ti-upload me-1"></i>Upload Data
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary & Search Row -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 px-1">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary" id="badgeTotalRows" style="font-size: 11px;">Total Rows: 0</span>
+            <span class="badge bg-success" id="badgeValidRows" style="font-size: 11px;">Valid: 0</span>
+            <span class="badge bg-danger" id="badgeInvalidRows" style="font-size: 11px;">Invalid: 0</span>
+          </div>
+          <div class="d-flex align-items-center" style="max-width: 250px;">
+            <input type="text" id="tableFilterInput" class="form-control form-control-sm bg-white border"
+              placeholder="Search in preview..."
+              style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+          </div>
+        </div>
+
+        <!-- Table Data Grid Container -->
+        <div class="table-responsive border rounded bg-white"
+          style="max-height: 450px; min-height: 250px; overflow-y: auto; border-color: #a3b8cc !important;">
+          <table class="table table-bordered table-sm m-0 text-nowrap table-hover align-middle" id="previewTable"
+            style="font-size: 11px;">
+            <thead class="sticky-top bg-light" style="z-index: 1;">
+              <tr id="tableHeaderRow" style="background-color: #f1f5f9;">
+                <th class="px-2 py-1 text-center" style="width: 50px;">Sr. No</th>
+                <th class="px-2 py-1">Emp Code</th>
+                <th class="px-2 py-1">Employee Name</th>
+                <th class="px-2 py-1 text-center">Year</th>
+                <th class="px-2 py-1 text-center">Month</th>
+                <th class="px-2 py-1 text-end">Day Rate (₹/hr)</th>
+                <th class="px-2 py-1 text-end">Night Rate (₹/hr)</th>
+                <th class="px-2 py-1">Remarks</th>
+                <th class="px-2 py-1 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <tr>
+                <td colspan="9" class="text-center py-5 text-muted">
+                  <i class="ti ti-file-spreadsheet fs-1 d-block mb-2"></i>
+                  Please browse and load an Excel/CSV file to preview per hour rate data.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .bg-legacy-blue {
+    background-color: #e8f0fe !important;
+    border-color: #a3b8cc !important;
+  }
+
+  #importTabs {
+    border-bottom: 1px solid #a3b8cc !important;
+  }
+
+  #importTabs .nav-link.active {
+    background-color: #e8f0fe !important;
+    border-color: #a3b8cc #a3b8cc transparent !important;
+    color: #135ca3 !important;
+  }
+
+  #previewTable th {
+    font-weight: 600;
+    color: #135ca3;
+    border-bottom: 2px solid #a3b8cc !important;
+    background-color: #f1f5f9;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const fileInput = document.getElementById('excelFileInput');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const btnBrowse = document.getElementById('btnBrowse');
+    const btnLoadExcel = document.getElementById('btnLoadExcel');
+    const btnUploadData = document.getElementById('btnUploadData');
+    const btnDownloadCurrent = document.getElementById('btnDownloadCurrent');
+    const yearSelect = document.getElementById('yearSelect');
+    const monthSelect = document.getElementById('monthSelect');
+    const tableBody = document.getElementById('tableBody');
+    const tableFilterInput = document.getElementById('tableFilterInput');
+
+    const badgeTotalRows = document.getElementById('badgeTotalRows');
+    const badgeValidRows = document.getElementById('badgeValidRows');
+    const badgeInvalidRows = document.getElementById('badgeInvalidRows');
+
+    let parsedRows = [];
+
+    function updateDownloadLink() {
+      btnDownloadCurrent.href = `actions/import-hour-rate-action.php?action=download_current&year=${yearSelect.value}&month=${monthSelect.value}`;
+    }
+
+    yearSelect.addEventListener('change', updateDownloadLink);
+    monthSelect.addEventListener('change', updateDownloadLink);
+    updateDownloadLink();
+
+    btnBrowse.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        fileNameDisplay.value = fileInput.files[0].name;
+        btnUploadData.disabled = true;
+      } else {
+        fileNameDisplay.value = '';
+      }
+    });
+
+    btnLoadExcel.addEventListener('click', () => {
+      if (fileInput.files.length === 0) {
+        alert('Please select an Excel/CSV file first.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      tableBody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center py-5">
+                    <span class="spinner-border spinner-border-sm text-primary me-2" role="status"></span>
+                    Parsing Excel file, please wait...
+                </td>
+            </tr>
+        `;
+
+      fetch('actions/import-hour-rate-action.php?action=load_excel', {
+        method: 'POST',
+        body: formData
+      })
+        .then(response => response.json())
+        .then(res => {
+          if (res.status === 'success') {
+            parsedRows = res.data;
+            if (res.summary) {
+              badgeTotalRows.textContent = `Total Rows: ${res.summary.total_rows}`;
+              badgeValidRows.textContent = `Valid: ${res.summary.valid_rows}`;
+              badgeInvalidRows.textContent = `Invalid: ${res.summary.invalid_rows}`;
+            }
+            renderPreviewTable(parsedRows);
+            btnUploadData.disabled = (res.summary.valid_rows === 0);
+          } else {
+            tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-danger">
+                            <i class="ti ti-alert-triangle fs-2 d-block mb-2"></i>
+                            ${res.message || 'Error occurred while loading Excel file.'}
+                        </td>
+                    </tr>
+                `;
+            btnUploadData.disabled = true;
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-5 text-danger">Failed to communicate with server.</td></tr>`;
+          btnUploadData.disabled = true;
+        });
+    });
+
+    function renderPreviewTable(rows) {
+      if (rows.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-5 text-warning">No rows found in Excel sheet.</td></tr>`;
+        return;
+      }
+
+      let html = '';
+      rows.forEach((row, idx) => {
+        const isInvalid = !row.is_valid;
+        const rowClass = isInvalid ? 'table-danger' : '';
+        const statusBadge = row.is_valid
+          ? `<span class="badge bg-success" style="font-size: 10px;">${row.status_msg || 'Valid'}</span>`
+          : `<span class="badge bg-danger" style="font-size: 10px;">${row.status_msg || 'Invalid'}</span>`;
+
+        html += `
+                <tr class="${rowClass}" data-filter-text="${(row.emp_code + ' ' + row.emp_name + ' ' + row.remarks).toLowerCase()}">
+                    <td class="text-center">${idx + 1}</td>
+                    <td><strong>${escapeHtml(row.emp_code || '')}</strong></td>
+                    <td>${escapeHtml(row.emp_name || '')}</td>
+                    <td class="text-center">${row.year}</td>
+                    <td class="text-center">${row.month}</td>
+                    <td class="text-end fw-semibold text-primary">${parseFloat(row.day_rate || 0).toFixed(2)}</td>
+                    <td class="text-end fw-semibold text-info">${parseFloat(row.night_rate || 0).toFixed(2)}</td>
+                    <td><small class="text-muted">${escapeHtml(row.remarks || '')}</small></td>
+                    <td class="text-center">${statusBadge}</td>
+                </tr>
+            `;
+      });
+      tableBody.innerHTML = html;
+    }
+
+    tableFilterInput.addEventListener('input', () => {
+      const filter = tableFilterInput.value.toLowerCase().trim();
+      const trs = tableBody.querySelectorAll('tr[data-filter-text]');
+      trs.forEach(tr => {
+        const text = tr.getAttribute('data-filter-text');
+        if (!filter || text.includes(filter)) {
+          tr.style.display = '';
+        } else {
+          tr.style.display = 'none';
+        }
+      });
+    });
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    btnUploadData.addEventListener('click', () => {
+      const validRowsToUpload = parsedRows.filter(r => r.is_valid);
+      if (validRowsToUpload.length === 0) return;
+
+      if (!confirm(`Are you sure you want to upload Per Hour Rates for ${validRowsToUpload.length} employees?`)) return;
+
+      btnUploadData.disabled = true;
+      btnUploadData.innerHTML = '<span class="spinner-border spinner-border-sm text-primary me-2" role="status"></span>Uploading...';
+
+      const formData = new FormData();
+      formData.append('data', JSON.stringify(validRowsToUpload));
+
+      fetch('actions/import-hour-rate-action.php?action=upload_data', {
+        method: 'POST',
+        body: formData
+      })
+        .then(response => response.json())
+        .then(res => {
+          btnUploadData.innerHTML = '<i class="ti ti-upload me-1"></i>Upload Data';
+          btnUploadData.disabled = false;
+
+          if (res.status === 'success') {
+            alert(res.message);
+            if (res.errors && res.errors.length > 0) {
+              alert("Warnings/Errors:\n" + res.errors.join("\n"));
+            }
+            parsedRows = [];
+            fileInput.value = '';
+            fileNameDisplay.value = '';
+            tableBody.innerHTML = `
+                  <tr>
+                    <td colspan="9" class="text-center py-5 text-success">
+                      <i class="ti ti-circle-check fs-1 d-block mb-2"></i>
+                      ${res.message}
+                    </td>
+                  </tr>
+                `;
+            btnUploadData.disabled = true;
+          } else {
+            alert('Upload failed: ' + (res.message || 'Unknown error'));
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          btnUploadData.innerHTML = '<i class="ti ti-upload me-1"></i>Upload Data';
+          btnUploadData.disabled = false;
+          alert('Upload Error: ' + err.message);
+        });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        window.location.href = 'index.php';
+      }
+    });
+  });
+</script>
+
+<?php include 'footer.php'; ?>

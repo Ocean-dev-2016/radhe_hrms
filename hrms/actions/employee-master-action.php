@@ -308,6 +308,30 @@ if ($action === 'view' || $action === 'list') {
         $id_arr = array_filter(array_map('intval', explode(',', $ids)));
         if (!empty($id_arr)) {
             $id_list = implode(',', $id_arr);
+
+            // Fetch employee details to log before deletion
+            $to_delete = $ai_db->aiGetQuery("SELECT e.id, e.emp_code, e.emp_name, 
+                                                    COALESCE(d.dept_name, '') as dept_name, 
+                                                    COALESCE(dg.desig_name, '') as desig_name 
+                                             FROM hrms_employeemaster e
+                                             LEFT JOIN hrms_departments d ON e.dept_id = d.id
+                                             LEFT JOIN hrms_designations dg ON e.desig_id = dg.id
+                                             WHERE e.id IN ($id_list) AND e.company_id = $company_id");
+
+            foreach ($to_delete as $del_emp) {
+                $e_id = intval($del_emp['id']);
+                $e_code = mysqli_real_escape_string($ai_conn, $del_emp['emp_code']);
+                $e_name = mysqli_real_escape_string($ai_conn, $del_emp['emp_name']);
+                $d_name = mysqli_real_escape_string($ai_conn, $del_emp['dept_name']);
+                $dg_name = mysqli_real_escape_string($ai_conn, $del_emp['desig_name']);
+                $del_reason = 'Deleted via Employee Master / View or Delete screen';
+
+                $ai_db->aiQuery("INSERT INTO hrms_employee_delete_log 
+                                (company_id, employee_id, emp_code, emp_name, dept_name, desig_name, deleted_by, deleted_reason)
+                                VALUES 
+                                ($company_id, $e_id, '$e_code', '$e_name', '$d_name', '$dg_name', '$username', '$del_reason')");
+            }
+
             $result = $ai_db->aiQuery("DELETE FROM hrms_employeemaster WHERE id IN ($id_list) AND company_id = $company_id");
             if ($result) {
                 echo json_encode(['status' => 'success', 'message' => 'Employee record(s) deleted successfully.']);
