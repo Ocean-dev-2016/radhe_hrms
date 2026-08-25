@@ -6,13 +6,13 @@ include 'header.php';
 <!-- Content wrapper -->
 <div class="container-fluid flex-grow-1 container-p-y position-relative" style="min-height: calc(100vh - 120px);">
 
-  <!-- Floating Dialog Card -->
-  <div class="card shadow-lg border-1"
-    style="max-width: 1400px; margin: 0 auto; width: 100%; border-radius: 8px !important; border: 1px solid #c9c8cc !important; background-color: #ffffff;">
+  <!-- Draggable Floating Dialog Card -->
+  <div id="draggableCard" class="card shadow-lg border-1"
+    style="max-width: 1250px; width: 95%; border-radius: 8px !important; border: 1px solid #c9c8cc !important; background-color: #ffffff; position: absolute; opacity: 0; transition: opacity 0.15s ease-in-out; z-index: 1000;">
 
-    <!-- Dialog Header -->
+    <!-- Dialog Header (Acts as Drag Handle) -->
     <div class="card-header p-2 px-3 text-white d-flex align-items-center justify-content-between"
-      style="background: linear-gradient(90deg, #135ca3 0%, #00a2e8 100%); border-top-left-radius: 7px !important; border-top-right-radius: 7px !important; border-bottom: 1px solid #104f9b; user-select: none;">
+      style="background: linear-gradient(90deg, #135ca3 0%, #00a2e8 100%); border-top-left-radius: 7px !important; border-top-right-radius: 7px !important; border-bottom: 1px solid #104f9b; user-select: none; cursor: move;">
       <h6 class="m-0 text-white fw-bold d-flex align-items-center" style="font-size: 14px;">
         <i class="ti ti-calendar me-2" style="font-size: 16px;"></i>IMPORT HOLIDAY FROM EXCEL SHEET
       </h6>
@@ -302,13 +302,65 @@ include 'header.php';
         });
     });
 
+    // Initialize Draggable Card Position
+    const card = document.getElementById("draggableCard");
+    if (card) {
+      const initialLeft = (window.innerWidth - card.offsetWidth) / 2;
+      card.style.left = Math.max(0, initialLeft) + "px";
+      card.style.top = "100px";
+      card.style.opacity = "1";
+      dragElement(card);
+    }
+
     // Press Esc to exit
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        window.location.href = 'index';
+        window.location.href = 'index.php';
       }
     });
   });
+
+  // Simple Draggable Functionality
+  function dragElement(elmnt) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    const header = elmnt.querySelector('.card-header');
+    const dragHandle = header || elmnt;
+
+    dragHandle.onmousedown = dragMouseDown;
+
+    function dragMouseDown(e) {
+      e = e || window.event;
+      if (e.target.closest('input, button, a, select, textarea')) return;
+      e.preventDefault();
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      document.onmouseup = closeDragElement;
+      document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+      e = e || window.event;
+      e.preventDefault();
+      pos1 = pos3 - e.clientX;
+      pos2 = pos4 - e.clientY;
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+
+      let newTop = elmnt.offsetTop - pos2;
+      let newLeft = elmnt.offsetLeft - pos1;
+
+      // Prevent dragging under the top navigation menu
+      if (newTop < 60) newTop = 60;
+
+      elmnt.style.top = newTop + "px";
+      elmnt.style.left = newLeft + "px";
+    }
+
+    function closeDragElement() {
+      document.onmouseup = null;
+      document.onmousemove = null;
+    }
+  }
 </script>
 
 <?php

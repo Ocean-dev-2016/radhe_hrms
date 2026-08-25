@@ -641,6 +641,9 @@ $leaveBalanceTableSql = "CREATE TABLE IF NOT EXISTS hrms_employee_leave_balance 
     company_id INT NOT NULL,
     employee_id INT NOT NULL,
     year INT NOT NULL,
+    month INT DEFAULT 0,
+    leave_code VARCHAR(50) DEFAULT 'PL',
+    balance DECIMAL(8,2) DEFAULT 0.00,
     pl_balance DECIMAL(5,2) DEFAULT 0.00,
     cl_balance DECIMAL(5,2) DEFAULT 0.00,
     sl_balance DECIMAL(5,2) DEFAULT 0.00,
@@ -650,11 +653,23 @@ $leaveBalanceTableSql = "CREATE TABLE IF NOT EXISTS hrms_employee_leave_balance 
     updated_by VARCHAR(100) DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY idx_emp_yr (company_id, employee_id, year)
+    UNIQUE KEY idx_emp_yr_mo_code (company_id, employee_id, year, month, leave_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
 if ($ai_db->aiQuery($leaveBalanceTableSql)) {
     echo "<p style='color: green;'>[OK] Table 'hrms_employee_leave_balance' verified / created successfully.</p>\n";
+    $checkCol = $ai_db->aiGetQuery("SHOW COLUMNS FROM hrms_employee_leave_balance LIKE 'month'");
+    if (empty($checkCol)) {
+        $ai_db->aiQuery("ALTER TABLE hrms_employee_leave_balance ADD COLUMN month INT DEFAULT 0 AFTER year");
+    }
+    $checkCol2 = $ai_db->aiGetQuery("SHOW COLUMNS FROM hrms_employee_leave_balance LIKE 'leave_code'");
+    if (empty($checkCol2)) {
+        $ai_db->aiQuery("ALTER TABLE hrms_employee_leave_balance ADD COLUMN leave_code VARCHAR(50) DEFAULT 'PL' AFTER month");
+    }
+    $checkCol3 = $ai_db->aiGetQuery("SHOW COLUMNS FROM hrms_employee_leave_balance LIKE 'balance'");
+    if (empty($checkCol3)) {
+        $ai_db->aiQuery("ALTER TABLE hrms_employee_leave_balance ADD COLUMN balance DECIMAL(8,2) DEFAULT 0.00 AFTER leave_code");
+    }
 } else {
     echo "<p style='color: red;'>[ERROR] Failed to verify / create table 'hrms_employee_leave_balance'.</p>\n";
 }

@@ -99,20 +99,18 @@ $current_year = intval(date('Y'));
             <thead class="sticky-top bg-light" style="z-index: 1;">
               <tr id="tableHeaderRow" style="background-color: #f1f5f9;">
                 <th class="px-2 py-1 text-center" style="width: 50px;">Sr. No</th>
-                <th class="px-2 py-1">Emp Code</th>
-                <th class="px-2 py-1">Employee Name</th>
-                <th class="px-2 py-1 text-center">Year</th>
-                <th class="px-2 py-1 text-end">PL Balance</th>
-                <th class="px-2 py-1 text-end">CL Balance</th>
-                <th class="px-2 py-1 text-end">SL Balance</th>
-                <th class="px-2 py-1 text-end">Other Balance</th>
-                <th class="px-2 py-1">Remarks</th>
+                <th class="px-2 py-1">EMP CODE</th>
+                <th class="px-2 py-1">Name</th>
+                <th class="px-2 py-1 text-center">YEAR</th>
+                <th class="px-2 py-1 text-center">MONTH</th>
+                <th class="px-2 py-1 text-center">CODE</th>
+                <th class="px-2 py-1 text-end">BALANCE</th>
                 <th class="px-2 py-1 text-center">Status</th>
               </tr>
             </thead>
             <tbody id="tableBody">
               <tr>
-                <td colspan="10" class="text-center py-5 text-muted">
+                <td colspan="8" class="text-center py-5 text-muted">
                   <i class="ti ti-file-spreadsheet fs-1 d-block mb-2"></i>
                   Please browse and load an Excel/CSV file to preview data.
                 </td>
@@ -195,7 +193,7 @@ $current_year = intval(date('Y'));
 
       tableBody.innerHTML = `
             <tr>
-                <td colspan="10" class="text-center py-5">
+                <td colspan="8" class="text-center py-5">
                     <span class="spinner-border spinner-border-sm text-primary me-2" role="status"></span>
                     Parsing Excel file, please wait...
                 </td>
@@ -220,7 +218,7 @@ $current_year = intval(date('Y'));
           } else {
             tableBody.innerHTML = `
                     <tr>
-                        <td colspan="10" class="text-center py-5 text-danger">
+                        <td colspan="8" class="text-center py-5 text-danger">
                             <i class="ti ti-alert-triangle fs-2 d-block mb-2"></i>
                             ${res.message || 'Error occurred while loading Excel file.'}
                         </td>
@@ -231,14 +229,14 @@ $current_year = intval(date('Y'));
         })
         .catch(err => {
           console.error(err);
-          tableBody.innerHTML = `<tr><td colspan="10" class="text-center py-5 text-danger">Failed to communicate with server.</td></tr>`;
+          tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-5 text-danger">Failed to communicate with server.</td></tr>`;
           btnUploadData.disabled = true;
         });
     });
 
     function renderPreviewTable(rows) {
       if (rows.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="10" class="text-center py-5 text-warning">No rows found in Excel sheet.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-5 text-warning">No rows found in Excel sheet.</td></tr>`;
         return;
       }
 
@@ -251,16 +249,14 @@ $current_year = intval(date('Y'));
           : `<span class="badge bg-danger" style="font-size: 10px;">${row.status_msg || 'Invalid'}</span>`;
 
         html += `
-                <tr class="${rowClass}" data-filter-text="${(row.emp_code + ' ' + row.emp_name + ' ' + row.year).toLowerCase()}">
+                <tr class="${rowClass}" data-filter-text="${(row.emp_code + ' ' + row.emp_name + ' ' + row.year + ' ' + row.leave_code).toLowerCase()}">
                     <td class="text-center">${idx + 1}</td>
                     <td><strong>${escapeHtml(row.emp_code || '')}</strong></td>
                     <td>${escapeHtml(row.emp_name || '')}</td>
                     <td class="text-center font-monospace">${escapeHtml(row.year || '')}</td>
-                    <td class="text-end fw-semibold text-primary">${parseFloat(row.pl_balance || 0).toFixed(2)}</td>
-                    <td class="text-end fw-semibold text-success">${parseFloat(row.cl_balance || 0).toFixed(2)}</td>
-                    <td class="text-end fw-semibold text-info">${parseFloat(row.sl_balance || 0).toFixed(2)}</td>
-                    <td class="text-end fw-semibold text-secondary">${parseFloat(row.other_balance || 0).toFixed(2)}</td>
-                    <td><small class="text-muted">${escapeHtml(row.remarks || '')}</small></td>
+                    <td class="text-center font-monospace">${escapeHtml(row.month || '')}</td>
+                    <td class="text-center"><span class="badge bg-label-info fw-bold" style="font-size: 11px;">${escapeHtml(row.leave_code || '')}</span></td>
+                    <td class="text-end fw-semibold text-primary">${parseFloat(row.balance || 0).toFixed(2)}</td>
                     <td class="text-center">${statusBadge}</td>
                 </tr>
             `;

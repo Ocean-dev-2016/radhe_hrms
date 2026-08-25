@@ -18,16 +18,14 @@ if ($company_id <= 0) {
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 $username = isset($_SESSION['username']) ? mysqli_real_escape_string($ai_conn, $_SESSION['username']) : 'System';
 
-// Standard columns for Leave Balance Import
+// Standard columns for Leave Balance Import as per Excel format
 $columns = [
     'EMP CODE',
-    'EMPLOYEE NAME',
+    'Name',
     'YEAR',
-    'PL BALANCE',
-    'CL BALANCE',
-    'SL BALANCE',
-    'OTHER BALANCE',
-    'REMARKS'
+    'MONTH',
+    'CODE',
+    'BALANCE'
 ];
 
 if ($action === 'format_file') {
@@ -37,40 +35,37 @@ if ($action === 'format_file') {
     $current_year = intval(date('Y'));
     $sample_rows = [
         [
-            '10001',
-            'Rahul Sharma',
+            'VTPL0021',
+            'employee two',
             $current_year,
-            '15.00',
-            '7.00',
-            '10.00',
-            '0.00',
-            'Annual Opening Balance'
+            2,
+            'PL',
+            '2.00'
         ],
         [
-            '10002',
-            'Pooja Patel',
+            'VTPL0026',
+            '',
             $current_year,
-            '12.00',
-            '7.00',
-            '8.00',
-            '0.00',
-            'Annual Opening Balance'
+            2,
+            'PL',
+            '3.00'
         ],
         [
-            '10003',
-            'Amit Kumar',
+            'VTPL0021',
+            'employee two',
             $current_year,
-            '18.00',
-            '7.00',
-            '12.00',
-            '0.00',
-            'Carried forward balance'
+            2,
+            'CL',
+            '1.00'
         ]
     ];
 
     $required_map = [
         'emp code' => true,
-        'year' => true
+        'year' => true,
+        'month' => true,
+        'code' => true,
+        'balance' => true
     ];
 
     download_sample_xlsx('LEAVE_BALANCE_IMPORT_FORMAT.xlsx', $columns, $sample_rows, $required_map);
@@ -84,15 +79,13 @@ if ($action === 'format_file') {
 
     $query = "SELECT e.emp_code, e.emp_name, 
                      COALESCE(l.year, $selected_year) AS year,
-                     COALESCE(l.pl_balance, 0.00) AS pl_balance,
-                     COALESCE(l.cl_balance, 0.00) AS cl_balance,
-                     COALESCE(l.sl_balance, 0.00) AS sl_balance,
-                     COALESCE(l.other_balance, 0.00) AS other_balance,
-                     COALESCE(l.remarks, '') AS remarks
+                     COALESCE(l.month, 1) AS month,
+                     COALESCE(l.leave_code, 'PL') AS leave_code,
+                     COALESCE(l.balance, 0.00) AS balance
               FROM hrms_employeemaster e
               LEFT JOIN hrms_employee_leave_balance l ON e.id = l.employee_id AND l.company_id = $company_id AND l.year = $selected_year
               WHERE e.company_id = $company_id AND e.status = 'active'
-              ORDER BY e.emp_code ASC";
+              ORDER BY e.emp_code ASC, l.month ASC, l.leave_code ASC";
 
     $records = $ai_db->aiGetQuery($query);
     $rows = [];
@@ -103,11 +96,9 @@ if ($action === 'format_file') {
                 $rec['emp_code'],
                 $rec['emp_name'],
                 $rec['year'],
-                number_format((float) $rec['pl_balance'], 2, '.', ''),
-                number_format((float) $rec['cl_balance'], 2, '.', ''),
-                number_format((float) $rec['sl_balance'], 2, '.', ''),
-                number_format((float) $rec['other_balance'], 2, '.', ''),
-                $rec['remarks']
+                $rec['month'],
+                $rec['leave_code'],
+                number_format((float) $rec['balance'], 2, '.', '')
             ];
         }
     }
@@ -125,6 +116,7 @@ if ($action === 'format_file') {
     $file = $_FILES['file']['tmp_name'];
     $filename = $_FILES['file']['name'];
     $rows = $ai_core->aiParseImportFile($file, $filename);
+
 
     if ($rows !== false && count($rows) > 0) {
         $headers = array_shift($rows);
@@ -166,18 +158,17 @@ if ($action === 'format_file') {
         $current_year = intval(date('Y'));
 
         foreach ($rows as $row_idx => $data_row) {
-            if (empty($data_row)) continue;
+            if (empty($data_row))
+                continue;
 
             $emp_code = $getVal($data_row, ['emp code', 'empcode', 'code', 'employee code'], 0);
-            $emp_name = $getVal($data_row, ['full name', 'fullname', 'employee name', 'employeename', 'name'], 1);
+            $emp_name = $getVal($data_row, ['name', 'employee name', 'employeename', 'full name', 'fullname'], 1);
             $year_raw = $getVal($data_row, ['year', 'leave year', 'leaveyear'], 2);
-            $pl_raw = $getVal($data_row, ['pl balance', 'pl', 'privilege leave', 'earned leave', 'el'], 3);
-            $cl_raw = $getVal($data_row, ['cl balance', 'cl', 'casual leave'], 4);
-            $sl_raw = $getVal($data_row, ['sl balance', 'sl', 'sick leave'], 5);
-            $other_raw = $getVal($data_row, ['other balance', 'other', 'special leave'], 6);
-            $remarks = $getVal($data_row, ['remarks', 'remark', 'notes'], 7);
+            $month_raw = $getVal($data_row, ['month', 'leave month', 'leavemonth', 'mo'], 3);
+            $code_raw = $getVal($data_row, ['code', 'leave code', 'leavecode', 'type', 'leavetype'], 4);
+            $balance_raw = $getVal($data_row, ['balance', 'leave balance', 'leavebalance', 'bal', 'qty', 'days'], 5);
 
-            if (empty($emp_code) && empty($emp_name) && empty($year_raw)) {
+            if (empty($emp_code) && empty($emp_name) && empty($year_raw) && empty($balance_raw)) {
                 continue;
             }
 
@@ -189,10 +180,9 @@ if ($action === 'format_file') {
             }
 
             $year = intval($year_raw) > 0 ? intval($year_raw) : $current_year;
-            $pl = floatval($pl_raw);
-            $cl = floatval($cl_raw);
-            $sl = floatval($sl_raw);
-            $other = floatval($other_raw);
+            $month = intval($month_raw) > 0 ? intval($month_raw) : 0;
+            $leave_code = !empty($code_raw) ? strtoupper(trim($code_raw)) : 'PL';
+            $balance = floatval($balance_raw);
 
             $status_msg = 'Valid';
             $is_valid = true;
@@ -205,6 +195,12 @@ if ($action === 'format_file') {
                 $is_valid = false;
             } else if ($year < 2000 || $year > 2100) {
                 $status_msg = 'Invalid Year';
+                $is_valid = false;
+            } else if ($month < 0 || $month > 12) {
+                $status_msg = 'Invalid Month (1-12)';
+                $is_valid = false;
+            } else if (empty($leave_code)) {
+                $status_msg = 'Missing Leave Code';
                 $is_valid = false;
             }
 
@@ -219,11 +215,9 @@ if ($action === 'format_file') {
                 'emp_code' => $emp_code,
                 'emp_name' => $resolved_name,
                 'year' => $year,
-                'pl_balance' => $pl,
-                'cl_balance' => $cl,
-                'sl_balance' => $sl,
-                'other_balance' => $other,
-                'remarks' => $remarks,
+                'month' => $month,
+                'leave_code' => $leave_code,
+                'balance' => $balance,
                 'is_valid' => $is_valid,
                 'status_msg' => $status_msg
             ];
@@ -280,23 +274,17 @@ if ($action === 'format_file') {
 
         $employee_id = $emp_lookup[$emp_code_upper];
         $year = intval($row['year'] ?? date('Y'));
-        $pl = floatval($row['pl_balance'] ?? 0.00);
-        $cl = floatval($row['cl_balance'] ?? 0.00);
-        $sl = floatval($row['sl_balance'] ?? 0.00);
-        $other = floatval($row['other_balance'] ?? 0.00);
-        $remarks = mysqli_real_escape_string($ai_conn, trim($row['remarks'] ?? ''));
+        $month = intval($row['month'] ?? 0);
+        $leave_code = mysqli_real_escape_string($ai_conn, strtoupper(trim($row['leave_code'] ?? 'PL')));
+        $balance = floatval($row['balance'] ?? 0.00);
 
         // Insert / Update duplicate key
         $sql = "INSERT INTO hrms_employee_leave_balance 
-                (company_id, employee_id, year, pl_balance, cl_balance, sl_balance, other_balance, remarks, created_by)
+                (company_id, employee_id, year, month, leave_code, balance, created_by)
                 VALUES 
-                ($company_id, $employee_id, $year, $pl, $cl, $sl, $other, '$remarks', '$username')
+                ($company_id, $employee_id, $year, $month, '$leave_code', $balance, '$username')
                 ON DUPLICATE KEY UPDATE 
-                pl_balance = VALUES(pl_balance),
-                cl_balance = VALUES(cl_balance),
-                sl_balance = VALUES(sl_balance),
-                other_balance = VALUES(other_balance),
-                remarks = VALUES(remarks),
+                balance = VALUES(balance),
                 updated_by = '$username',
                 updated_at = CURRENT_TIMESTAMP";
 
