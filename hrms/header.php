@@ -259,16 +259,16 @@ if (isset($_SESSION['selected_company_id']) && intval($_SESSION['selected_compan
                   </ul>
                 </li>
                 <!-- Admin -->
-                <li class="menu-item">
+                <li class="menu-item <?php echo (in_array($current_page, ['export-employee-details.php', 'salary-lock-unlock.php'])) ? 'active open' : ''; ?>">
                   <a href="javascript:void(0)" class="menu-link menu-toggle">
                     <i class="menu-icon tf-icons ti ti-shield-lock"></i>
                     <div data-i18n="Admin"><u>A</u>dmin</div>
                   </a>
                   <ul class="menu-sub">
-                    <li class="menu-item"><a href="#" class="menu-link">
+                    <li class="menu-item <?php echo ($current_page == 'export-employee-details.php') ? 'active' : ''; ?>"><a href="export-employee-details" class="menu-link">
                         <div data-i18n="Employee Details (Export)">Employee Details (Export)</div>
                       </a></li>
-                    <li class="menu-item menu-divider-bottom"><a href="#" class="menu-link">
+                    <li class="menu-item menu-divider-bottom <?php echo ($current_page == 'salary-lock-unlock.php') ? 'active' : ''; ?>"><a href="salary-lock-unlock" class="menu-link">
                         <div data-i18n="Lock - Unlock Salary">Lock - Unlock Salary</div>
                       </a></li>
 
@@ -306,24 +306,24 @@ if (isset($_SESSION['selected_company_id']) && intval($_SESSION['selected_compan
                   </ul>
                 </li>
                 <!-- Payroll -->
-                <li class="menu-item">
+                <li class="menu-item <?php echo (in_array($current_page, ['loan-entry.php', 'loan-authorization.php', 'pay-loan-installment.php'])) ? 'active open' : ''; ?>">
                   <a href="javascript:void(0)" class="menu-link menu-toggle">
                     <i class="menu-icon tf-icons ti ti-receipt"></i>
                     <div data-i18n="Payroll"><u>P</u>ayroll</div>
                   </a>
                   <ul class="menu-sub">
-                    <li class="menu-item">
+                    <li class="menu-item <?php echo (in_array($current_page, ['loan-entry.php', 'loan-authorization.php', 'pay-loan-installment.php'])) ? 'active open' : ''; ?>">
                       <a href="javascript:void(0)" class="menu-link menu-toggle">
                         <div data-i18n="Loan / Advance Details">Loan / Advance Details</div>
                       </a>
                       <ul class="menu-sub">
-                        <li class="menu-item"><a href="#" class="menu-link">
+                        <li class="menu-item <?php echo ($current_page == 'loan-entry.php') ? 'active' : ''; ?>"><a href="loan-entry" class="menu-link">
                             <div data-i18n="Loan Entry">Loan Entry</div>
                           </a></li>
-                        <li class="menu-item"><a href="#" class="menu-link">
+                        <li class="menu-item <?php echo ($current_page == 'loan-authorization.php') ? 'active' : ''; ?>"><a href="loan-authorization" class="menu-link">
                             <div data-i18n="Loan Authorization">Loan Authorization</div>
                           </a></li>
-                        <li class="menu-item"><a href="#" class="menu-link">
+                        <li class="menu-item <?php echo ($current_page == 'pay-loan-installment.php') ? 'active' : ''; ?>"><a href="pay-loan-installment" class="menu-link">
                             <div data-i18n="Pay Loan Installment">Pay Loan Installment</div>
                           </a></li>
                       </ul>

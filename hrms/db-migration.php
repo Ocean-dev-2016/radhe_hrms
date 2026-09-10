@@ -718,5 +718,77 @@ if ($ai_db->aiQuery($salDeleteLogSql)) {
     echo "<p style='color: red;'>[ERROR] Failed to verify / create table 'hrms_salary_delete_log'.</p>\n";
 }
 
+// 26. Create hrms_salary_lock table
+$salLockSql = "CREATE TABLE IF NOT EXISTS hrms_salary_lock (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    salary_year INT NOT NULL,
+    salary_month INT NOT NULL,
+    is_locked TINYINT(1) DEFAULT 0,
+    locked_by VARCHAR(100) DEFAULT '',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_comp_year_month (company_id, salary_year, salary_month)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+if ($ai_db->aiQuery($salLockSql)) {
+    echo "<p style='color: green;'>[OK] Table 'hrms_salary_lock' verified / created successfully.</p>\n";
+} else {
+    echo "<p style='color: red;'>[ERROR] Failed to verify / create table 'hrms_salary_lock'.</p>\n";
+}
+
+// 27. Create hrms_loans table
+$loansSql = "CREATE TABLE IF NOT EXISTS hrms_loans (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    emp_id INT NOT NULL,
+    loan_date DATE NOT NULL,
+    loan_year INT NOT NULL,
+    loan_month VARCHAR(20) NOT NULL,
+    loan_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    no_of_installments INT NOT NULL DEFAULT 1,
+    installment_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    remarks TEXT NULL,
+    status ENUM('PENDING', 'AUTHORIZED', 'REJECTED', 'COMPLETED') DEFAULT 'PENDING',
+    authorized_by VARCHAR(100) DEFAULT '',
+    authorized_at DATETIME NULL,
+    created_by VARCHAR(100) DEFAULT '',
+    updated_by VARCHAR(100) DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_company_emp (company_id, emp_id),
+    KEY idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+if ($ai_db->aiQuery($loansSql)) {
+    echo "<p style='color: green;'>[OK] Table 'hrms_loans' verified / created successfully.</p>\n";
+} else {
+    echo "<p style='color: red;'>[ERROR] Failed to verify / create table 'hrms_loans'.</p>\n";
+}
+
+// 28. Create hrms_loan_installments table
+$loanInstSql = "CREATE TABLE IF NOT EXISTS hrms_loan_installments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    loan_id INT NOT NULL,
+    emp_id INT NOT NULL,
+    payment_date DATE NOT NULL,
+    amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    payment_type ENUM('DIRECT', 'SALARY') DEFAULT 'DIRECT',
+    salary_month INT NULL,
+    salary_year INT NULL,
+    remarks VARCHAR(255) DEFAULT '',
+    created_by VARCHAR(100) DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_loan_id (loan_id),
+    KEY idx_emp_id (emp_id),
+    KEY idx_comp_loan (company_id, loan_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+if ($ai_db->aiQuery($loanInstSql)) {
+    echo "<p style='color: green;'>[OK] Table 'hrms_loan_installments' verified / created successfully.</p>\n";
+} else {
+    echo "<p style='color: red;'>[ERROR] Failed to verify / create table 'hrms_loan_installments'.</p>\n";
+}
+
 echo "<h3>Migration completed successfully.</h3>\n";
 ?>
