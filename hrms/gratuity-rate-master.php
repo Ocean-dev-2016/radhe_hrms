@@ -4,15 +4,16 @@ include 'header.php';
 ?>
 
 <style>
-/* Hide HTML5 spin-buttons for number inputs */
-input[type=number]::-webkit-outer-spin-button,
-input[type=number]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-input[type=number] {
-  -moz-appearance: textfield;
-}
+  /* Hide HTML5 spin-buttons for number inputs */
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type=number] {
+    -moz-appearance: textfield;
+  }
 </style>
 
 <!-- Content wrapper -->
@@ -43,22 +44,29 @@ input[type=number] {
             Gratuity Rate Entry
           </legend>
           <div class="row g-2 align-items-center">
-            
+
             <!-- Gratuity Rate -->
             <div class="col-md-8 d-flex align-items-center">
-              <label class="fw-semibold text-dark-blue me-2 text-start" style="font-size: 11px; min-width: 90px;">Gratuity Rate</label>
-              <input type="number" step="0.001" class="form-control form-control-sm text-end" name="gratuity_rate" id="gratuity_rate" value="0.000" required style="font-size: 11px; border: 1px solid #c9c8cc !important;" />
+              <label class="fw-semibold text-dark-blue me-2 text-start"
+                style="font-size: 11px; min-width: 90px;">Gratuity Rate</label>
+              <input type="number" step="0.001" class="form-control form-control-sm text-end" name="gratuity_rate"
+                id="gratuity_rate" value="0.000" required
+                style="font-size: 11px; border: 1px solid #c9c8cc !important;" />
             </div>
 
             <!-- Record ID display indicator -->
             <div class="col-md-4 text-end">
-              <span id="recordIndicator" class="badge bg-light text-dark border py-1" style="font-size: 11px; min-width: 40px;">0</span>
+              <span id="recordIndicator" class="badge bg-light text-dark border py-1"
+                style="font-size: 11px; min-width: 40px;">0</span>
             </div>
 
             <!-- Effective Date -->
             <div class="col-md-8 d-flex align-items-center">
-              <label class="fw-semibold text-dark-blue me-2 text-start" style="font-size: 11px; min-width: 90px;">Effective Date</label>
-              <input type="text" class="form-control form-control-sm text-center" name="effective_date" id="effective_date" placeholder="DD/MM/YYYY" required style="font-size: 11px; border: 1px solid #c9c8cc !important;" />
+              <label class="fw-semibold text-dark-blue me-2 text-start"
+                style="font-size: 11px; min-width: 90px;">Effective Date</label>
+              <input type="text" class="form-control form-control-sm text-center" name="effective_date"
+                id="effective_date" placeholder="DD/MM/YYYY" required
+                style="font-size: 11px; border: 1px solid #c9c8cc !important;" />
             </div>
 
           </div>
@@ -66,37 +74,50 @@ input[type=number] {
 
         <!-- Bottom Action Toolbar -->
         <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mt-3 pt-2 border-top">
-          <div class="d-flex flex-wrap gap-1 align-items-center bg-white p-1 rounded border shadow-xs" style="border-color: #c9c8cc !important;">
-            <button type="button" id="btnAdd" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+          <div class="d-flex flex-wrap gap-1 align-items-center bg-white p-1 rounded border shadow-xs"
+            style="border-color: #c9c8cc !important;">
+            <button type="button" id="btnAdd" class="btn btn-xs btn-outline-secondary px-2 py-1"
+              style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
               <i class="ti ti-plus me-1 text-success"></i>Add
             </button>
-            <button type="button" id="btnEdit" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+            <button type="button" id="btnEdit" class="btn btn-xs btn-outline-secondary px-2 py-1"
+              style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
               <i class="ti ti-edit me-1 text-warning"></i>Edit
             </button>
-            <button type="button" id="btnDelete" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+            <button type="button" id="btnDelete" class="btn btn-xs btn-outline-secondary px-2 py-1"
+              style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
               <i class="ti ti-trash me-1 text-danger"></i>Delete
             </button>
-            <button type="button" id="btnSave" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+            <button type="button" id="btnSave" class="btn btn-xs btn-outline-secondary px-2 py-1"
+              style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
               <i class="ti ti-device-floppy me-1 text-primary"></i>Save
             </button>
-            <button type="button" id="btnCancel" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+            <button type="button" id="btnCancel" class="btn btn-xs btn-outline-secondary px-2 py-1"
+              style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
               <i class="ti ti-refresh me-1 text-secondary"></i>Cancel
             </button>
-            <button type="button" id="btnExit" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+            <button type="button" id="btnExit" class="btn btn-xs btn-outline-secondary px-2 py-1"
+              style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
               <i class="ti ti-logout me-1 text-danger"></i>Exit
             </button>
-            <button type="button" id="btnSearch" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+            <button type="button" id="btnSearch" class="btn btn-xs btn-outline-secondary px-2 py-1"
+              style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
               <i class="ti ti-search me-1 text-info"></i>Search
             </button>
           </div>
 
           <!-- Slider / Record Navigation -->
-          <div class="d-flex align-items-center bg-white p-1 rounded border shadow-xs" style="border-color: #c9c8cc !important; font-size: 11px; height: 26px;">
+          <div class="d-flex align-items-center bg-white p-1 rounded border shadow-xs"
+            style="border-color: #c9c8cc !important; font-size: 11px; height: 26px;">
             <span id="sliderModeLabel" class="badge bg-secondary me-2" style="font-size: 9px;">VIEW</span>
-            <span id="navLabel" class="px-2 fw-bold border-end me-2" style="min-width: 50px; text-align: center; white-space: nowrap;">0 / 0</span>
-            <button type="button" id="btnPrev" class="btn btn-xs btn-outline-secondary px-2 py-0" style="font-size: 11px; line-height: 1.2; border-color: #a3b8cc !important; height: 20px; font-weight: bold; background-color: #f8f9fa;">&lt;</button>
-            <input type="range" id="rangeSlider" class="form-range mx-2" min="0" max="0" value="0" style="height: 4px; flex-grow: 1; min-width: 120px;" disabled />
-            <button type="button" id="btnNext" class="btn btn-xs btn-outline-secondary px-2 py-0" style="font-size: 11px; line-height: 1.2; border-color: #a3b8cc !important; height: 20px; font-weight: bold; background-color: #f8f9fa;">&gt;</button>
+            <span id="navLabel" class="px-2 fw-bold border-end me-2"
+              style="min-width: 50px; text-align: center; white-space: nowrap;">0 / 0</span>
+            <button type="button" id="btnPrev" class="btn btn-xs btn-outline-secondary px-2 py-0"
+              style="font-size: 11px; line-height: 1.2; border-color: #a3b8cc !important; height: 20px; font-weight: bold; background-color: #f8f9fa;">&lt;</button>
+            <input type="range" id="rangeSlider" class="form-range mx-2" min="0" max="0" value="0"
+              style="height: 4px; flex-grow: 1; min-width: 120px;" disabled />
+            <button type="button" id="btnNext" class="btn btn-xs btn-outline-secondary px-2 py-0"
+              style="font-size: 11px; line-height: 1.2; border-color: #a3b8cc !important; height: 20px; font-weight: bold; background-color: #f8f9fa;">&gt;</button>
           </div>
         </div>
       </form>
@@ -106,17 +127,23 @@ input[type=number] {
 </div>
 
 <!-- Search Selection Modal -->
-<div class="modal fade" id="rateSelectModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="rateSelectModalLabel" aria-hidden="true">
+<div class="modal fade" id="rateSelectModal" tabindex="-1" data-bs-backdrop="static"
+  aria-labelledby="rateSelectModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-md modal-dialog-centered">
-    <div class="modal-content border shadow-lg" style="border-radius: 6px !important; border-color: #a3b8cc !important;">
-      <div class="modal-header text-white p-2 px-3" style="background: linear-gradient(90deg, #135ca3 0%, #00a2e8 100%); border-top-left-radius: 5px !important; border-top-right-radius: 5px !important; border-bottom: 1px solid #104f9b;">
-        <h6 class="modal-title fw-bold text-white d-flex align-items-center" id="rateSelectModalLabel" style="font-size: 13px; margin: 0;">
+    <div class="modal-content border shadow-lg"
+      style="border-radius: 6px !important; border-color: #a3b8cc !important;">
+      <div class="modal-header text-white p-2 px-3"
+        style="background: linear-gradient(90deg, #135ca3 0%, #00a2e8 100%); border-top-left-radius: 5px !important; border-top-right-radius: 5px !important; border-bottom: 1px solid #104f9b;">
+        <h6 class="modal-title fw-bold text-white d-flex align-items-center" id="rateSelectModalLabel"
+          style="font-size: 13px; margin: 0;">
           <i class="ti ti-search me-2" style="font-size: 15px;"></i>Select Gratuity Rate Record
         </h6>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="font-size: 10px;"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"
+          style="font-size: 10px;"></button>
       </div>
       <div class="modal-body p-3" style="background-color: #e8f0fe !important;">
-        <div class="table-responsive bg-white rounded p-2 border" style="max-height: 300px; overflow-y: auto; border-color: #a3b8cc !important;">
+        <div class="table-responsive bg-white rounded p-2 border"
+          style="max-height: 300px; overflow-y: auto; border-color: #a3b8cc !important;">
           <table class="table table-sm table-striped table-bordered table-hover mb-0" style="font-size: 11px;">
             <thead class="table-light">
               <tr>
@@ -173,7 +200,7 @@ input[type=number] {
     }
 
     form.querySelectorAll("input[type='number']").forEach(inp => {
-      inp.addEventListener('change', function() {
+      inp.addEventListener('change', function () {
         const val = parseFloat(this.value) || 0;
         this.value = val.toFixed(3);
       });
@@ -183,7 +210,7 @@ input[type=number] {
       form.reset();
       document.getElementById("gratuity_rate_id").value = "0";
       document.getElementById("recordIndicator").textContent = "0";
-      
+
       const today = new Date();
       const dd = String(today.getDate()).padStart(2, '0');
       const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -350,13 +377,13 @@ input[type=number] {
         method: 'POST',
         body: formData
       })
-      .then(res => res.json())
-      .then(response => {
-        alert(response.message);
-        if (response.status === 'success') {
-          fetchRates();
-        }
-      });
+        .then(res => res.json())
+        .then(response => {
+          alert(response.message);
+          if (response.status === 'success') {
+            fetchRates();
+          }
+        });
     });
 
     function dragElement(elmnt) {

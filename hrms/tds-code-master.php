@@ -48,13 +48,14 @@ include 'header.php';
                     <label class="col-sm-3 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue"
                       style="font-size: 11px;">Section Code <span class="text-danger">*</span></label>
                     <div class="col-sm-4">
-                      <input type="text" class="form-control form-control-sm bg-white" name="section_code" id="section_code"
-                        placeholder="e.g. 80C, 80D, 24(B)" style="font-size: 11px;" required />
+                      <input type="text" class="form-control form-control-sm bg-white" name="section_code"
+                        id="section_code" placeholder="e.g. 80C, 80D, 24(B)" style="font-size: 11px;" required />
                     </div>
                     <label class="col-sm-2 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue"
                       style="font-size: 11px;">Regime</label>
                     <div class="col-sm-3">
-                      <select class="form-select form-select-sm bg-white" name="regime" id="regime" style="font-size: 11px;">
+                      <select class="form-select form-select-sm bg-white" name="regime" id="regime"
+                        style="font-size: 11px;">
                         <option value="BOTH">BOTH (Old & New)</option>
                         <option value="OLD" selected>OLD Regime</option>
                         <option value="NEW">NEW Regime</option>
@@ -66,8 +67,9 @@ include 'header.php';
                     <label class="col-sm-3 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue"
                       style="font-size: 11px;">Description / Particulars <span class="text-danger">*</span></label>
                     <div class="col-sm-9">
-                      <input type="text" class="form-control form-control-sm bg-white" name="section_name" id="section_name"
-                        placeholder="e.g. Life Insurance, PPF, Tuition Fee" style="font-size: 11px;" required />
+                      <input type="text" class="form-control form-control-sm bg-white" name="section_name"
+                        id="section_name" placeholder="e.g. Life Insurance, PPF, Tuition Fee" style="font-size: 11px;"
+                        required />
                     </div>
                   </div>
 
@@ -75,13 +77,14 @@ include 'header.php';
                     <label class="col-sm-3 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue"
                       style="font-size: 11px;">Max Exemption Limit (₹)</label>
                     <div class="col-sm-4">
-                      <input type="number" step="0.01" class="form-control form-control-sm bg-white text-end" name="max_limit" id="max_limit"
-                        value="150000.00" style="font-size: 11px;" />
+                      <input type="number" step="0.01" class="form-control form-control-sm bg-white text-end"
+                        name="max_limit" id="max_limit" value="150000.00" style="font-size: 11px;" />
                     </div>
                     <label class="col-sm-2 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue"
                       style="font-size: 11px;">Status</label>
                     <div class="col-sm-3">
-                      <select class="form-select form-select-sm bg-white" name="status" id="status" style="font-size: 11px;">
+                      <select class="form-select form-select-sm bg-white" name="status" id="status"
+                        style="font-size: 11px;">
                         <option value="active" selected>Active</option>
                         <option value="inactive">Inactive</option>
                       </select>
@@ -477,7 +480,7 @@ include 'header.php';
 
     modalSearchInput.addEventListener("input", () => {
       const q = modalSearchInput.value.toLowerCase().trim();
-      const filtered = records.filter(r => 
+      const filtered = records.filter(r =>
         (r.section_code && r.section_code.toLowerCase().includes(q)) ||
         (r.section_name && r.section_name.toLowerCase().includes(q))
       );
