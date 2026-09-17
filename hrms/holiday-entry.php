@@ -16,7 +16,8 @@ include 'header.php';
       <h6 class="m-0 text-white fw-bold d-flex align-items-center" style="font-size: 14px;">
         <i class="ti ti-calendar me-2" style="font-size: 16px;"></i>HOLIDAY DETAILS
       </h6>
-      <span class="badge bg-danger px-2 py-1" style="font-size: 10px; font-weight: 600;"># Press [F5] For List, [Esc] For Cancel</span>
+      <span class="badge bg-danger px-2 py-1" style="font-size: 10px; font-weight: 600;"># Press [F5] For List, [Esc]
+        For Cancel</span>
     </div>
 
     <div class="card-body p-3 bg-white">
@@ -31,51 +32,59 @@ include 'header.php';
             style="margin-left: 0 !important; margin-right: 0 !important; padding-left: 4px !important;">
             <li class="nav-item" role="presentation">
               <button class="nav-link active fw-bold py-1 px-3" id="holiday-tab" data-bs-toggle="tab"
-                data-bs-target="#holiday-info" type="button" role="tab" aria-controls="holiday-info" aria-selected="true"
-                style="font-size: 11px;">Holiday Details</button>
+                data-bs-target="#holiday-info" type="button" role="tab" aria-controls="holiday-info"
+                aria-selected="true" style="font-size: 11px;">Holiday Details</button>
             </li>
           </ul>
 
           <!-- Tab Content Container with light blue background and border -->
           <div class="tab-content border p-3 rounded-bottom bg-legacy-blue" id="holidayTabsContent">
             <div class="tab-pane fade show active" id="holiday-info" role="tabpanel" aria-labelledby="holiday-tab">
-              
+
               <!-- Date Parameters row -->
               <div class="row g-2 mb-2 align-items-center">
                 <div class="col-md-3 d-flex align-items-center">
-                  <label class="fw-semibold text-dark-blue me-2 text-end" style="font-size: 11px; min-width: 60px;">Start Date</label>
-                  <input type="text" class="form-control form-control-sm" name="start_date" id="start_date" value="25/04/2026"
-                    style="font-size: 11px; background-color: #fdf2cc !important;" />
+                  <label class="fw-semibold text-dark-blue me-2 text-end"
+                    style="font-size: 11px; min-width: 60px;">Start Date</label>
+                  <input type="text" class="form-control form-control-sm" name="start_date" id="start_date"
+                    value="25/04/2026" style="font-size: 11px; background-color: #fdf2cc !important;" />
                 </div>
                 <div class="col-md-3 d-flex align-items-center">
-                  <label class="fw-semibold text-dark-blue me-2 text-end" style="font-size: 11px; min-width: 60px;">End Date</label>
-                  <input type="text" class="form-control form-control-sm" name="end_date" id="end_date" value="25/04/2026"
-                    style="font-size: 11px;" />
+                  <label class="fw-semibold text-dark-blue me-2 text-end" style="font-size: 11px; min-width: 60px;">End
+                    Date</label>
+                  <input type="text" class="form-control form-control-sm" name="end_date" id="end_date"
+                    value="25/04/2026" style="font-size: 11px;" />
                 </div>
                 <div class="col-md-3 d-flex align-items-center">
-                  <label class="fw-semibold text-dark-blue me-2 text-end" style="font-size: 11px; min-width: 70px;">Resume Date</label>
-                  <input type="text" class="form-control form-control-sm" name="resume_date" id="resume_date" value="26/04/2026"
-                    style="font-size: 11px;" />
+                  <label class="fw-semibold text-dark-blue me-2 text-end"
+                    style="font-size: 11px; min-width: 70px;">Resume Date</label>
+                  <input type="text" class="form-control form-control-sm" name="resume_date" id="resume_date"
+                    value="26/04/2026" style="font-size: 11px;" />
                 </div>
                 <div class="col-md-3 d-flex align-items-center">
-                  <label class="fw-semibold text-dark-blue me-2 text-end" style="font-size: 11px; min-width: 60px;">Leave Days</label>
-                  <input type="text" class="form-control form-control-sm bg-light" name="leave_days" id="leave_days" value="1.00" readonly
-                    style="font-size: 11px;" />
+                  <label class="fw-semibold text-dark-blue me-2 text-end"
+                    style="font-size: 11px; min-width: 60px;">Leave Days</label>
+                  <input type="text" class="form-control form-control-sm bg-light" name="leave_days" id="leave_days"
+                    value="1.00" readonly style="font-size: 11px;" />
                 </div>
               </div>
 
               <!-- Filter options row -->
               <div class="row g-2 mb-2 align-items-center">
                 <div class="col-md-6 d-flex align-items-center">
-                  <label class="fw-semibold text-dark-blue me-2 text-end" style="font-size: 11px; min-width: 70px;">Select Branch</label>
-                  <select class="form-select form-select-sm bg-white" name="select_branch" id="select_branch" style="font-size: 11px;">
+                  <label class="fw-semibold text-dark-blue me-2 text-end"
+                    style="font-size: 11px; min-width: 70px;">Select Branch</label>
+                  <select class="form-select form-select-sm bg-white" name="select_branch" id="select_branch"
+                    style="font-size: 11px;">
                     <option value="">---SELECT ALL---</option>
                     <option value="RAJKOT" selected>RAJKOT</option>
                   </select>
                 </div>
                 <div class="col-md-6 d-flex align-items-center">
-                  <label class="fw-semibold text-dark-blue me-2 text-end" style="font-size: 11px; min-width: 70px;">Select Dept.</label>
-                  <select class="form-select form-select-sm bg-white" name="select_dept" id="select_dept" style="font-size: 11px;">
+                  <label class="fw-semibold text-dark-blue me-2 text-end"
+                    style="font-size: 11px; min-width: 70px;">Select Dept.</label>
+                  <select class="form-select form-select-sm bg-white" name="select_dept" id="select_dept"
+                    style="font-size: 11px;">
                     <option value="">---SELECT ALL---</option>
                   </select>
                 </div>
@@ -85,18 +94,23 @@ include 'header.php';
               <div class="d-flex justify-content-between align-items-center mb-2 px-1">
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" id="selectAllCheckbox" checked>
-                  <label class="form-check-label fw-bold text-dark-blue" style="font-size: 11px;" for="selectAllCheckbox">Select All</label>
+                  <label class="form-check-label fw-bold text-dark-blue" style="font-size: 11px;"
+                    for="selectAllCheckbox">Select All</label>
                 </div>
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" id="paidHolidayCheckbox" checked>
-                  <label class="form-check-label fw-bold text-dark-blue" style="font-size: 11px;" for="paidHolidayCheckbox">Paid Holiday</label>
+                  <label class="form-check-label fw-bold text-dark-blue" style="font-size: 11px;"
+                    for="paidHolidayCheckbox">Paid Holiday</label>
                 </div>
               </div>
 
               <!-- Employee Grid -->
-              <div class="table-responsive rounded border bg-white mb-2" style="max-height: 220px; overflow-y: auto; border-color: #a3b8cc !important;">
-                <table class="table table-sm table-bordered table-striped table-hover mb-0 text-center" style="font-size: 11px; vertical-align: middle;">
-                  <thead class="table-light text-primary" style="position: sticky; top: 0; z-index: 1; font-weight: bold;">
+              <div class="table-responsive rounded border bg-white mb-2"
+                style="max-height: 220px; overflow-y: auto; border-color: #a3b8cc !important;">
+                <table class="table table-sm table-bordered table-striped table-hover mb-0 text-center"
+                  style="font-size: 11px; vertical-align: middle;">
+                  <thead class="table-light text-primary"
+                    style="position: sticky; top: 0; z-index: 1; font-weight: bold;">
                     <tr>
                       <th style="width: 40px;"></th>
                       <th style="width: 90px;">Emp.CODE</th>
@@ -170,7 +184,8 @@ include 'header.php';
               <div class="row align-items-center g-2 mt-1">
                 <label class="col-sm-1 fw-semibold text-dark-blue text-end" style="font-size: 11px;">Reason</label>
                 <div class="col-sm-11">
-                  <input type="text" class="form-control form-control-sm" name="reason" id="reason" value="HOLIDAY" style="font-size: 11px;" />
+                  <input type="text" class="form-control form-control-sm" name="reason" id="reason" value="HOLIDAY"
+                    style="font-size: 11px;" />
                 </div>
               </div>
 
