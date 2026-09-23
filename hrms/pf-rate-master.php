@@ -40,14 +40,21 @@ include 'header.php';
 
       <!-- Main UI (Hidden or disabled until branch is selected) -->
       <div id="pfSettingsContainer" style="display: none;">
-        <!-- Nav Tabs for combining both views -->
+        <!-- Nav Tabs for combining all three views -->
         <ul class="nav nav-tabs mb-2" id="pfTabs" role="tablist"
-          style="padding-left: 4px !important; border-bottom: 1px solid #a3b8cc !important;">
+          style="margin: 0;">
           <li class="nav-item" role="presentation">
-            <button class="nav-link <?php echo (!isset($_GET['tab']) || $_GET['tab'] !== 'components') ? 'active' : ''; ?> fw-bold py-1 px-3" 
+            <button class="nav-link <?php echo (!isset($_GET['tab']) || $_GET['tab'] === 'rates') ? 'active' : ''; ?> fw-bold py-1 px-3" 
               id="rates-tab" data-bs-toggle="tab" data-bs-target="#rates-pane" type="button" role="tab" 
               aria-controls="rates-pane" aria-selected="true" style="font-size: 11px;">
               PF Rate Master
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'challan') ? 'active' : ''; ?> fw-bold py-1 px-3" 
+              id="challan-tab" data-bs-toggle="tab" data-bs-target="#challan-pane" type="button" role="tab" 
+              aria-controls="challan-pane" aria-selected="false" style="font-size: 11px;">
+              PF Rate Master for Challan
             </button>
           </li>
           <li class="nav-item" role="presentation">
@@ -63,7 +70,7 @@ include 'header.php';
         <div class="tab-content border p-3 rounded bg-legacy-blue" id="pfTabsContent" style="min-height: 350px;">
           
           <!-- Tab 1: PF Rate Master -->
-          <div class="tab-pane fade <?php echo (!isset($_GET['tab']) || $_GET['tab'] !== 'components') ? 'show active' : ''; ?>" 
+          <div class="tab-pane fade <?php echo (!isset($_GET['tab']) || $_GET['tab'] === 'rates') ? 'show active' : ''; ?>" 
             id="rates-pane" role="tabpanel" aria-labelledby="rates-tab">
             
             <form id="pfRateForm">
@@ -74,47 +81,8 @@ include 'header.php';
                   PF Rate Entry Detail
                 </legend>
 
-                <div class="row py-2">
-                  <div class="col-md-6 border-end" style="border-color: #dbe4ee !important;">
-                    <div class="row mb-2 align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">PF A/c 1</label>
-                      <div class="col-sm-6">
-                        <input type="number" step="0.001" class="form-control form-control-sm text-end" name="pf_ac_1" id="pf_ac_1" value="0.000" style="font-size: 11px;" />
-                      </div>
-                    </div>
-                    <div class="row mb-2 align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">PF A/c 2</label>
-                      <div class="col-sm-6">
-                        <input type="number" step="0.001" class="form-control form-control-sm text-end" name="pf_ac_2" id="pf_ac_2" value="0.000" style="font-size: 11px;" />
-                      </div>
-                    </div>
-                    <div class="row mb-2 align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">PF A/c 10</label>
-                      <div class="col-sm-6">
-                        <input type="number" step="0.001" class="form-control form-control-sm text-end" name="pf_ac_10" id="pf_ac_10" value="0.000" style="font-size: 11px;" />
-                      </div>
-                    </div>
-                    <div class="row mb-2 align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">PF A/c 21</label>
-                      <div class="col-sm-6">
-                        <input type="number" step="0.001" class="form-control form-control-sm text-end" name="pf_ac_21" id="pf_ac_21" value="0.000" style="font-size: 11px;" />
-                      </div>
-                    </div>
-                    <div class="row mb-2 align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">PF A/c 22</label>
-                      <div class="col-sm-6">
-                        <input type="number" step="0.001" class="form-control form-control-sm text-end" name="pf_ac_22" id="pf_ac_22" value="0.000" style="font-size: 11px;" />
-                      </div>
-                    </div>
-                    <div class="row mb-2 align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">Pension</label>
-                      <div class="col-sm-6">
-                        <input type="number" step="0.001" class="form-control form-control-sm text-end" name="pension" id="pension" value="0.000" style="font-size: 11px;" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="col-md-6 ps-3">
+                <div class="row py-3 justify-content-center">
+                  <div class="col-md-8">
                     <div class="row mb-2 align-items-center">
                       <label class="col-sm-5 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">Employer PF</label>
                       <div class="col-sm-6">
@@ -125,18 +93,6 @@ include 'header.php';
                       <label class="col-sm-5 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">Employee PF</label>
                       <div class="col-sm-6">
                         <input type="number" step="0.001" class="form-control form-control-sm text-end" name="employee_pf" id="employee_pf" value="0.000" style="font-size: 11px;" />
-                      </div>
-                    </div>
-                    <div class="row mb-2 align-items-center">
-                      <label class="col-sm-5 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">Employee Pen</label>
-                      <div class="col-sm-6">
-                        <input type="number" step="0.001" class="form-control form-control-sm text-end" name="employee_pen" id="employee_pen" value="0.000" style="font-size: 11px;" />
-                      </div>
-                    </div>
-                    <div class="row mb-2 align-items-center">
-                      <label class="col-sm-5 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">Max. Amount</label>
-                      <div class="col-sm-6">
-                        <input type="number" step="0.01" class="form-control form-control-sm text-end" name="max_amount" id="max_amount" value="0.00" style="font-size: 11px;" />
                       </div>
                     </div>
                     <div class="row mb-2 align-items-center">
@@ -187,6 +143,97 @@ include 'header.php';
                   <button type="button" id="btnPrev" class="btn btn-xs btn-outline-secondary px-2 py-0" style="font-size: 11px; line-height: 1.2; border-color: #a3b8cc !important; height: 20px; font-weight: bold; background-color: #f8f9fa;">&lt;</button>
                   <input type="range" id="rangeSlider" class="form-range mx-2" min="0" max="0" value="0" style="height: 4px; flex-grow: 1; min-width: 120px;" disabled />
                   <button type="button" id="btnNext" class="btn btn-xs btn-outline-secondary px-2 py-0" style="font-size: 11px; line-height: 1.2; border-color: #a3b8cc !important; height: 20px; font-weight: bold; background-color: #f8f9fa;">&gt;</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Tab 2: PF Rate Master for Challan -->
+          <div class="tab-pane fade <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'challan') ? 'show active' : ''; ?>" 
+            id="challan-pane" role="tabpanel" aria-labelledby="challan-tab">
+            
+            <form id="pfChallanForm">
+              <input type="hidden" name="id" id="pf_challan_db_id" value="0">
+              <input type="hidden" name="branch_id" class="hidden-branch-id" value="0">
+              <fieldset class="border p-3 rounded mb-2" style="border-color: #a3b8cc !important; background-color: #ffffff;">
+                <legend class="float-none w-auto px-2 fw-bold text-primary" style="font-size: 12px; margin-bottom: 0;">
+                  PF Rate Master for Challan
+                </legend>
+
+                <div class="row py-2 justify-content-center">
+                  <div class="col-md-7">
+                    <div class="row mb-2 align-items-center">
+                      <label class="col-sm-4 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">PF A/c 1</label>
+                      <div class="col-sm-6">
+                        <input type="number" step="0.001" class="form-control form-control-sm text-end" name="pf_ac_1" id="challan_pf_ac_1" value="0.000" style="font-size: 11px;" />
+                      </div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                      <label class="col-sm-4 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">PF A/c 2</label>
+                      <div class="col-sm-6">
+                        <input type="number" step="0.001" class="form-control form-control-sm text-end" name="pf_ac_2" id="challan_pf_ac_2" value="0.000" style="font-size: 11px;" />
+                      </div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                      <label class="col-sm-4 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">PF A/c 10</label>
+                      <div class="col-sm-6">
+                        <input type="number" step="0.001" class="form-control form-control-sm text-end" name="pf_ac_10" id="challan_pf_ac_10" value="0.000" style="font-size: 11px;" />
+                      </div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                      <label class="col-sm-4 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">PF A/c 21</label>
+                      <div class="col-sm-6">
+                        <input type="number" step="0.001" class="form-control form-control-sm text-end" name="pf_ac_21" id="challan_pf_ac_21" value="0.000" style="font-size: 11px;" />
+                      </div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                      <label class="col-sm-4 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">PF A/c 22</label>
+                      <div class="col-sm-6">
+                        <input type="number" step="0.001" class="form-control form-control-sm text-end" name="pf_ac_22" id="challan_pf_ac_22" value="0.000" style="font-size: 11px;" />
+                      </div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                      <label class="col-sm-4 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">Pension</label>
+                      <div class="col-sm-6">
+                        <input type="number" step="0.001" class="form-control form-control-sm text-end" name="pension" id="challan_pension" value="0.000" style="font-size: 11px;" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+
+              <!-- Bottom Action Toolbar / Footer Buttons for Challan tab -->
+              <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mt-3 pt-2 border-top">
+                <div class="d-flex flex-wrap gap-1 align-items-center bg-white p-1 rounded border shadow-xs" style="border-color: #c9c8cc !important;">
+                  <button type="button" id="btnAddChallan" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+                    <i class="ti ti-plus me-1 text-success"></i>Add
+                  </button>
+                  <button type="button" id="btnEditChallan" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+                    <i class="ti ti-edit me-1 text-warning"></i>Edit
+                  </button>
+                  <button type="button" id="btnDeleteChallan" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+                    <i class="ti ti-trash me-1 text-danger"></i>Delete
+                  </button>
+                  <button type="button" id="btnSaveChallan" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+                    <i class="ti ti-device-floppy me-1 text-primary"></i>Save
+                  </button>
+                  <button type="button" id="btnCancelChallan" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+                    <i class="ti ti-refresh me-1 text-secondary"></i>Cancel
+                  </button>
+                  <button type="button" id="btnExitChallan" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+                    <i class="ti ti-logout me-1 text-danger"></i>Exit
+                  </button>
+                  <button type="button" id="btnSearchChallan" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+                    <i class="ti ti-search me-1 text-info"></i>Search
+                  </button>
+                </div>
+
+                <!-- Right Side: Record Navigation Slider for Challan -->
+                <div class="d-flex align-items-center bg-white p-1 rounded border shadow-xs" style="border-color: #c9c8cc !important; font-size: 11px; height: 26px;">
+                  <span id="navLabelChallan" class="px-2 fw-bold border-end me-2" style="min-width: 50px; text-align: center; white-space: nowrap;">0 / 0</span>
+                  <button type="button" id="btnPrevChallan" class="btn btn-xs btn-outline-secondary px-2 py-0" style="font-size: 11px; line-height: 1.2; border-color: #a3b8cc !important; height: 20px; font-weight: bold; background-color: #f8f9fa;">&lt;</button>
+                  <input type="range" id="rangeSliderChallan" class="form-range mx-2" min="0" max="0" value="0" style="height: 4px; flex-grow: 1; min-width: 120px;" disabled />
+                  <button type="button" id="btnNextChallan" class="btn btn-xs btn-outline-secondary px-2 py-0" style="font-size: 11px; line-height: 1.2; border-color: #a3b8cc !important; height: 20px; font-weight: bold; background-color: #f8f9fa;">&gt;</button>
                 </div>
               </div>
             </form>
@@ -361,6 +408,9 @@ include 'header.php';
         rateRecords = [];
         currentIndex = -1;
         clearRateForm();
+        challanRecords = [];
+        currentChallanIndex = -1;
+        clearChallanForm();
         return;
       }
 
@@ -368,8 +418,9 @@ include 'header.php';
       pfSettingsContainer.style.display = "block";
       selectBranchPlaceholder.style.display = "none";
 
-      // Load Rates and Components for the selected Branch
+      // Load Rates, Challan Rates and Components for the selected Branch
       fetchRates();
+      fetchChallanRates();
       fetchComponents(selectedBranchId);
     });
 
@@ -432,20 +483,9 @@ include 'header.php';
       const record = rateRecords[index];
 
       document.getElementById("pf_rate_db_id").value = record.id;
-      document.getElementById("pf_ac_1").value = parseFloat(record.pf_ac_1).toFixed(3);
-      document.getElementById("pf_ac_2").value = parseFloat(record.pf_ac_2).toFixed(3);
-      document.getElementById("pf_ac_10").value = parseFloat(record.pf_ac_10).toFixed(3);
-      document.getElementById("pf_ac_21").value = parseFloat(record.pf_ac_21).toFixed(3);
-      document.getElementById("pf_ac_22").value = parseFloat(record.pf_ac_22).toFixed(3);
-      document.getElementById("pension").value = parseFloat(record.pension).toFixed(3);
-      
       document.getElementById("employer_pf").value = parseFloat(record.employer_pf).toFixed(3);
       document.getElementById("employee_pf").value = parseFloat(record.employee_pf).toFixed(3);
-      document.getElementById("employee_pen").value = parseFloat(record.employee_pen).toFixed(3);
-      
-      document.getElementById("max_amount").value = parseFloat(record.max_amount).toFixed(2);
       document.getElementById("pf_ceiling_amount").value = parseFloat(record.pf_ceiling_amount).toFixed(2);
-      
       document.getElementById("effective_date").value = formatDateForDisplay(record.effective_date);
 
       // Update Nav Label & Slider
@@ -469,7 +509,7 @@ include 'header.php';
             const yyyy = today.getFullYear();
             el.value = `${dd}/${mm}/${yyyy}`;
           } else {
-            el.value = el.id === 'max_amount' || el.id === 'pf_ceiling_amount' ? '0.00' : '0.000';
+            el.value = el.id === 'pf_ceiling_amount' ? '0.00' : '0.000';
           }
         }
       });
@@ -642,6 +682,249 @@ include 'header.php';
 
 
     // ------------------------------------
+    // TAB 2: PF RATE MASTER FOR CHALLAN LOGIC
+    // ------------------------------------
+    let challanRecords = [];
+    let currentChallanIndex = -1;
+    let currentChallanMode = 'view'; // 'view', 'add', 'edit'
+    let challanSelectModalInstance = null;
+
+    const challanForm = document.getElementById("pfChallanForm");
+    const challanFormElements = challanForm.querySelectorAll("input");
+
+    function fetchChallanRates(showSearchModal = false) {
+      const branchId = globalBranchSelect.value;
+      if (!branchId) return;
+
+      fetch(`actions/pf-rate-master-action.php?action=view_challan_rates&branch_id=${branchId}`)
+        .then(res => res.json())
+        .then(response => {
+          if (response.status === 'success') {
+            challanRecords = response.data;
+            if (challanRecords.length > 0) {
+              if (currentChallanIndex === -1 || currentChallanIndex >= challanRecords.length) {
+                currentChallanIndex = 0;
+              }
+              displayChallanRecord(currentChallanIndex);
+
+              if (showSearchModal) {
+                populateChallanSearchModalAndShow();
+              }
+            } else {
+              currentChallanIndex = -1;
+              clearChallanForm();
+              document.getElementById("navLabelChallan").innerText = "0 / 0";
+              const slider = document.getElementById("rangeSliderChallan");
+              slider.max = 0;
+              slider.value = 0;
+              slider.disabled = true;
+              setChallanMode('add');
+            }
+          }
+        })
+        .catch(err => console.error("Error fetching challan rate records: ", err));
+    }
+
+    function displayChallanRecord(index) {
+      if (index < 0 || index >= challanRecords.length) return;
+      const record = challanRecords[index];
+
+      document.getElementById("pf_challan_db_id").value = record.id;
+      document.getElementById("challan_pf_ac_1").value = parseFloat(record.pf_ac_1 || 0).toFixed(3);
+      document.getElementById("challan_pf_ac_2").value = parseFloat(record.pf_ac_2 || 0).toFixed(3);
+      document.getElementById("challan_pf_ac_10").value = parseFloat(record.pf_ac_10 || 0).toFixed(3);
+      document.getElementById("challan_pf_ac_21").value = parseFloat(record.pf_ac_21 || 0).toFixed(3);
+      document.getElementById("challan_pf_ac_22").value = parseFloat(record.pf_ac_22 || 0).toFixed(3);
+      document.getElementById("challan_pension").value = parseFloat(record.pension || 0).toFixed(3);
+
+      // Update Nav Label & Slider
+      document.getElementById("navLabelChallan").innerText = `${index + 1} / ${challanRecords.length}`;
+      const slider = document.getElementById("rangeSliderChallan");
+      slider.max = challanRecords.length - 1;
+      slider.value = index;
+      slider.disabled = false;
+
+      setChallanMode('view');
+    }
+
+    function clearChallanForm() {
+      document.getElementById("pf_challan_db_id").value = "0";
+      challanFormElements.forEach(el => {
+        if (el.id !== 'pf_challan_db_id' && !el.classList.contains('hidden-branch-id')) {
+          el.value = '0.000';
+        }
+      });
+    }
+
+    function setChallanMode(mode) {
+      currentChallanMode = mode;
+      if (mode === 'view') {
+        challanFormElements.forEach(el => {
+          if (!el.classList.contains('hidden-branch-id')) {
+            el.disabled = true;
+          }
+        });
+        document.getElementById("btnAddChallan").disabled = false;
+        document.getElementById("btnEditChallan").disabled = false;
+        document.getElementById("btnDeleteChallan").disabled = false;
+        document.getElementById("btnSaveChallan").disabled = true;
+        document.getElementById("btnCancelChallan").disabled = true;
+        document.getElementById("btnSearchChallan").disabled = false;
+        document.getElementById("rangeSliderChallan").disabled = false;
+      } else if (mode === 'add' || mode === 'edit') {
+        challanFormElements.forEach(el => {
+          if (!el.classList.contains('hidden-branch-id')) {
+            el.disabled = false;
+          }
+        });
+        document.getElementById("pf_challan_db_id").disabled = true;
+        
+        document.getElementById("btnAddChallan").disabled = true;
+        document.getElementById("btnEditChallan").disabled = true;
+        document.getElementById("btnDeleteChallan").disabled = true;
+        document.getElementById("btnSaveChallan").disabled = false;
+        document.getElementById("btnCancelChallan").disabled = false;
+        document.getElementById("btnSearchChallan").disabled = true;
+        document.getElementById("rangeSliderChallan").disabled = true;
+
+        if (mode === 'add') {
+          clearChallanForm();
+        }
+      }
+    }
+
+    function cancelChallanAction() {
+      if (challanRecords.length > 0) {
+        if (currentChallanIndex === -1) currentChallanIndex = 0;
+        displayChallanRecord(currentChallanIndex);
+      } else {
+        clearChallanForm();
+        setChallanMode('add');
+      }
+    }
+
+    // Challan Button Actions
+    document.getElementById("btnAddChallan").addEventListener('click', () => setChallanMode('add'));
+
+    document.getElementById("btnEditChallan").addEventListener('click', () => {
+      if (challanRecords.length > 0 && currentChallanIndex >= 0) {
+        setChallanMode('edit');
+      }
+    });
+
+    document.getElementById("btnCancelChallan").addEventListener('click', cancelChallanAction);
+
+    document.getElementById("btnExitChallan").addEventListener('click', () => {
+      window.location.href = 'index';
+    });
+
+    document.getElementById("btnSaveChallan").addEventListener('click', () => {
+      const formData = new FormData(challanForm);
+      
+      fetch('actions/pf-rate-master-action.php?action=save_challan_rate', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(response => {
+        if (response.status === 'success') {
+          alert(response.message);
+          if (currentChallanMode === 'add' && response.insert_id) {
+            currentChallanIndex = 0;
+          }
+          setChallanMode('view');
+          fetchChallanRates();
+        } else {
+          alert("Error: " + response.message);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Failed to save challan record.");
+      });
+    });
+
+    document.getElementById("btnDeleteChallan").addEventListener('click', () => {
+      if (confirm("Are you sure you want to delete this PF Challan Rate record?")) {
+        const id = document.getElementById("pf_challan_db_id").value;
+        fetch(`actions/pf-rate-master-action.php?action=delete_challan_rate&id=${id}`)
+          .then(res => res.json())
+          .then(response => {
+            if (response.status === 'success') {
+              alert(response.message);
+              currentChallanIndex = 0;
+              fetchChallanRates();
+            } else {
+              alert("Error: " + response.message);
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            alert("Failed to delete record.");
+          });
+      }
+    });
+
+    // Search Mode for Challan Rates
+    document.getElementById("btnSearchChallan").addEventListener('click', () => {
+      fetchChallanRates(true);
+    });
+
+    function populateChallanSearchModalAndShow() {
+      const selectBody = document.getElementById("challanSelectBody");
+      selectBody.innerHTML = "";
+
+      if (challanRecords.length === 0) {
+        selectBody.innerHTML = "<tr><td colspan='7' class='text-center'>No records found.</td></tr>";
+      } else {
+        challanRecords.forEach((record, index) => {
+          const row = document.createElement("tr");
+          row.style.cursor = "pointer";
+          row.innerHTML = `
+            <td class="text-center">${index + 1}</td>
+            <td class="text-end">${parseFloat(record.pf_ac_1 || 0).toFixed(3)}%</td>
+            <td class="text-end">${parseFloat(record.pf_ac_2 || 0).toFixed(3)}%</td>
+            <td class="text-end">${parseFloat(record.pf_ac_10 || 0).toFixed(3)}%</td>
+            <td class="text-end">${parseFloat(record.pf_ac_21 || 0).toFixed(3)}%</td>
+            <td class="text-end">${parseFloat(record.pf_ac_22 || 0).toFixed(3)}%</td>
+            <td class="text-end">${parseFloat(record.pension || 0).toFixed(3)}%</td>
+          `;
+          row.addEventListener('click', () => {
+            currentChallanIndex = index;
+            displayChallanRecord(currentChallanIndex);
+            challanSelectModalInstance.hide();
+          });
+          selectBody.appendChild(row);
+        });
+      }
+
+      if (!challanSelectModalInstance) {
+        challanSelectModalInstance = new bootstrap.Modal(document.getElementById('challanSelectModal'));
+      }
+      challanSelectModalInstance.show();
+    }
+
+    // Slider & Navigation for Challan
+    document.getElementById("btnPrevChallan").addEventListener('click', () => {
+      if (currentChallanIndex > 0) {
+        currentChallanIndex--;
+        displayChallanRecord(currentChallanIndex);
+      }
+    });
+
+    document.getElementById("btnNextChallan").addEventListener('click', () => {
+      if (currentChallanIndex < challanRecords.length - 1) {
+        currentChallanIndex++;
+        displayChallanRecord(currentChallanIndex);
+      }
+    });
+
+    document.getElementById("rangeSliderChallan").addEventListener('input', (e) => {
+      currentChallanIndex = parseInt(e.target.value);
+      displayChallanRecord(currentChallanIndex);
+    });
+
+    // ------------------------------------
     // TAB 2: PF CALCULATED ON COMPONENTS LOGIC
     // ------------------------------------
     const componentsTableBody = document.getElementById("componentsTableBody");
@@ -778,6 +1061,46 @@ include 'header.php';
               </tr>
             </thead>
             <tbody id="rateSelectBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PF Rate Master for Challan Selection Modal (For Search) -->
+<div class="modal fade" id="challanSelectModal" tabindex="-1" data-bs-backdrop="static"
+  aria-labelledby="challanSelectModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border shadow-lg"
+      style="border-radius: 6px !important; border-color: #a3b8cc !important;">
+      <div class="modal-header text-white p-2 px-3"
+        style="background: linear-gradient(90deg, #135ca3 0%, #00a2e8 100%); border-top-left-radius: 5px !important; border-top-right-radius: 5px !important; border-bottom: 1px solid #104f9b;">
+        <h6 class="modal-title fw-bold text-white d-flex align-items-center" id="challanSelectModalLabel"
+          style="font-size: 13px; margin: 0;">
+          <i class="ti ti-search me-2" style="font-size: 15px;"></i>Select PF Challan Rate Record
+        </h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"
+          style="font-size: 10px;"></button>
+      </div>
+      <div class="modal-body p-3" style="background-color: #e8f0fe !important;">
+        <div class="table-responsive bg-white rounded p-2 border"
+          style="max-height: 300px; overflow-y: auto; border-color: #a3b8cc !important;">
+          <table class="table table-sm table-striped table-bordered table-hover mb-0" style="font-size: 11px;">
+            <thead class="table-light">
+              <tr>
+                <th class="text-center" style="width: 40px;">#</th>
+                <th class="text-end">PF A/c 1 %</th>
+                <th class="text-end">PF A/c 2 %</th>
+                <th class="text-end">PF A/c 10 %</th>
+                <th class="text-end">PF A/c 21 %</th>
+                <th class="text-end">PF A/c 22 %</th>
+                <th class="text-end">Pension %</th>
+              </tr>
+            </thead>
+            <tbody id="challanSelectBody">
               <!-- Dynamically populated -->
             </tbody>
           </table>

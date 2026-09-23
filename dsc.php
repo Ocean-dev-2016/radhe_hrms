@@ -35,12 +35,21 @@ $data = null;
 if (isset($_POST['ajax_fetch'])) {
     $where = " WHERE 1=1";
     $search = $_POST['search'] ?? '';
+    $expiry_month = isset($_POST['expiry_month']) ? intval($_POST['expiry_month']) : 0;
+    $expiry_year = isset($_POST['expiry_year']) ? intval($_POST['expiry_year']) : 0;
     $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
     $limit = 10;
     $offset = ($page - 1) * $limit;
 
     if (!empty($search)) {
+        $search = addslashes($search);
         $where .= " AND (entity_name LIKE '%$search%' OR certification_name LIKE '%$search%' OR email LIKE '%$search%')";
+    }
+    if ($expiry_month > 0 && $expiry_month <= 12) {
+        $where .= " AND MONTH(dsc_date) = '$expiry_month'";
+    }
+    if ($expiry_year > 1900 && $expiry_year < 2100) {
+        $where .= " AND YEAR(dsc_date) = '$expiry_year'";
     }
 
     $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table $where");
@@ -445,11 +454,45 @@ if ($mode === 'list') {
             <div class="collapse mb-4" id="filterCollapse">
                 <div class="card border-0 shadow-sm">
                     <div class="card-body p-3">
-                        <form id="filterForm" class="row g-3">
-                            <div class="col-md-10"><input type="text" name="search" id="searchInput" class="form-control"
-                                    placeholder="Search by Entity, Certification or Email..."></div>
-                            <div class="col-md-2"><button type="submit"
-                                    class="btn btn-primary w-100 shadow-sm">Filter</button>
+                        <form id="filterForm" class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted">Search Keyword</label>
+                                <input type="text" name="search" id="searchInput" class="form-control"
+                                    placeholder="Search by Entity, Certification or Email...">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-muted">Expiry Month</label>
+                                <select name="expiry_month" id="expiryMonth" class="form-select">
+                                    <option value="">All Months</option>
+                                    <option value="1">January (01)</option>
+                                    <option value="2">February (02)</option>
+                                    <option value="3">March (03)</option>
+                                    <option value="4">April (04)</option>
+                                    <option value="5">May (05)</option>
+                                    <option value="6">June (06)</option>
+                                    <option value="7">July (07)</option>
+                                    <option value="8">August (08)</option>
+                                    <option value="9">September (09)</option>
+                                    <option value="10">October (10)</option>
+                                    <option value="11">November (11)</option>
+                                    <option value="12">December (12)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-muted">Expiry Year</label>
+                                <select name="expiry_year" id="expiryYear" class="form-select">
+                                    <option value="">All Years</option>
+                                    <?php
+                                    $current_year = intval(date('Y'));
+                                    for ($y = $current_year - 5; $y <= $current_year + 10; $y++) {
+                                        echo "<option value='$y'>$y</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary w-100 shadow-sm"><i class="ti ti-search me-1"></i>Filter</button>
+                                <button type="button" id="resetFilterBtn" class="btn btn-premium-reset w-100" style="border-radius: 5px !important;"><i class="ti ti-refresh me-1"></i>Reset</button>
                             </div>
                         </form>
                     </div>
@@ -812,6 +855,41 @@ if ($mode === 'list') {
 
     document.getElementById('filterForm')?.addEventListener('submit', function (e) {
         e.preventDefault();
+        loadData(1);
+    });
+
+    document.getElementById('expiryMonth')?.addEventListener('change', function () {
+        loadData(1);
+    });
+
+    document.getElementById('expiryYear')?.addEventListener('change', function () {
+        loadData(1);
+    });
+
+    document.getElementById('resetFilterBtn')?.addEventListener('click', function () {
+        const searchInput = document.getElementById('searchInput');
+        const expiryMonth = document.getElementById('expiryMonth');
+        const expiryYear = document.getElementById('expiryYear');
+
+        if (searchInput) searchInput.value = '';
+        if (expiryMonth) {
+            expiryMonth.value = '';
+            if (window.jQuery && $(expiryMonth).data('select2')) {
+                $(expiryMonth).val('').trigger('change.select2');
+            }
+        }
+        if (expiryYear) {
+            expiryYear.value = '';
+            if (window.jQuery && $(expiryYear).data('select2')) {
+                $(expiryYear).val('').trigger('change.select2');
+            }
+        }
+
+        const form = document.getElementById('filterForm');
+        if (form) {
+            form.reset();
+        }
+
         loadData(1);
     });
 

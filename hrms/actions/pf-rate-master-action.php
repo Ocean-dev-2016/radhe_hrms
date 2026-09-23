@@ -64,16 +64,8 @@ if ($action === 'view_rates') {
             exit;
         }
 
-        $pf_ac_1 = floatval($_POST['pf_ac_1'] ?? 0);
-        $pf_ac_2 = floatval($_POST['pf_ac_2'] ?? 0);
-        $pf_ac_10 = floatval($_POST['pf_ac_10'] ?? 0);
-        $pf_ac_21 = floatval($_POST['pf_ac_21'] ?? 0);
-        $pf_ac_22 = floatval($_POST['pf_ac_22'] ?? 0);
-        $pension = floatval($_POST['pension'] ?? 0);
         $employer_pf = floatval($_POST['employer_pf'] ?? 0);
         $employee_pf = floatval($_POST['employee_pf'] ?? 0);
-        $employee_pen = floatval($_POST['employee_pen'] ?? 0);
-        $max_amount = floatval($_POST['max_amount'] ?? 0);
         $pf_ceiling_amount = floatval($_POST['pf_ceiling_amount'] ?? 0);
 
         $effective_date_raw = $_POST['effective_date'] ?? '';
@@ -98,16 +90,8 @@ if ($action === 'view_rates') {
         if ($id > 0) {
             $sql = "UPDATE hrms_pf_rates SET 
                         branch_id = $branch_id,
-                        pf_ac_1 = $pf_ac_1,
-                        pf_ac_2 = $pf_ac_2,
-                        pf_ac_10 = $pf_ac_10,
-                        pf_ac_21 = $pf_ac_21,
-                        pf_ac_22 = $pf_ac_22,
-                        pension = $pension,
                         employer_pf = $employer_pf,
                         employee_pf = $employee_pf,
-                        employee_pen = $employee_pen,
-                        max_amount = $max_amount,
                         pf_ceiling_amount = $pf_ceiling_amount,
                         effective_date = '$effective_date',
                         updated_by = '$username'
@@ -121,13 +105,11 @@ if ($action === 'view_rates') {
             }
         } else {
             $sql = "INSERT INTO hrms_pf_rates (
-                        company_id, branch_id, pf_ac_1, pf_ac_2, pf_ac_10, pf_ac_21, pf_ac_22, 
-                        pension, employer_pf, employee_pf, employee_pen, 
-                        max_amount, pf_ceiling_amount, effective_date, created_by, updated_by
+                        company_id, branch_id, employer_pf, employee_pf, 
+                        pf_ceiling_amount, effective_date, created_by, updated_by
                     ) VALUES (
-                        $company_id, $branch_id, $pf_ac_1, $pf_ac_2, $pf_ac_10, $pf_ac_21, $pf_ac_22, 
-                        $pension, $employer_pf, $employee_pf, $employee_pen, 
-                        $max_amount, $pf_ceiling_amount, '$effective_date', '$username', '$username'
+                        $company_id, $branch_id, $employer_pf, $employee_pf, 
+                        $pf_ceiling_amount, '$effective_date', '$username', '$username'
                     )";
 
             $result = $ai_db->aiQuery($sql);
@@ -150,6 +132,92 @@ if ($action === 'view_rates') {
             echo json_encode(['status' => 'success', 'message' => 'PF Rate deleted successfully.']);
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Failed to delete PF Rate.']);
+        }
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid ID specified.']);
+    }
+    exit;
+
+} else if ($action === 'view_challan_rates') {
+    $branch_id = isset($_GET['branch_id']) ? intval($_GET['branch_id']) : 0;
+    if ($branch_id <= 0) {
+        echo json_encode([
+            'status' => 'success',
+            'data' => []
+        ]);
+        exit;
+    }
+    $rates = $ai_db->aiGetQuery("SELECT * FROM hrms_pf_rates_challan WHERE company_id = $company_id AND branch_id = $branch_id ORDER BY id DESC");
+    echo json_encode([
+        'status' => 'success',
+        'data' => $rates
+    ]);
+    exit;
+
+} else if ($action === 'save_challan_rate') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+        $branch_id = isset($_POST['branch_id']) ? intval($_POST['branch_id']) : 0;
+
+        if ($branch_id <= 0) {
+            echo json_encode(['status' => 'error', 'message' => 'Please select a valid Branch.']);
+            exit;
+        }
+
+        $pf_ac_1 = floatval($_POST['pf_ac_1'] ?? 0);
+        $pf_ac_2 = floatval($_POST['pf_ac_2'] ?? 0);
+        $pf_ac_10 = floatval($_POST['pf_ac_10'] ?? 0);
+        $pf_ac_21 = floatval($_POST['pf_ac_21'] ?? 0);
+        $pf_ac_22 = floatval($_POST['pf_ac_22'] ?? 0);
+        $pension = floatval($_POST['pension'] ?? 0);
+
+        if ($id > 0) {
+            $sql = "UPDATE hrms_pf_rates_challan SET 
+                        branch_id = $branch_id,
+                        pf_ac_1 = $pf_ac_1,
+                        pf_ac_2 = $pf_ac_2,
+                        pf_ac_10 = $pf_ac_10,
+                        pf_ac_21 = $pf_ac_21,
+                        pf_ac_22 = $pf_ac_22,
+                        pension = $pension,
+                        updated_by = '$username'
+                    WHERE id = $id AND company_id = $company_id";
+
+            $result = $ai_db->aiQuery($sql);
+            if ($result) {
+                echo json_encode(['status' => 'success', 'message' => 'PF Challan Rate updated successfully.']);
+            } else {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to update PF Challan Rate.']);
+            }
+        } else {
+            $sql = "INSERT INTO hrms_pf_rates_challan (
+                        company_id, branch_id, pf_ac_1, pf_ac_2, pf_ac_10, pf_ac_21, pf_ac_22, 
+                        pension, created_by, updated_by
+                    ) VALUES (
+                        $company_id, $branch_id, $pf_ac_1, $pf_ac_2, $pf_ac_10, $pf_ac_21, $pf_ac_22, 
+                        $pension, '$username', '$username'
+                    )";
+
+            $result = $ai_db->aiQuery($sql);
+            if ($result) {
+                echo json_encode(['status' => 'success', 'message' => 'PF Challan Rate created successfully.', 'insert_id' => $ai_db->aiLastInsert()]);
+            } else {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to create PF Challan Rate.']);
+            }
+        }
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid request method.']);
+    }
+    exit;
+
+} else if ($action === 'delete_challan_rate') {
+    $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+    if ($id > 0) {
+        $result = $ai_db->aiQuery("DELETE FROM hrms_pf_rates_challan WHERE id = $id AND company_id = $company_id");
+        if ($result) {
+            echo json_encode(['status' => 'success', 'message' => 'PF Challan Rate deleted successfully.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to delete PF Challan Rate.']);
         }
     } else {
         echo json_encode(['status' => 'error', 'message' => 'Invalid ID specified.']);
