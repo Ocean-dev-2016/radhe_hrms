@@ -391,7 +391,7 @@ include 'header.php';
 
             <!-- Deductions Block -->
             <div class="col-12">
-              <div class="card p-2 border shadow-xs"
+              <div class="card p-2 border shadow-xs" style="display: none !important;"
                 style="border-color: #9ca3af !important; background-color: #cbd2f6 !important;">
                 <span class="col-form-label-sm fw-bold d-block mb-1 text-dark"
                   style="font-size: 11px; border-bottom: 1px solid #9ca3af; padding-bottom: 2px;">Deduction</span>
@@ -463,7 +463,7 @@ include 'header.php';
               <input type="text" class="form-control form-control-sm text-center border-secondary bg-white"
                 name="total_earn" id="total_earn" readonly style="font-size: 11px;" />
             </div>
-            <div class="col-md-2.4 d-flex align-items-center col">
+            <div class="col-md-2.4 d-flex align-items-center col" style="display: none !important;">
               <label class="fw-semibold text-dark-blue me-1 text-end"
                 style="font-size: 10px; min-width: 55px; white-space: nowrap;">Total Ded</label>
               <input type="text" class="form-control form-control-sm text-center border-secondary bg-white"
@@ -753,17 +753,17 @@ include 'header.php';
       document.getElementById("total_earn").value = totalEarn ? totalEarn.toFixed(2) : "";
 
       // P.Tax handling
-      const ptaxApplicable = document.getElementById("chkPTax").checked;
-      let ptaxAmt = 0;
-      if (ptaxApplicable) {
-        ptaxAmt = parseFloat(document.getElementById("ptax_amount").value) || 200.00;
-      }
-      document.getElementById("ptax_rate_ded").value = ptaxAmt ? ptaxAmt.toFixed(2) : "";
-      document.getElementById("ptax_amt_ded").value = ptaxAmt ? ptaxAmt.toFixed(2) : "";
-
+      // const ptaxApplicable = document.getElementById("chkPTax").checked;
+      // let ptaxAmt = 0;
+      // if (ptaxApplicable) {
+      //   ptaxAmt = parseFloat(document.getElementById("ptax_amount").value) || 200.00;
+      // }
+      // document.getElementById("ptax_rate_ded").value = ptaxAmt ? ptaxAmt.toFixed(2) : "";
+      // document.getElementById("ptax_amt_ded").value = ptaxAmt ? ptaxAmt.toFixed(2) : "";
+      const ptaxAmt = 0;
       // Other Deductions
       const otherDedAmt = parseFloat(document.getElementById("other_ded_amt").value) || 0;
-      const totalDed = ptaxAmt + otherDedAmt;
+      const totalDed = otherDedAmt;
       document.getElementById("total_ded").value = totalDed ? totalDed.toFixed(2) : "";
 
       // Net Amount

@@ -306,13 +306,13 @@ if (isset($_SESSION['selected_company_id']) && intval($_SESSION['selected_compan
                   </ul>
                 </li>
                 <!-- Payroll -->
-                <li class="menu-item <?php echo (in_array($current_page, ['loan-entry.php', 'loan-authorization.php', 'pay-loan-installment.php'])) ? 'active open' : ''; ?>">
+                <li class="menu-item <?php echo (in_array($current_page, ['loan-entry.php', 'loan-authorization.php', 'pay-loan-installment.php', 'salary-process.php'])) ? 'active open' : ''; ?>">
                   <a href="javascript:void(0)" class="menu-link menu-toggle">
                     <i class="menu-icon tf-icons ti ti-receipt"></i>
                     <div data-i18n="Payroll"><u>P</u>ayroll</div>
                   </a>
                   <ul class="menu-sub">
-                    <li class="menu-item <?php echo (in_array($current_page, ['loan-entry.php', 'loan-authorization.php', 'pay-loan-installment.php'])) ? 'active open' : ''; ?>">
+                    <li class="menu-item <?php echo (in_array($current_page, ['loan-entry.php', 'loan-authorization.php', 'pay-loan-installment.php', 'salary-process.php'])) ? 'active open' : ''; ?>">
                       <a href="javascript:void(0)" class="menu-link menu-toggle">
                         <div data-i18n="Loan / Advance Details">Loan / Advance Details</div>
                       </a>
@@ -328,7 +328,7 @@ if (isset($_SESSION['selected_company_id']) && intval($_SESSION['selected_compan
                           </a></li>
                       </ul>
                     </li>
-                    <li class="menu-item"><a href="#" class="menu-link">
+                    <li class="menu-item <?php echo ($current_page == 'salary-process.php') ? 'active' : ''; ?>"><a href="salary-process" class="menu-link">
                         <div data-i18n="Salary Process">Salary Process</div>
                       </a></li>
                     <li class="menu-item"><a href="#" class="menu-link">
