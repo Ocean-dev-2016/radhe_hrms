@@ -4,19 +4,17 @@ include 'header.php';
 ?>
 
 <!-- Content wrapper -->
-<div class="container-fluid flex-grow-1 container-p-y position-relative" style="min-height: calc(100vh - 120px);">
+<div class="container-fluid flex-grow-1 container-p-y position-relative emp-master-container">
 
   <!-- Draggable Floating Dialog Card -->
-  <div id="draggableCard" class="card shadow-lg border-1"
-    style="max-width: 1200px; width: 100%; border-radius: 8px !important; border: 1px solid #c9c8cc !important; background-color: #ffffff; position: absolute; opacity: 0; transition: opacity 0.15s ease-in-out; z-index: 1;">
+  <div id="draggableCard" class="card shadow-lg border-1 emp-master-card">
 
     <!-- Dialog Header (Acts as Drag Handle) -->
-    <div class="card-header p-2 px-3 text-white d-flex align-items-center justify-content-between"
-      style="background: linear-gradient(90deg, #135ca3 0%, #00a2e8 100%); border-top-left-radius: 7px !important; border-top-right-radius: 7px !important; border-bottom: 1px solid #104f9b; user-select: none;">
-      <h6 class="m-0 text-white fw-bold d-flex align-items-center" style="font-size: 14px;">
-        <i class="ti ti-user me-2" style="font-size: 16px;"></i>EMPLOYEE MASTER INFORMATION
+    <div class="card-header p-2 px-3 text-white d-flex align-items-center justify-content-between emp-master-header">
+      <h6 class="m-0 text-white fw-bold d-flex align-items-center emp-header-title">
+        <i class="ti ti-user me-2"></i>EMPLOYEE MASTER INFORMATION
       </h6>
-      <span class="badge bg-danger px-2 py-1" style="font-size: 10px; font-weight: 600;"># Press [F5] For List, [Esc]
+      <span class="badge bg-danger px-2 py-1 emp-badge-shortcuts"># Press [F5] For List, [Esc]
         For Cancel</span>
     </div>
 
@@ -28,40 +26,42 @@ include 'header.php';
         <input type="hidden" name="status" id="emp_status" value="active">
 
         <!-- Header row of general employee info -->
-        <div class="row g-2 mb-2 align-items-center bg-legacy-blue p-2 rounded border"
-          style="border-color: #a3b8cc !important;">
+        <div class="row g-2 mb-2 align-items-center bg-legacy-blue p-2 rounded border border-legacy-blue">
           <div class="col-md-3 d-flex align-items-center">
-            <label class="fw-semibold text-dark-blue me-2 text-end" style="font-size: 11px; min-width: 70px;">Emp.
+            <label class="fw-semibold text-dark-blue me-2 text-end label-header">Emp.
               Code</label>
-            <input type="text" class="form-control form-control-sm" name="emp_code" id="emp_code" value=""
-              style="font-size: 11px;" required />
+            <input type="text" class="form-control form-control-sm input-compact" name="emp_code" id="emp_code" value=""
+              required />
           </div>
-          <div class="col-md-4 d-flex align-items-center">
-            <label class="fw-semibold text-dark-blue me-2 text-end" style="font-size: 11px; min-width: 70px;">Emp.
-              Name</label>
-            <input type="text" class="form-control form-control-sm" name="emp_name" id="emp_name" value=""
-              style="font-size: 11px;" required />
+          <div class="col-md-3 d-flex align-items-center">
+            <label class="fw-semibold text-dark-blue me-2 text-end label-header">Emp. Sr. No.</label>
+            <input type="text" class="form-control form-control-sm input-compact" name="emp_sr_no" id="emp_sr_no" value=""
+              required />
           </div>
-          <div class="col-md-5 d-flex align-items-center">
-            <label class="fw-semibold text-dark-blue me-2 text-end" style="font-size: 11px; min-width: 80px;">Father
+          <div class="col-md-3 d-flex align-items-center">
+            <label class="fw-semibold text-dark-blue me-2 text-end label-header">Emp.
               Name</label>
-            <input type="text" class="form-control form-control-sm" name="father_name" id="father_name" value=""
-              style="font-size: 11px;" />
+            <input type="text" class="form-control form-control-sm input-compact" name="emp_name" id="emp_name" value=""
+              required />
+          </div>
+          <div class="col-md-3 d-flex align-items-center">
+            <label class="fw-semibold text-dark-blue me-2 text-end label-header">Father
+              Name</label>
+            <input type="text" class="form-control form-control-sm input-compact" name="father_name" id="father_name" value="" />
           </div>
         </div>
 
         <!-- Classic Group Box using Fieldset/Legend -->
-        <fieldset class="border p-3 rounded mb-2" style="border-color: #a3b8cc !important;">
-          <legend class="float-none w-auto px-2 fw-bold text-primary" style="font-size: 12px; margin-bottom: 0;">
+        <fieldset class="border p-3 rounded mb-2 emp-fieldset">
+          <legend class="float-none w-auto px-2 fw-bold text-primary emp-legend">
             Employee Details</legend>
 
           <!-- Nav Tabs styled classically -->
-          <ul class="nav nav-tabs mb-0 border-bottom-0" id="empTabs" role="tablist"
-            style="margin-left: 0 !important; margin-right: 0 !important; padding-left: 4px !important;">
+          <ul class="nav nav-tabs mb-0 border-bottom-0" id="empTabs" role="tablist">
             <li class="nav-item" role="presentation">
-              <button class="nav-link active fw-bold py-1 px-3" id="emp-info-tab" data-bs-toggle="tab"
+              <button class="nav-link active fw-bold py-1 px-3 input-compact" id="emp-info-tab" data-bs-toggle="tab"
                 data-bs-target="#emp-info-content" type="button" role="tab" aria-controls="emp-info-content"
-                aria-selected="true" style="font-size: 11px;">1. Employee Information</button>
+                aria-selected="true">1. Employee Information</button>
             </li>
           </ul>
 
@@ -73,150 +73,122 @@ include 'header.php';
               <div class="row g-2">
 
                 <!-- Block 1: Permanent Details -->
-                <div class="col-xl-3 col-lg-6 col-md-12 pe-md-2 border-end border-light-blue">
-                  <div class="card p-2 bg-white border h-100" style="border-color: #c4d6ec !important;">
-                    <span class="col-form-label-sm fw-bold d-block mb-2 text-primary"
-                      style="font-size: 11px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">Permanent
+                <div class="col-xl-4 col-lg-6 col-md-12 pe-md-2 ">
+                  <div class="card p-2 bg-white border h-100 border-card-subtle">
+                    <span class="col-form-label-sm fw-bold d-block mb-2 text-primary section-heading">Permanent
                       Details</span>
 
                     <div class="mb-1">
-                      <label class="col-form-label col-form-label-sm fw-semibold text-dark-blue p-0"
-                        style="font-size: 10px;">Address</label>
-                      <input type="text" class="form-control form-control-sm mb-1" name="address_1" id="address_1"
-                        style="font-size: 11px;" />
-                      <input type="text" class="form-control form-control-sm mb-1" name="address_2" id="address_2"
-                        style="font-size: 11px;" />
-                      <input type="text" class="form-control form-control-sm" name="address_3" id="address_3"
-                        style="font-size: 11px;" />
+                      <label class="col-form-label col-form-label-sm fw-semibold text-dark-blue p-0 label-compact">Address</label>
+                      <input type="text" class="form-control form-control-sm mb-1 input-compact" name="address_1" id="address_1" />
+                      <input type="text" class="form-control form-control-sm mb-1 input-compact" name="address_2" id="address_2" />
+                      <input type="text" class="form-control form-control-sm input-compact" name="address_3" id="address_3" />
                     </div>
 
                     <div class="row g-1 mb-1">
                       <div class="col-7">
-                        <label class="col-form-label col-form-label-sm fw-semibold text-dark-blue p-0"
-                          style="font-size: 10px;">City</label>
-                        <input type="text" class="form-control form-control-sm" name="city" id="city"
-                          style="font-size: 11px;" />
+                        <label class="col-form-label col-form-label-sm fw-semibold text-dark-blue p-0 label-compact">City</label>
+                        <input type="text" class="form-control form-control-sm input-compact" name="city" id="city" />
                       </div>
                       <div class="col-5">
-                        <label class="col-form-label col-form-label-sm fw-semibold text-dark-blue p-0"
-                          style="font-size: 10px;">Pin Code</label>
-                        <input type="text" class="form-control form-control-sm" name="pincode" id="pincode"
-                          style="font-size: 11px;" />
+                        <label class="col-form-label col-form-label-sm fw-semibold text-dark-blue p-0 label-compact">Pin Code</label>
+                        <input type="text" class="form-control form-control-sm input-compact" name="pincode" id="pincode" />
                       </div>
                     </div>
 
                     <div class="mb-1">
-                      <label class="col-form-label col-form-label-sm fw-semibold text-dark-blue p-0"
-                        style="font-size: 10px;">Mobile</label>
-                      <input type="text" class="form-control form-control-sm" name="mobile" id="mobile"
-                        style="font-size: 11px;" />
+                      <label class="col-form-label col-form-label-sm fw-semibold text-dark-blue p-0 label-compact">Mobile</label>
+                      <input type="text" class="form-control form-control-sm input-compact" name="mobile" id="mobile" />
                     </div>
 
                     <div class="row g-1 mb-1">
                       <div class="col-6">
-                        <label class="col-form-label col-form-label-sm fw-semibold text-dark-blue p-0"
-                          style="font-size: 10px;">Emer. Per.</label>
-                        <input type="text" class="form-control form-control-sm" name="emergency_person"
-                          id="emergency_person" style="font-size: 11px;" />
+                        <label class="col-form-label col-form-label-sm fw-semibold text-dark-blue p-0 label-compact">Emer. Per.</label>
+                        <input type="text" class="form-control form-control-sm input-compact" name="emergency_person"
+                          id="emergency_person" />
                       </div>
                       <div class="col-6">
-                        <label class="col-form-label col-form-label-sm fw-semibold text-dark-blue p-0"
-                          style="font-size: 10px;">Contact</label>
-                        <input type="text" class="form-control form-control-sm" name="emergency_contact"
-                          id="emergency_contact" style="font-size: 11px;" />
+                        <label class="col-form-label col-form-label-sm fw-semibold text-dark-blue p-0 label-compact">Contact</label>
+                        <input type="text" class="form-control form-control-sm input-compact" name="emergency_contact"
+                          id="emergency_contact" />
                       </div>
                     </div>
 
                     <div class="mb-1">
-                      <label class="col-form-label col-form-label-sm fw-semibold text-dark-blue p-0"
-                        style="font-size: 10px;">E-Mail Id.</label>
-                      <input type="email" class="form-control form-control-sm" name="email" id="email"
-                        style="font-size: 11px;" />
+                      <label class="col-form-label col-form-label-sm fw-semibold text-dark-blue p-0 label-compact">E-Mail Id.</label>
+                      <input type="email" class="form-control form-control-sm input-compact" name="email" id="email" />
                     </div>
                   </div>
                 </div>
 
                 <!-- Block 2: Classification Details -->
-                <div class="col-xl-3 col-lg-6 col-md-12 pe-md-2 border-end border-light-blue">
-                  <div class="card p-2 bg-white border h-100" style="border-color: #c4d6ec !important;">
-                    <span class="col-form-label-sm fw-bold d-block mb-2 text-primary"
-                      style="font-size: 11px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">Classification
+                <div class="col-xl-4 col-lg-6 col-md-12 pe-md-2 ">
+                  <div class="card p-2 bg-white border h-100 border-card-subtle">
+                    <span class="col-form-label-sm fw-bold d-block mb-2 text-primary section-heading">Classification
                       Details</span>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Branch</label>
+                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Branch</label>
                       <div class="col-sm-8">
-                        <select class="form-select form-select-sm" name="branch_id" id="branch_id"
-                          style="font-size: 11px;" required>
+                        <select class="form-select form-select-sm input-compact" name="branch_id" id="branch_id"
+                          required>
                           <option value="">-- Select Branch --</option>
                         </select>
                       </div>
                     </div>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Department</label>
+                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Department</label>
                       <div class="col-sm-8">
-                        <select class="form-select form-select-sm" name="dept_id" id="dept_id" style="font-size: 11px;">
+                        <select class="form-select form-select-sm input-compact" name="dept_id" id="dept_id">
                           <option value="0">-- Select Dept --</option>
                         </select>
                       </div>
                     </div>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Sub Dept.</label>
+                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Sub Dept.</label>
                       <div class="col-sm-8">
-                        <input type="text" class="form-control form-control-sm" name="sub_dept" id="sub_dept"
-                          style="font-size: 11px;" />
+                        <input type="text" class="form-control form-control-sm input-compact" name="sub_dept" id="sub_dept" />
                       </div>
                     </div>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Designation</label>
+                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Designation</label>
                       <div class="col-sm-8">
-                        <select class="form-select form-select-sm" name="desig_id" id="desig_id"
-                          style="font-size: 11px;">
+                        <select class="form-select form-select-sm input-compact" name="desig_id" id="desig_id">
                           <option value="0">-- Select Designation --</option>
                         </select>
                       </div>
                     </div>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Marital Stat.</label>
+                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Marital Stat.</label>
                       <div class="col-sm-8">
-                        <input type="text" class="form-control form-control-sm" name="marital_status"
-                          id="marital_status" style="font-size: 11px;" required />
+                        <input type="text" class="form-control form-control-sm input-compact" name="marital_status"
+                          id="marital_status" required />
                       </div>
                     </div>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Gender</label>
+                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Gender</label>
                       <div class="col-sm-8">
-                        <input type="text" class="form-control form-control-sm" name="gender" id="gender"
-                          style="font-size: 11px;" required />
+                        <input type="text" class="form-control form-control-sm input-compact" name="gender" id="gender"
+                          required />
                       </div>
                     </div>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Blood Group</label>
+                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Blood Group</label>
                       <div class="col-sm-8">
-                        <input type="text" class="form-control form-control-sm" name="blood_group" id="blood_group"
-                          style="font-size: 11px;" />
+                        <input type="text" class="form-control form-control-sm input-compact" name="blood_group" id="blood_group" />
                       </div>
                     </div>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Category</label>
+                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Category</label>
                       <div class="col-sm-8">
-                        <select class="form-select form-select-sm" name="category" id="category"
-                          style="font-size: 11px;">
+                        <select class="form-select form-select-sm input-compact" name="category" id="category">
                           <option value="">-- Select --</option>
                           <option value="UN SKILLED">UN SKILLED</option>
                           <option value="SEMI SKILLED">SEMI SKILLED</option>
@@ -227,38 +199,33 @@ include 'header.php';
                     </div>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Punch Machine Code</label>
+                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Punch Machine Code</label>
                       <div class="col-sm-8">
-                        <input type="text" class="form-control form-control-sm" name="punch_code" id="punch_code"
-                          style="font-size: 11px;" />
+                        <input type="text" class="form-control form-control-sm input-compact" name="punch_code" id="punch_code" />
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <!-- Block 3: Dates & Settings -->
-                <div class="col-xl-3 col-lg-6 col-md-12 pe-md-2 border-end border-light-blue">
-                  <div class="card p-2 bg-white border h-100" style="border-color: #c4d6ec !important;">
-                    <span class="col-form-label-sm fw-bold d-block mb-2 text-primary"
-                      style="font-size: 11px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">Dates &
+                <div class="col-xl-4 col-lg-6 col-md-12 pe-md-2 ">
+                  <div class="card p-2 bg-white border h-100 border-card-subtle">
+                    <span class="col-form-label-sm fw-bold d-block mb-2 text-primary section-heading">Dates &
                       Flags</span>
 
                     <div class="mb-2 row align-items-center">
-                      <label class="col-sm-5 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Joining Date</label>
+                      <label class="col-sm-5 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Joining Date</label>
                       <div class="col-sm-7">
-                        <input type="text" class="form-control form-control-sm" name="joining_date" id="joining_date"
-                          placeholder="DD/MM/YYYY" style="font-size: 11px;" required />
+                        <input type="text" class="form-control form-control-sm input-compact" name="joining_date" id="joining_date"
+                          placeholder="DD/MM/YYYY" required />
                       </div>
                     </div>
 
                     <div class="mb-2 row align-items-center">
-                      <label class="col-sm-5 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Birth Date</label>
+                      <label class="col-sm-5 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Birth Date</label>
                       <div class="col-sm-7">
-                        <input type="text" class="form-control form-control-sm" name="birth_date" id="birth_date"
-                          placeholder="DD/MM/YYYY" style="font-size: 11px;" required />
+                        <input type="text" class="form-control form-control-sm input-compact" name="birth_date" id="birth_date"
+                          placeholder="DD/MM/YYYY" required />
                       </div>
                     </div>
 
@@ -266,95 +233,71 @@ include 'header.php';
                       <div class="col-6">
                         <div class="form-check">
                           <input class="form-check-input" type="checkbox" name="pension" id="chkPension" value="1">
-                          <label class="form-check-label col-form-label-sm fw-semibold text-dark-blue" for="chkPension"
-                            style="font-size: 10px;">Pension</label>
+                          <label class="form-check-label col-form-label-sm fw-semibold text-dark-blue label-compact" for="chkPension">Pension</label>
                         </div>
                       </div>
                       <div class="col-6">
                         <div class="form-check">
                           <input class="form-check-input" type="checkbox" name="pf_applicable" id="chkPFAux" value="1">
-                          <label class="form-check-label col-form-label-sm fw-semibold text-dark-blue" for="chkPFAux"
-                            style="font-size: 10px;">PF Applicable</label>
+                          <label class="form-check-label col-form-label-sm fw-semibold text-dark-blue label-compact" for="chkPFAux">PF Applicable</label>
                         </div>
                       </div>
                       <div class="col-6">
                         <div class="form-check">
                           <input class="form-check-input" type="checkbox" name="esic_applicable" id="chkESICAux"
                             value="1">
-                          <label class="form-check-label col-form-label-sm fw-semibold text-dark-blue" for="chkESICAux"
-                            style="font-size: 10px;">ESIC Applicable</label>
+                          <label class="form-check-label col-form-label-sm fw-semibold text-dark-blue label-compact" for="chkESICAux">ESIC Applicable</label>
                         </div>
                       </div>
                       <div class="col-6">
                         <div class="form-check">
                           <input class="form-check-input" type="checkbox" name="pt_applicable" id="chkPTAux" value="1">
-                          <label class="form-check-label col-form-label-sm fw-semibold text-dark-blue" for="chkPTAux"
-                            style="font-size: 10px;">PT Applicable</label>
+                          <label class="form-check-label col-form-label-sm fw-semibold text-dark-blue label-compact" for="chkPTAux">PT Applicable</label>
                         </div>
                       </div>
                     </div>
 
                     <div class="mb-2 row align-items-center">
-                      <label class="col-sm-5 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Ceiling Amt.</label>
+                      <label class="col-sm-5 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Ceiling Amt.</label>
                       <div class="col-sm-7">
-                        <input type="number" class="form-control form-control-sm" name="ceiling_amount"
-                          id="ceiling_amount" value="0" style="font-size: 11px;" />
+                        <input type="number" class="form-control form-control-sm input-compact" name="ceiling_amount"
+                          id="ceiling_amount" value="0" />
                       </div>
                     </div>
 
                     <div class="mb-2 row align-items-center">
-                      <label class="col-sm-5 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">PF Start Dt.</label>
+                      <label class="col-sm-5 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">PF Start Dt.</label>
                       <div class="col-sm-7">
-                        <input type="text" class="form-control form-control-sm" name="pf_start_date" id="pf_start_date"
-                          placeholder="DD/MM/YYYY" style="font-size: 11px;" />
+                        <input type="text" class="form-control form-control-sm input-compact" name="pf_start_date" id="pf_start_date"
+                          placeholder="DD/MM/YYYY" />
                       </div>
                     </div>
 
                     <div class="row">
-                      <div class="col-12">
+                      <div class="col-6 col-sm-6">
                         <div class="form-check">
                           <input class="form-check-input" type="checkbox" name="ot_applicable" id="chkOT" value="1">
-                          <label class="form-check-label col-form-label-sm fw-semibold text-dark-blue" for="chkOT"
-                            style="font-size: 10px;">OT Calc.</label>
+                          <label class="form-check-label col-form-label-sm fw-semibold text-dark-blue label-compact" for="chkOT">OT Calc.</label>
+                        </div>
+                      </div>
+                      <div class="col-6 col-sm-6">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" name="resign" id="chkResign" value="1">
+                          <label class="form-check-label fw-bold text-danger label-compact"
+                            >Resign</label>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                <!-- Block 4: Photos / Signature Uploads -->
-                <div class="col-xl-3 col-lg-6 col-md-12">
-                  <div class="card p-2 bg-white border h-100 justify-content-center"
-                    style="border-color: #c4d6ec !important; gap: 8px;">
-                    <!-- Photo preview box -->
-                    <div class="text-center p-2 rounded border"
-                      style="border-style: dashed !important; border-color: #135ca3 !important; background-color: #f8fafc;">
-                      <div id="photoPreviewContainer" class="text-danger fw-bold mb-2" style="font-size: 11px;">Image
-                        Not Available</div>
-                      <div class="d-flex justify-content-center gap-1">
-                        <input type="file" id="photoFile" style="display: none;" accept="image/*">
-                        <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2" id="btnBrowsePhoto"
-                          style="font-size: 10px; height: 22px;">Browse</button>
-                        <button type="button" class="btn btn-xs btn-primary py-0 px-2" id="btnUploadPhoto"
-                          style="font-size: 10px; height: 22px; background-color: #135ca3; border-color: #135ca3;">Import
-                          Image</button>
+                    <div id="resignDateWrapper" class="row align-items-center">
+                      <label class="col-sm-5 col-form-label col-form-label-sm fw-semibold label-compact text-danger">Resign Date</label>
+                      <div class="col-sm-7 mb-1">
+                          <input type="text" class="form-control form-control-sm input-compact" name="resign_date" id="resign_date"
+                        placeholder="DD/MM/YYYY" />
                       </div>
-                    </div>
-
-                    <!-- Signature preview box -->
-                    <div class="text-center p-2 rounded border"
-                      style="border-style: dashed !important; border-color: #135ca3 !important; background-color: #f8fafc;">
-                      <span class="col-form-label-sm fw-bold d-block mb-1 text-dark-blue"
-                        style="font-size: 11px;">Signature</span>
-                      <div id="sigPreviewContainer" class="text-muted mb-2" style="font-size: 10px;">No Signature</div>
-                      <div class="d-flex justify-content-center gap-1">
-                        <input type="file" id="sigFile" style="display: none;" accept="image/*">
-                        <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2" id="btnBrowseSig"
-                          style="font-size: 10px; height: 22px;">Browse</button>
-                        <button type="button" class="btn btn-xs btn-primary py-0 px-2" id="btnUploadSig"
-                          style="font-size: 10px; height: 22px; background-color: #135ca3; border-color: #135ca3;">Upload</button>
+                      <label class="col-sm-5 col-form-label col-form-label-sm fw-semibold text-danger label-compact">Reason / Remark</label>
+                      <div class="col-sm-7">
+                        <textarea class="form-control form-control-sm emp-resign-remark" name="resign_remark" id="resign_remark" rows="2"></textarea>
                       </div>
                     </div>
                   </div>
@@ -366,18 +309,15 @@ include 'header.php';
               <div class="row g-2 mt-2">
 
                 <!-- Bank Details -->
-                <div class="col-md-5">
-                  <div class="card p-2 bg-white border h-100" style="border-color: #c4d6ec !important;">
-                    <span class="col-form-label-sm fw-bold d-block mb-2 text-primary"
-                      style="font-size: 11px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">Bank
+                <div class="col-xl-4 col-lg-6 col-md-12 pe-md-2">
+                  <div class="card p-2 bg-white border h-100 border-card-subtle">
+                    <span class="col-form-label-sm fw-bold d-block mb-2 text-primary section-heading">Bank
                       Details</span>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Salary Mode</label>
+                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Salary Mode</label>
                       <div class="col-sm-8">
-                        <select class="form-select form-select-sm" name="salary_mode" id="salary_mode"
-                          style="font-size: 11px;">
+                        <select class="form-select form-select-sm input-compact" name="salary_mode" id="salary_mode">
                           <option value="BANK" selected>BANK</option>
                           <option value="CASH">CASH</option>
                         </select>
@@ -385,115 +325,113 @@ include 'header.php';
                     </div>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Bank</label>
+                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Bank</label>
                       <div class="col-sm-8">
-                        <input type="text" class="form-control form-control-sm bank-fields" name="bank_name"
-                          id="bank_name" style="font-size: 11px;" />
+                        <input type="text" class="form-control form-control-sm bank-fields input-compact" name="bank_name"
+                          id="bank_name" />
                       </div>
                     </div>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Branch Name</label>
+                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Branch Name</label>
                       <div class="col-sm-8">
-                        <input type="text" class="form-control form-control-sm bank-fields" name="branch_name"
-                          id="branch_name_input" style="font-size: 11px;" />
+                        <input type="text" class="form-control form-control-sm bank-fields input-compact" name="branch_name"
+                          id="branch_name_input" />
                       </div>
                     </div>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Bank Account No.</label>
+                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Bank Account No.</label>
                       <div class="col-sm-8">
-                        <input type="text" class="form-control form-control-sm bank-fields" name="bank_account_no"
-                          id="bank_account_no" style="font-size: 11px;" />
+                        <input type="text" class="form-control form-control-sm bank-fields input-compact" name="bank_account_no"
+                          id="bank_account_no" />
                       </div>
                     </div>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">IFSC Code</label>
+                      <label class="col-sm-4 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">IFSC Code</label>
                       <div class="col-sm-8">
-                        <input type="text" class="form-control form-control-sm bank-fields" name="ifsc_code"
-                          id="ifsc_code" style="font-size: 11px;" />
+                        <input type="text" class="form-control form-control-sm bank-fields input-compact" name="ifsc_code"
+                          id="ifsc_code" />
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <!-- Document Details -->
-                <div class="col-md-5">
-                  <div class="card p-2 bg-white border h-100" style="border-color: #c4d6ec !important;">
-                    <span class="col-form-label-sm fw-bold d-block mb-2 text-primary"
-                      style="font-size: 11px; border-bottom: 1px solid #e2e8f0; padding-bottom: 2px;">Document
+                <div class="col-xl-4 col-lg-6 col-md-12 pe-md-2">
+                  <div class="card p-2 bg-white border h-100 border-card-subtle">
+                    <span class="col-form-label-sm fw-bold d-block mb-2 text-primary section-heading">Document
                       Details</span>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-3 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Aadhar</label>
+                      <label class="col-sm-3 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Aadhar</label>
                       <div class="col-sm-9">
-                        <input type="text" class="form-control form-control-sm" name="aadhar_no" id="aadhar_no"
-                          style="font-size: 11px;" />
+                        <input type="text" class="form-control form-control-sm input-compact" name="aadhar_no" id="aadhar_no" />
                       </div>
                     </div>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-3 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">Pan No.</label>
+                      <label class="col-sm-3 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">Pan No.</label>
                       <div class="col-sm-9">
-                        <input type="text" class="form-control form-control-sm" name="pan_no" id="pan_no"
-                          style="font-size: 11px;" />
+                        <input type="text" class="form-control form-control-sm input-compact" name="pan_no" id="pan_no" />
                       </div>
                     </div>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-3 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">P.F. No.</label>
+                      <label class="col-sm-3 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">P.F. No.</label>
                       <div class="col-sm-9">
-                        <input type="text" class="form-control form-control-sm" name="pf_no" id="pf_no"
-                          style="font-size: 11px;" />
+                        <input type="text" class="form-control form-control-sm input-compact" name="pf_no" id="pf_no" />
                       </div>
                     </div>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-3 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">UAN No.</label>
+                      <label class="col-sm-3 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">UAN No.</label>
                       <div class="col-sm-9">
-                        <input type="text" class="form-control form-control-sm" name="uan_no" id="uan_no"
-                          style="font-size: 11px;" />
+                        <input type="text" class="form-control form-control-sm input-compact" name="uan_no" id="uan_no" />
                       </div>
                     </div>
 
                     <div class="mb-1 row align-items-center">
-                      <label class="col-sm-3 col-form-label col-form-label-sm fw-semibold text-dark-blue"
-                        style="font-size: 10px;">ESIC No.</label>
+                      <label class="col-sm-3 col-form-label col-form-label-sm fw-semibold text-dark-blue label-compact">ESIC No.</label>
                       <div class="col-sm-9">
-                        <input type="text" class="form-control form-control-sm" name="esic_no" id="esic_no"
-                          style="font-size: 11px;" />
+                        <input type="text" class="form-control form-control-sm input-compact" name="esic_no" id="esic_no" />
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <!-- Resign checkbox & date -->
-                <div class="col-md-2 d-flex flex-column align-items-center justify-content-center">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="resign" id="chkResign" value="1">
-                    <label class="form-check-label fw-bold text-danger" style="font-size: 12px;"
-                      for="chkResign">Resign</label>
+
+                <!-- Block 4: Photos / Signature Uploads -->
+                <div class="col-xl-4 col-lg-6 col-md-12 pe-md-2">
+                  <div class="card p-2 bg-white border h-100 justify-content-center border-card-subtle emp-card-upload-col">
+                    <span class="col-form-label-sm fw-bold d-block mb-2 text-primary section-heading">Upload Photo &
+                      Signature</span>
+                    <!-- Photo preview box -->
+                    <div class="text-center p-2 rounded border emp-upload-box">
+                      <div id="photoPreviewContainer" class="text-danger fw-bold mb-2 emp-photo-preview">Image
+                        Not Available</div>
+                      <div class="d-flex justify-content-center gap-1">
+                        <input type="file" id="photoFile" class="d-none" accept="image/*">
+                        <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2 emp-upload-btn-secondary" id="btnBrowsePhoto">Browse</button>
+                        <button type="button" class="btn btn-xs btn-primary py-0 px-2 emp-upload-btn-primary" id="btnUploadPhoto">Import
+                          Image</button>
+                      </div>
+                    </div>
+
+                    <!-- Signature preview box -->
+                    <div class="text-center p-2 rounded border emp-upload-box">
+                      <span class="col-form-label-sm fw-bold d-block mb-1 text-dark-blue emp-sig-title">Signature</span>
+                      <div id="sigPreviewContainer" class="text-muted mb-2 emp-sig-preview">No Signature</div>
+                      <div class="d-flex justify-content-center gap-1">
+                        <input type="file" id="sigFile" class="d-none" accept="image/*">
+                        <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2 emp-upload-btn-secondary" id="btnBrowseSig">Browse</button>
+                        <button type="button" class="btn btn-xs btn-primary py-0 px-2 emp-upload-btn-primary" id="btnUploadSig">Upload</button>
+                      </div>
+                    </div>
                   </div>
-                  <div id="resignDateWrapper" class="mt-2 w-100" style="display: none;">
-                    <label class="col-form-label col-form-label-sm fw-semibold text-danger p-0"
-                      style="font-size: 10px;">Resign Date</label>
-                    <input type="text" class="form-control form-control-sm mb-1" name="resign_date" id="resign_date"
-                      placeholder="DD/MM/YYYY" style="font-size: 11px;" />
-                    <label class="col-form-label col-form-label-sm fw-semibold text-danger p-0"
-                      style="font-size: 10px;">Reason / Remark</label>
-                    <textarea class="form-control form-control-sm" name="resign_remark" id="resign_remark" rows="2"
-                      style="font-size: 11px; resize: none;"></textarea>
-                  </div>
-                </div>
+                </div>              
 
               </div>
 
@@ -507,59 +445,42 @@ include 'header.php';
     <div class="card-footer bg-light border-top p-2 px-3">
       <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
         <!-- Left Side: Buttons + Slider Navigation -->
-        <div class="d-flex flex-wrap gap-1 align-items-center bg-white p-1 rounded border shadow-xs"
-          style="border-color: #c9c8cc !important;">
-          <button type="button" id="btnAdd" class="btn btn-xs btn-outline-secondary px-2 py-1"
-            style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;"><i
+        <div class="d-flex flex-wrap gap-1 align-items-center bg-white p-1 rounded border shadow-xs border-card-border">
+          <button type="button" id="btnAdd" class="btn btn-xs btn-outline-secondary px-2 py-1 btn-action"><i
               class="ti ti-plus me-1 text-success"></i>Add</button>
-          <button type="button" id="btnEdit" class="btn btn-xs btn-outline-secondary px-2 py-1"
-            style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;"><i
+          <button type="button" id="btnEdit" class="btn btn-xs btn-outline-secondary px-2 py-1 btn-action"><i
               class="ti ti-edit me-1 text-warning"></i>Edit</button>
-          <button type="button" id="btnDelete" class="btn btn-xs btn-outline-secondary px-2 py-1"
-            style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;"><i
+          <button type="button" id="btnDelete" class="btn btn-xs btn-outline-secondary px-2 py-1 btn-action"><i
               class="ti ti-trash me-1 text-danger"></i>Delete</button>
-          <button type="button" id="btnSave" class="btn btn-xs btn-outline-secondary px-2 py-1"
-            style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;"><i
+          <button type="button" id="btnSave" class="btn btn-xs btn-outline-secondary px-2 py-1 btn-action"><i
               class="ti ti-device-floppy me-1 text-primary"></i>Save</button>
-          <button type="button" id="btnCancel" class="btn btn-xs btn-outline-secondary px-2 py-1"
-            style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;"><i
+          <button type="button" id="btnCancel" class="btn btn-xs btn-outline-secondary px-2 py-1 btn-action"><i
               class="ti ti-refresh me-1 text-secondary"></i>Cancel</button>
-          <button type="button" id="btnExit" class="btn btn-xs btn-outline-secondary px-2 py-1"
-            style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;"><i
+          <button type="button" id="btnExit" class="btn btn-xs btn-outline-secondary px-2 py-1 btn-action"><i
               class="ti ti-logout me-1 text-danger"></i>Exit</button>
-          <button type="button" id="btnSearch" class="btn btn-xs btn-outline-secondary px-2 py-1"
-            style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;"><i
+          <button type="button" id="btnSearch" class="btn btn-xs btn-outline-secondary px-2 py-1 btn-action"><i
               class="ti ti-search me-1 text-info"></i>Search</button>
-          <button type="button" id="btnPrint" class="btn btn-xs btn-outline-secondary px-2 py-1"
-            style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;"><i
+          <button type="button" id="btnPrint" class="btn btn-xs btn-outline-secondary px-2 py-1 btn-action"><i
               class="ti ti-printer me-1 text-dark"></i>Print</button>
         </div>
 
         <!-- Middle: Record Navigation Slider -->
-        <div class="d-flex align-items-center bg-white p-1 rounded border shadow-xs"
-          style="border-color: #c9c8cc !important; font-size: 11px; height: 26px;">
-          <span id="navLabel" class="px-2 fw-bold border-end me-2"
-            style="min-width: 50px; text-align: center; white-space: nowrap;">0 / 0</span>
-          <button type="button" id="btnPrev" class="btn btn-xs btn-outline-secondary px-2 py-0"
-            style="font-size: 11px; line-height: 1.2; border-color: #a3b8cc !important; height: 20px; font-weight: bold; background-color: #f8f9fa;">&lt;</button>
-          <input type="range" id="rangeSlider" class="form-range mx-2" min="0" max="0" value="0"
-            style="height: 4px; flex-grow: 1; min-width: 120px;" />
-          <button type="button" id="btnNext" class="btn btn-xs btn-outline-secondary px-2 py-0"
-            style="font-size: 11px; line-height: 1.2; border-color: #a3b8cc !important; height: 20px; font-weight: bold; background-color: #f8f9fa;">&gt;</button>
+        <div class="d-flex align-items-center bg-white p-1 rounded border shadow-xs emp-nav-slider-box">
+          <span id="navLabel" class="px-2 fw-bold border-end me-2 emp-nav-label">0 / 0</span>
+          <button type="button" id="btnPrev" class="btn btn-xs btn-outline-secondary px-2 py-0 emp-btn-nav-step">&lt;</button>
+          <input type="range" id="rangeSlider" class="form-range mx-2 emp-range-slider" min="0" max="0" value="0" />
+          <button type="button" id="btnNext" class="btn btn-xs btn-outline-secondary px-2 py-0 emp-btn-nav-step">&gt;</button>
         </div>
 
         <!-- Right Side: Info buttons -->
         <div class="d-flex gap-2">
-          <button type="button" id="btnPayrollInfo" class="btn btn-sm btn-info text-white px-2 py-1"
-            style="font-size: 11px; height: 26px; background-color: #02a9f4; border-color: #02a9f4;">
+          <button type="button" id="btnPayrollInfo" class="btn btn-sm btn-info text-white px-2 py-1 btn-info-cyan">
             Payroll Info.
           </button>
-          <button type="button" id="btnHourRateInfo" class="btn btn-sm btn-primary text-white px-2 py-1"
-            style="font-size: 11px; height: 26px; background-color: #135ca3; border-color: #135ca3;">
+          <button type="button" id="btnHourRateInfo" class="btn btn-sm btn-primary text-white px-2 py-1 btn-info-blue">
             Hour Rate Info.
           </button>
-          <button type="button" id="btnNomineeInfo" class="btn btn-sm btn-warning text-white px-2 py-1"
-            style="font-size: 11px; height: 26px; background-color: #ff9800; border-color: #ff9800;">
+          <button type="button" id="btnNomineeInfo" class="btn btn-sm btn-warning text-white px-2 py-1 btn-info-orange">
             Nominee Info.
           </button>
         </div>
@@ -570,94 +491,23 @@ include 'header.php';
 </div>
 <!--/ Content -->
 
-<style>
-  /* Light blue background for the tab content window */
-  .bg-legacy-blue {
-    background-color: #e8f0fe !important;
-    border-color: #a3b8cc !important;
-  }
-
-  .text-dark-blue {
-    color: #135ca3 !important;
-  }
-
-  /* Make inputs have classical blue borders */
-  .bg-legacy-blue .form-control,
-  .bg-legacy-blue .form-select {
-    border: 1px solid #135ca3 !important;
-    border-radius: 2px !important;
-    background-color: #ffffff !important;
-  }
-
-  .bg-legacy-blue .form-control:focus,
-  .bg-legacy-blue .form-select:focus {
-    border-color: #00a2e8 !important;
-    box-shadow: 0 0 4px rgba(0, 162, 232, 0.4) !important;
-  }
-
-  /* Classical Tab styles */
-  #empTabs {
-    border-bottom: 1px solid #a3b8cc !important;
-  }
-
-  #empTabs .nav-item .nav-link {
-    border: 1px solid #a3b8cc !important;
-    border-bottom: none !important;
-    background-color: #f0f4f8 !important;
-    color: #4b465c !important;
-    margin-right: 4px !important;
-    border-top-left-radius: 4px !important;
-    border-top-right-radius: 4px !important;
-    padding: 6px 12px !important;
-    transition: all 0.15s ease-in-out;
-  }
-
-  #empTabs .nav-item .nav-link:hover {
-    background-color: #e3ebf6 !important;
-    color: #135ca3 !important;
-  }
-
-  #empTabs .nav-item .nav-link.active {
-    background-color: #e8f0fe !important;
-    border-color: #a3b8cc !important;
-    border-bottom-color: #e8f0fe !important;
-    color: #135ca3 !important;
-    position: relative;
-    z-index: 2;
-  }
-
-  /* Override global card z-index during modal overlays */
-  .modal-backdrop {
-    z-index: 1150 !important;
-  }
-
-  .modal {
-    z-index: 1200 !important;
-  }
-</style>
-
 <!-- Employee Search modal -->
 <div class="modal fade" id="empSelectModal" tabindex="-1" data-bs-backdrop="static"
-  aria-labelledby="empSelectModalLabel" aria-hidden="true" style="z-index: 1200 !important;">
+  aria-labelledby="empSelectModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border shadow-lg"
-      style="border-radius: 6px !important; border-color: #a3b8cc !important;">
-      <div class="modal-header text-white p-2 px-3"
-        style="background: linear-gradient(90deg, #135ca3 0%, #00a2e8 100%); border-top-left-radius: 5px !important; border-top-right-radius: 5px !important; border-bottom: 1px solid #104f9b;">
-        <h6 class="modal-title fw-bold text-white d-flex align-items-center" id="empSelectModalLabel"
-          style="font-size: 13px; margin: 0;">
-          <i class="ti ti-users me-2" style="font-size: 15px;"></i>Select Employee
+    <div class="modal-content border shadow-lg emp-modal-dialog-content">
+      <div class="modal-header text-white p-2 px-3 emp-modal-header">
+        <h6 class="modal-title fw-bold text-white d-flex align-items-center emp-modal-title" id="empSelectModalLabel">
+          <i class="ti ti-users me-2"></i>Select Employee
         </h6>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"
-          style="font-size: 10px;"></button>
+        <button type="button" class="btn-close btn-close-white emp-modal-close-btn" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body p-3" style="background-color: #e8f0fe !important;">
-        <div class="table-responsive bg-white rounded p-2 border"
-          style="max-height: 350px; overflow-y: auto; border-color: #a3b8cc !important;">
-          <table class="table table-sm table-striped table-bordered table-hover mb-0" style="font-size: 11px;">
+      <div class="modal-body p-3 bg-legacy-blue">
+        <div class="table-responsive bg-white rounded p-2 border emp-modal-table-wrap">
+          <table class="table table-sm table-striped table-bordered table-hover mb-0 emp-modal-table">
             <thead class="table-light text-primary fw-bold">
               <tr>
-                <th style="width: 80px;">Code</th>
+                <th class="emp-modal-th-code">Code</th>
                 <th>Employee Name</th>
                 <th>Designation</th>
                 <th>Department</th>
@@ -686,8 +536,9 @@ include 'header.php';
     // Center card initially on load
     const initialLeft = (window.innerWidth - card.offsetWidth) / 2;
     card.style.left = Math.max(0, initialLeft) + "px";
-    card.style.top = "60px";
+    card.style.top = "100px";
     card.style.opacity = "1";
+    card.style.bottom = "40px";
 
     dragElement(card);
 
@@ -729,7 +580,7 @@ include 'header.php';
     const resignDateWrapper = document.getElementById("resignDateWrapper");
     chkResign.addEventListener('change', function () {
       if (this.checked) {
-        resignDateWrapper.style.display = "block";
+        resignDateWrapper.style.display = "flex";
       } else {
         resignDateWrapper.style.display = "none";
         document.getElementById("resign_date").value = "";
@@ -856,7 +707,7 @@ include 'header.php';
         .then(data => {
           if (data.status === 'success') {
             document.getElementById("photo_path").value = data.filename;
-            document.getElementById("photoPreviewContainer").innerHTML = `<img src="../uploads/photos/${data.filename}" style="max-height:80px; max-width:100%; border-radius:4px;"/>`;
+            document.getElementById("photoPreviewContainer").innerHTML = `<img src="../uploads/photos/${data.filename}" class="emp-preview-photo-img"/>`;
             alert("Photo uploaded successfully.");
           } else {
             alert(data.message);
@@ -893,7 +744,7 @@ include 'header.php';
         .then(data => {
           if (data.status === 'success') {
             document.getElementById("signature_path").value = data.filename;
-            document.getElementById("sigPreviewContainer").innerHTML = `<img src="../uploads/signatures/${data.filename}" style="max-height:50px; max-width:100%; border-radius:4px;"/>`;
+            document.getElementById("sigPreviewContainer").innerHTML = `<img src="../uploads/signatures/${data.filename}" class="emp-preview-sig-img"/>`;
             alert("Signature uploaded successfully.");
           } else {
             alert(data.message);
@@ -1013,6 +864,7 @@ include 'header.php';
 
       document.getElementById("emp_db_id").value = emp.id;
       document.getElementById("emp_code").value = emp.emp_code;
+      document.getElementById("emp_sr_no").value = emp.emp_sr_no;
       document.getElementById("emp_name").value = emp.emp_name;
       document.getElementById("father_name").value = emp.father_name;
 
@@ -1067,7 +919,7 @@ include 'header.php';
       document.getElementById("resign_remark").value = emp.resign_remark || "";
 
       if (emp.resign == 1) {
-        resignDateWrapper.style.display = "block";
+        resignDateWrapper.style.display = "flex";
       } else {
         resignDateWrapper.style.display = "none";
       }
@@ -1077,13 +929,13 @@ include 'header.php';
       document.getElementById("emp_status").value = emp.status;
 
       if (emp.photo_path) {
-        document.getElementById("photoPreviewContainer").innerHTML = `<img src="../uploads/photos/${emp.photo_path}" style="max-height:80px; max-width:100%; border-radius:4px;"/>`;
+        document.getElementById("photoPreviewContainer").innerHTML = `<img src="../uploads/photos/${emp.photo_path}" class="emp-preview-photo-img"/>`;
       } else {
         document.getElementById("photoPreviewContainer").innerHTML = "Image Not Available";
       }
 
       if (emp.signature_path) {
-        document.getElementById("sigPreviewContainer").innerHTML = `<img src="../uploads/signatures/${emp.signature_path}" style="max-height:50px; max-width:100%; border-radius:4px;"/>`;
+        document.getElementById("sigPreviewContainer").innerHTML = `<img src="../uploads/signatures/${emp.signature_path}" class="emp-preview-sig-img"/>`;
       } else {
         document.getElementById("sigPreviewContainer").innerHTML = "No Signature";
       }

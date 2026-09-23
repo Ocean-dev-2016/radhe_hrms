@@ -597,17 +597,17 @@ if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'ajax_get_history' && $
 $list_data = [];
 if ($mode === 'list') {
     $where = " WHERE 1=1";
-    $search = $_GET['search'] ?? '';
+    $search = isset($_GET['search']) ? addslashes(trim($_GET['search'])) : '';
     if (!empty($search)) {
-        $where .= " AND (company_name LIKE '%$search%' OR phone LIKE '%$search%')";
+        $where .= " AND (r.company_name LIKE '%$search%' OR r.phone LIKE '%$search%')";
     }
 
     $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
     $limit = 10;
     $offset = ($page - 1) * $limit;
 
-    $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table $where");
-    $total_records = $total_res[0]->total;
+    $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table r $where");
+    $total_records = $total_res[0]->total ?? 0;
     $total_pages = ceil($total_records / $limit);
 
     $sql = "SELECT r.*, c.factory_license_number FROM $table r LEFT JOIN tbl_vendors_companies c ON (r.company_code = c.company_code AND r.company_code != '' AND r.company_code IS NOT NULL) $where ORDER BY r.id DESC LIMIT $limit OFFSET $offset";

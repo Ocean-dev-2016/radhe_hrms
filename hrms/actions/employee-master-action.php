@@ -121,6 +121,7 @@ if ($action === 'view' || $action === 'list') {
         $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
 
         $emp_code = mysqli_real_escape_string($ai_conn, $_POST['emp_code'] ?? '');
+        $emp_sr_no = mysqli_real_escape_string($ai_conn, $_POST['emp_sr_no'] ?? '');
         $emp_name = mysqli_real_escape_string($ai_conn, $_POST['emp_name'] ?? '');
         $father_name = mysqli_real_escape_string($ai_conn, $_POST['father_name'] ?? '');
 
@@ -198,8 +199,18 @@ if ($action === 'view' || $action === 'list') {
                 exit;
             }
 
+            // Check duplicate Sr No for update
+            if (!empty($emp_sr_no)) {
+                $check_sr = $ai_db->aiGetQuery("SELECT * FROM hrms_employeemaster WHERE company_id = $company_id AND emp_sr_no = '$emp_sr_no' AND id != $id");
+                if (count($check_sr) > 0) {
+                    echo json_encode(['status' => 'error', 'message' => 'Employee Sr. No. already exists for this company.']);
+                    exit;
+                }
+            }
+
             $sql = "UPDATE hrms_employeemaster SET 
                         emp_code = '$emp_code',
+                        emp_sr_no = '$emp_sr_no',
                         emp_name = '$emp_name',
                         father_name = '$father_name',
                         address_1 = '$address_1',
@@ -263,8 +274,17 @@ if ($action === 'view' || $action === 'list') {
                 exit;
             }
 
+            // Check duplicate Sr No for insert
+            if (!empty($emp_sr_no)) {
+                $check_sr = $ai_db->aiGetQuery("SELECT * FROM hrms_employeemaster WHERE company_id = $company_id AND emp_sr_no = '$emp_sr_no'");
+                if (count($check_sr) > 0) {
+                    echo json_encode(['status' => 'error', 'message' => 'Employee Sr. No. already exists for this company.']);
+                    exit;
+                }
+            }
+
             $sql = "INSERT INTO hrms_employeemaster (
-                        company_id, emp_code, emp_name, father_name, 
+                        company_id, emp_code, emp_sr_no, emp_name, father_name, 
                         address_1, address_2, address_3, city, pincode, 
                         mobile, emergency_person, emergency_contact, email, 
                         branch_id, dept_id, sub_dept, desig_id, 
@@ -276,7 +296,7 @@ if ($action === 'view' || $action === 'list') {
                         resign, resign_date, resign_remark, photo_path, signature_path, status, 
                         created_by, updated_by
                     ) VALUES (
-                        $company_id, '$emp_code', '$emp_name', '$father_name', 
+                        $company_id, '$emp_code', '$emp_sr_no', '$emp_name', '$father_name', 
                         '$address_1', '$address_2', '$address_3', '$city', '$pincode', 
                         '$mobile', '$emergency_person', '$emergency_contact', '$email', 
                         $branch_id, $dept_id, '$sub_dept', $desig_id, 
