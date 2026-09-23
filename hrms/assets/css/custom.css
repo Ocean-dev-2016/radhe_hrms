@@ -1,0 +1,351 @@
+/* ==========================================================================
+   Radhe HRMS - Custom Stylesheet
+   ========================================================================== */
+
+/* Page and Container Heights & Prevent Window Scrolling */
+html,
+body {
+    height: 100%;
+}
+
+body:has(.emp-master-container) {
+    overflow: hidden !important;
+}
+
+.emp-master-container {
+    height: calc(100vh - 100px);
+    min-height: auto;
+    overflow: hidden !important;
+}
+
+/* Draggable Floating Card */
+#draggableCard.emp-master-card {
+    max-width: 1400px;
+    width: 96%;
+    border-radius: 8px !important;
+    border: 1px solid #c9c8cc !important;
+    background-color: #ffffff;
+    position: absolute;
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+    z-index: 1;
+    max-height: calc(100vh - 120px) !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#draggableCard.emp-master-card>.card-header {
+    flex-shrink: 0;
+}
+
+#draggableCard.emp-master-card>.card-footer {
+    flex-shrink: 0;
+}
+
+#draggableCard.emp-master-card>.card-body {
+    padding: 10px 15px !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Scroll inside employeeMasterForm ONLY */
+#employeeMasterForm {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-right: 6px;
+}
+
+/* Dialog Header (Acts as Drag Handle) */
+.emp-master-header {
+    background: linear-gradient(90deg, #135ca3 0%, #00a2e8 100%);
+    border-top-left-radius: 7px !important;
+    border-top-right-radius: 7px !important;
+    border-bottom: 1px solid #104f9b;
+    user-select: none;
+}
+
+.emp-master-header .emp-header-title {
+    font-size: 14px;
+}
+
+.emp-master-header .emp-header-title i {
+    font-size: 16px;
+}
+
+.emp-badge-shortcuts {
+    font-size: 10px;
+    font-weight: 600;
+}
+
+/* Box & Fieldset Borders */
+.border-legacy-blue {
+    border-color: #a3b8cc !important;
+}
+
+.border-card-subtle {
+    border-color: #c4d6ec !important;
+}
+
+.border-card-border {
+    border-color: #c9c8cc !important;
+}
+
+/* Fieldset and Legends */
+.emp-fieldset {
+    border-color: #a3b8cc !important;
+}
+
+.emp-legend {
+    font-size: 14px;
+    margin-bottom: 0;
+}
+
+/* Form Labels & Texts */
+.label-header {
+    font-size: 13px;
+    min-width: 80px;
+}
+
+.input-compact {
+    font-size: 13px !important;
+}
+
+.label-compact {
+    font-size: 13px;
+}
+
+.section-heading {
+    font-size: 13px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 2px;
+}
+
+.emp-resign-label {
+    font-size: 12px;
+}
+
+.emp-resign-remark {
+    font-size: 11px;
+    resize: none;
+}
+
+/* Colors */
+.bg-legacy-blue {
+    background-color: #e8f0fe !important;
+    border-color: #a3b8cc !important;
+}
+
+.text-dark-blue {
+    color: #135ca3 !important;
+}
+
+/* Form controls in legacy blue container */
+.bg-legacy-blue .form-control,
+.bg-legacy-blue .form-select {
+    border: 1px solid #135ca3 !important;
+    border-radius: 2px !important;
+    background-color: #ffffff !important;
+}
+
+.bg-legacy-blue .form-control:focus,
+.bg-legacy-blue .form-select:focus {
+    border-color: #00a2e8 !important;
+    box-shadow: 0 0 4px rgba(0, 162, 232, 0.4) !important;
+}
+
+/* Classical Tab styles */
+#empTabs {
+    border-bottom: 1px solid #a3b8cc !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 4px !important;
+}
+
+#empTabs .nav-item .nav-link {
+    border: 1px solid #a3b8cc !important;
+    border-bottom: none !important;
+    background-color: #f0f4f8 !important;
+    color: #4b465c !important;
+    margin-right: 4px !important;
+    border-top-left-radius: 4px !important;
+    border-top-right-radius: 4px !important;
+    padding: 6px 12px !important;
+    font-size: 11px;
+    transition: all 0.15s ease-in-out;
+}
+
+#empTabs .nav-item .nav-link:hover {
+    background-color: #e3ebf6 !important;
+    color: #135ca3 !important;
+}
+
+#empTabs .nav-item .nav-link.active {
+    background-color: #e8f0fe !important;
+    border-color: #a3b8cc !important;
+    border-bottom-color: #e8f0fe !important;
+    color: #135ca3 !important;
+    position: relative;
+    z-index: 2;
+}
+
+/* Upload & Preview Boxes */
+.emp-upload-box {
+    border-style: dashed !important;
+    border-color: #135ca3 !important;
+    background-color: #f8fafc;
+}
+
+.emp-photo-preview {
+    font-size: 11px;
+}
+
+.emp-preview-photo-img {
+    max-height: 80px;
+    max-width: 100%;
+    border-radius: 4px;
+}
+
+.emp-sig-title {
+    font-size: 13px;
+}
+
+.emp-sig-preview {
+    font-size: 13px;
+}
+
+.emp-preview-sig-img {
+    max-height: 50px;
+    max-width: 100%;
+    border-radius: 4px;
+}
+
+.emp-upload-btn-secondary {
+    font-size: 13px;
+    height: 22px;
+}
+
+.emp-upload-btn-primary {
+    font-size: 13px;
+    height: 22px;
+    background-color: #135ca3;
+    border-color: #135ca3;
+}
+
+.emp-card-upload-col {
+    gap: 8px;
+}
+
+/* Bottom Action Toolbar Buttons */
+.btn-action {
+    font-size: 13px;
+    height: 26px;
+    border-color: #a3b8cc !important;
+}
+
+.emp-nav-slider-box {
+    border-color: #c9c8cc !important;
+    font-size: 13px;
+    height: 26px;
+}
+
+.emp-nav-label {
+    min-width: 65px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.emp-btn-nav-step {
+    font-size: 11px;
+    line-height: 1.2;
+    border-color: #a3b8cc !important;
+    height: 20px;
+    font-weight: bold;
+    background-color: #f8f9fa;
+}
+
+.emp-range-slider {
+    height: 4px;
+    flex-grow: 1;
+    min-width: 120px;
+}
+
+.btn-info-cyan {
+    font-size: 13px;
+    height: 26px;
+    background-color: #02a9f4;
+    border-color: #02a9f4;
+}
+
+.btn-info-blue {
+    font-size: 13px;
+    height: 26px;
+    background-color: #135ca3;
+    border-color: #135ca3;
+}
+
+.btn-info-orange {
+    font-size: 13px;
+    height: 26px;
+    background-color: #ff9800;
+    border-color: #ff9800;
+}
+
+/* Employee Select Modal */
+#empSelectModal {
+    z-index: 1200 !important;
+}
+
+.emp-modal-dialog-content {
+    border-radius: 6px !important;
+    border-color: #a3b8cc !important;
+}
+
+.emp-modal-header {
+    background: linear-gradient(90deg, #135ca3 0%, #00a2e8 100%);
+    border-top-left-radius: 5px !important;
+    border-top-right-radius: 5px !important;
+    border-bottom: 1px solid #104f9b;
+}
+
+.emp-modal-title {
+    font-size: 13px;
+    margin: 0;
+}
+
+.emp-modal-title i {
+    font-size: 15px;
+}
+
+.emp-modal-close-btn {
+    font-size: 10px;
+}
+
+.emp-modal-table-wrap {
+    max-height: 350px;
+    overflow-y: auto;
+    border-color: #a3b8cc !important;
+}
+
+.emp-modal-table {
+    font-size: 11px;
+}
+
+.emp-modal-th-code {
+    width: 80px;
+}
+
+/* Modal Backdrops */
+.modal-backdrop {
+    z-index: 1150 !important;
+}
+
+.modal {
+    z-index: 1200 !important;
+}
