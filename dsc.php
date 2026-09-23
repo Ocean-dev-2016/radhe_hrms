@@ -838,7 +838,7 @@ if ($mode === 'list') {
             data: { ajax_toggle_io: true, id: id },
             dataType: 'json',
             success: function (res) {
-                if (res.status == 'success') {
+                if (res.status == 'Success') {
                     if (res.new_type == 'In') {
                         $(btn).removeClass('btn-outline-warning').addClass('btn-outline-success').html('<i class="ti ti-arrows-left-right me-1"></i> In');
                     } else {
