@@ -224,7 +224,7 @@
       if (event.target.id === 'calculatorModal') return;
       const card = document.getElementById("draggableCard");
       if (card) {
-        card.style.display = 'block';
+        card.style.removeProperty('display');
       }
     });
 

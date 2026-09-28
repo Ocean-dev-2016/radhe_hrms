@@ -12,23 +12,10 @@ if ($company_id <= 0) {
 }
 $action = $_GET['action'] ?? '';
 
-/*
-|--------------------------------------------------------------------------
-| Salary Preview Columns - exactly the columns requested by the user.
-|--------------------------------------------------------------------------
-*/
-
-/*
-|--------------------------------------------------------------------------
-| 2nd Excel / generated salary columns - based on the uploaded salary
-| output screenshot.
-|--------------------------------------------------------------------------
-*/
 function salary_output_headers()
 {
     return [
         'EMP CODE',
-        'MACHINE CODE',
         'NAME',
         'DEPT',
         'DESIG',
@@ -52,9 +39,9 @@ function salary_output_headers()
         'PAPER',
         'RECOVERY',
         'CITY',
-        'PRD INC/ATTN.BONUS',
-        'OTHER ALLOW',
-        'LEAVE AMT',
+        'ATTEN',
+        'OTHER',
+        'LEAVE',
         'BONUS',
         'GRATUITY',
         'GROSS',
@@ -150,11 +137,6 @@ function money_value($value)
     return number_format((float) $value, 2, '.', '');
 }
 
-/*
-|--------------------------------------------------------------------------
-| 1. Employee Master Format
-|--------------------------------------------------------------------------
-*/
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 $username = isset($_SESSION['username']) ? mysqli_real_escape_string($ai_conn, $_SESSION['username']) : 'System';
 $columns = ['EMP CODE', 'NAME', 'MONTH DAYS', 'PAY DAY', 'GROSS', 'LOAN', 'ADVANCE', 'CANTEEN', 'OTHER DEDUCTION', 'TDS', 'TIME LOSS', 'UNIFORM', 'SAFETY EQUIPMENT', 'FACILITY EXP.', 'ATT BONUS', 'BASIC', 'HRA', 'MEDICAL', 'CONV.', 'EDU', 'WASHING', 'PAPER', 'RECOVERY', 'CITY', 'ATTENDANCE', 'OTHER ALLOW', 'PRD INC', 'OT', 'OT HOUR', 'LEAVE AMOUNT', 'LEAVE DEDUCT', 'LTA'];
@@ -171,1003 +153,6 @@ if ($action === 'format_file') {
     exit;
 }
 
-/*
-|--------------------------------------------------------------------------
-| 2. Load first Excel
-|
-| FIRST EXCEL:
-| EMPLOYEE MASTER FORMAT.xlsx
-|
-| The employee count comes from this Excel.
-| The browser table DOES NOT show all first-Excel columns.
-| It shows the 31 salary-process columns requested by the user.
-|--------------------------------------------------------------------------
-*/
-// if ($action === 'load_excel') {
-
-//     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-//         json_out('error', 'Invalid request method.');
-//     }
-
-//     if (
-//         !isset($_FILES['file']) ||
-//         $_FILES['file']['error'] !== UPLOAD_ERR_OK
-//     ) {
-//         json_out('error', 'Please upload Employee Master Excel.');
-//     }
-
-//     $tmpFile = $_FILES['file']['tmp_name'];
-//     $fileName = $_FILES['file']['name'];
-
-//     $inputRows = $ai_core->aiParseImportFile(
-//         $tmpFile,
-//         $fileName
-//     );
-
-//     if (
-//         !is_array($inputRows) ||
-//         count($inputRows) === 0
-//     ) {
-//         json_out(
-//             'error',
-//             'Invalid or empty Employee Master Excel.'
-//         );
-//     }
-
-//     /*
-//      * First row is the Employee Master header.
-//      */
-//     $inputHeaders = array_map(
-//         'clean_h',
-//         array_shift($inputRows)
-//     );
-
-//     $validEmployeeRows = [];
-//     $errors = [];
-
-//     foreach ($inputRows as $rowIndex => $row) {
-
-//         if (!is_array($row)) {
-//             continue;
-//         }
-
-//         $hasData = false;
-
-//         foreach ($row as $value) {
-//             if (trim((string) $value) !== '') {
-//                 $hasData = true;
-//                 break;
-//             }
-//         }
-
-//         if (!$hasData) {
-//             continue;
-//         }
-
-//         /*
-//          * Normalize row to Employee Master column count.
-//          */
-//         $employeeRow = [];
-
-//         foreach ($inputHeaders as $index => $header) {
-//             $employeeRow[] = trim(
-//                 (string) ($row[$index] ?? '')
-//             );
-//         }
-
-//         $empCode = trim((string) row_value(
-//             $employeeRow,
-//             $inputHeaders,
-//             [
-//                 'EMP CODE',
-//                 'EMPLOYEE CODE',
-//                 'EMP ID',
-//                 'CODE'
-//             ]
-//         ));
-
-//         $empName = trim((string) row_value(
-//             $employeeRow,
-//             $inputHeaders,
-//             [
-//                 'FULL NAME',
-//                 'EMP NAME',
-//                 'NAME'
-//             ]
-//         ));
-
-//         if ($empCode === '' && $empName === '') {
-//             continue;
-//         }
-
-//         if ($empCode === '') {
-//             $errors[] =
-//                 'Row ' . ($rowIndex + 2) .
-//                 ': EMP CODE is missing.';
-//             continue;
-//         }
-
-//         $validEmployeeRows[] = $employeeRow;
-//     }
-
-//     if (count($validEmployeeRows) === 0) {
-//         json_out(
-//             'error',
-//             'No employee records found in the first Excel.',
-//             [
-//                 'errors' => $errors
-//             ]
-//         );
-//     }
-
-//     /*
-//      * Build the exact 31-column preview.
-//      */
-//     $previewHeaders = preview_headers();
-//     $previewRows = [];
-
-//     $year = (int) ($_POST['year'] ?? date('Y'));
-//     $month = (int) ($_POST['month'] ?? date('n'));
-//     $monthDay = (int) ($_POST['month_day'] ?? 24);
-
-//     foreach ($validEmployeeRows as $employeeRow) {
-
-//         $preview = array_fill(
-//             0,
-//             count($previewHeaders),
-//             ''
-//         );
-
-//         $setPreview = function (
-//             array $names,
-//             $value
-//         ) use (
-//             &$preview,
-//             $previewHeaders
-//         ) {
-//             $index = find_index(
-//                 $previewHeaders,
-//                 $names
-//             );
-
-//             if ($index !== null) {
-//                 $preview[$index] = $value;
-//             }
-//         };
-
-//         /*
-//          * Employee name.
-//          */
-//         $setPreview(
-//             ['EMP NAME'],
-//             row_value(
-//                 $employeeRow,
-//                 $inputHeaders,
-//                 ['FULL NAME', 'EMP NAME', 'NAME']
-//             )
-//         );
-
-//         /*
-//          * Work Day.
-//          *
-//          * Employee Master does not contain attendance days,
-//          * therefore we use the selected MonthDay as the initial
-//          * working-day value. Replace this with your attendance
-//          * calculation when the attendance module is connected.
-//          */
-//         $setPreview(
-//             ['WORK DAY'],
-//             $monthDay
-//         );
-
-//         /*
-//          * Initial Pay Day.
-//          * This will be recalculated by your attendance/salary
-//          * calculation later.
-//          */
-//         $setPreview(
-//             ['PAY DAY'],
-//             $monthDay
-//         );
-
-//         /*
-//          * Gross is taken from SALARY in Employee Master.
-//          */
-//         $salary = number_value(
-//             row_value(
-//                 $employeeRow,
-//                 $inputHeaders,
-//                 [
-//                     'SALARY',
-//                     'GROSS SALARY',
-//                     'GROSS RATE'
-//                 ],
-//                 0
-//             )
-//         );
-
-//         $setPreview(
-//             ['GROSS'],
-//             money_value($salary)
-//         );
-
-//         /*
-//          * Employee master currently contains these values directly.
-//          */
-//         $setPreview(
-//             ['CITY'],
-//             row_value(
-//                 $employeeRow,
-//                 $inputHeaders,
-//                 ['PERM. CITY', 'CITY']
-//             )
-//         );
-
-//         $setPreview(
-//             ['OTHER DED'],
-//             ''
-//         );
-
-//         $setPreview(
-//             ['OT HOUR'],
-//             ''
-//         );
-
-//         $setPreview(
-//             ['OT AMOUNT'],
-//             ''
-//         );
-
-//         $setPreview(
-//             ['SAVE AMOUNT'],
-//             ''
-//         );
-
-//         $setPreview(
-//             ['SAVE DEDUCTION'],
-//             ''
-//         );
-
-//         /*
-//          * Store the employee-master identity fields in hidden
-//          * positions by using a parallel source array.
-//          *
-//          * We return both preview data and source employee data.
-//          */
-//         $previewRows[] = $preview;
-//     }
-
-//     /*
-//      * Return the first Excel employee data separately.
-//      * Start uses this source data to generate the 2nd Excel.
-//      */
-//     json_out(
-//         'success',
-//         'Employee Master Excel loaded successfully.',
-//         [
-//             'headers' => $previewHeaders,
-//             'data' => $previewRows,
-//             'source_headers' => $inputHeaders,
-//             'source_data' => $validEmployeeRows,
-//             'employee_count' => count($validEmployeeRows),
-//             'errors' => $errors,
-//             'year' => $year,
-//             'month' => $month
-//         ]
-//     );
-// }
-// if ($action === 'load_excel') {
-//     header('Content-Type: application/json');
-//     if (!isset($_FILES['file']) || $_FILES['file']['error'] !== 0) {
-//         echo json_encode(['status' => 'error', 'message' => 'No file uploaded or file upload error.']);
-//         exit;
-//     }
-//     $file = $_FILES['file']['tmp_name'];
-//     $filename = $_FILES['file']['name'];
-//     $rows = $ai_core->aiParseImportFile($file, $filename);
-//     if ($rows === false || count($rows) === 0) {
-//         echo json_encode(['status' => 'error', 'message' => 'Invalid or empty Excel/CSV file.']);
-//         exit;
-//     }
-//     $headers = array_shift($rows);
-//     $header_map = [];
-//     foreach ($headers as $idx => $header_name) {
-//         $cleaned_key = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', (string) $header_name));
-//         $header_map[$cleaned_key] = $idx;
-//     }
-//     $getVal = function ($data_row, $possible_names, $default_idx) use ($header_map) {
-//         foreach ($possible_names as $name) {
-//             $cleaned = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', (string) $name));
-//             if (isset($header_map[$cleaned])) {
-//                 return trim((string) ($data_row[$header_map[$cleaned]] ?? ''));
-//             }
-//         }
-//         return trim((string) ($data_row[$default_idx] ?? ''));
-//     };
-//     $preview_data = [];
-//     $error_rows = [];
-//     foreach ($rows as $data_row) {
-//         if (empty($data_row)) continue;
-//         $emp_code = $getVal($data_row, ['emp code', 'empcode', 'code', 'emp id', 'employee id'], 0);
-//         // print_r($emp_code);
-//         // exit;
-//         $emp_name_raw = $getVal($data_row, ['name', 'emp name', 'employee name', 'employeename'], 1);
-//         if (empty($emp_code)) {
-//             $error_rows[] = 'Row: Employee Code is missing.';
-//             continue;
-//         }
-//         $emp_check = $ai_db->aiGetQuery("SELECT e.id, e.emp_name, e.emp_code, e.status, e.pf_applicable, e.pt_applicable, p.basic_rate, p.hra_rate, p.medical_rate, p.conveyance_rate, p.education_rate, p.washing_rate, p.paper_rate, p.recovery_rate, p.city_rate, p.atten_rate, p.other_allow_rate, p.other_ded_rate, p.leave_allow_rate, p.bonus_rate, p.gratuity_rate, p.pf_amount, p.ptax_amount, p.payl_type FROM hrms_employeemaster e LEFT JOIN hrms_employee_payroll p ON e.id = p.employee_id AND p.company_id = $company_id WHERE e.company_id = $company_id AND e.emp_code = '$emp_code' LIMIT 1");
-//         if (count($emp_check) === 0) {
-//             $error_rows[] = "Code: $emp_code - Employee not found in master.";
-//             continue;
-//         }
-//         $emp = $emp_check[0];
-//         if ($emp['status'] !== 'active') {
-//             $error_rows[] = "Code: $emp_code - Employee is not active.";
-//             continue;
-//         }
-//         $emp_id = intval($emp['id']);
-//         $emp_name = $emp['emp_name'];
-//         $pay_type = $emp['payl_type'] ?: 'MONTHLY';
-//         $pf_applicable = intval($emp['pf_applicable'] ?? 1);
-//         $ptax_applicable = intval($emp['pt_applicable'] ?? 1);
-//         $work_days = floatval($getVal($data_row, ['work days', 'workday', 'working days', 'total work', 'total working days', 'working day', 'total working day', 'month days', 'pay day'], 2));
-//         // print_r($work_days);
-//         // exit;
-//         $present = floatval($getVal($data_row, ['present', 'days present', 'presents', 'present days', 'days present'], 3));
-//         $absent = floatval($getVal($data_row, ['absent', 'days absent', 'absences', 'absent days', 'days absent'], 4));
-//         $half_day = floatval($getVal($data_row, ['half day', 'halfday', 'half days', 'half day'], 5));
-//         $leave = floatval($getVal($data_row, ['leave', 'leaves', 'leave days', 'leave taken', 'leave applied'], 6));
-//         $pf_amount = floatval($emp['pf_amount'] ?? 0);
-//         $ptax_amount = floatval($emp['ptax_amount'] ?? 0);
-//         $basic = floatval($emp['basic_rate'] ?? 0);
-//         $hra = floatval($emp['hra_rate'] ?? 0);
-//         $medical = floatval($emp['medical_rate'] ?? 0);
-//         $conv = floatval($emp['conveyance_rate'] ?? 0);
-//         $edu = floatval($emp['education_rate'] ?? 0);
-//         $was = floatval($emp['washing_rate'] ?? 0);
-//         $paper_all = floatval($emp['paper_rate'] ?? 0);
-//         $recovery_val = floatval($emp['recovery_rate'] ?? 0);
-//         $city_allo = floatval($emp['city_rate'] ?? 0);
-//         $atten_all = floatval($emp['atten_rate'] ?? 0);
-//         $other_earning = floatval($emp['other_allow_rate'] ?? 0);
-//         $other_deduction = floatval($emp['other_ded_rate'] ?? 0);
-//         $leave_allow = floatval($emp['leave_allow_rate'] ?? 0);
-//         $bonus = floatval($emp['bonus_rate'] ?? 0);
-//         $gratuity = floatval($emp['gratuity_rate'] ?? 0);
-//         $total_earn = $basic + $hra + $medical + $conv + $edu + $was + $paper_all + $recovery_val + $city_allo + $atten_all + $other_earning + $leave_allow + $bonus + $gratuity;
-//         $total_ded = $ptax_amount + $other_deduction;
-//         $net_pay = $total_earn - $total_ded;
-//         $preview_data[] = ['emp_code' => $emp_code, 'emp_name' => $emp_name, 'pay_type' => $pay_type, 'work_days' => $work_days, 'present' => $present, 'absent' => $absent, 'half_day' => $half_day, 'leave' => $leave, 'basic' => $basic, 'hra' => $hra, 'medical' => $medical, 'conv' => $conv, 'edu' => $edu, 'was' => $was, 'paper_all' => $paper_all, 'recovery' => $recovery_val, 'city_allo' => $city_allo, 'atten_all' => $atten_all, 'other_earning' => $other_earning, 'other_deduction' => $other_deduction, 'leave_allow' => $leave_allow, 'bonus' => $bonus, 'gratuity' => $gratuity, 'total_earn' => $total_earn, 'total_ded' => $total_ded, 'net_pay' => $net_pay, 'pf_amount' => $pf_amount, 'ptax_amount' => $ptax_amount, 'emp_id' => $emp_id];
-//         $preview_data[] = ['emp_name' => $emp_name,
-//                             'work_days' => $work_days, 
-//                             'pay_days' => $present, 
-//                             'gross' => $basic, 
-//                             'hra' => $hra, 
-//                             'medical' => $medical, 
-//                             'conv' => $conv, 
-//                             'edu' => $edu, 
-//                             'was' => $was, 
-//                             'paper_all' => $paper_all, 
-//                             'recovery' => $recovery_val, 
-//                             'city_allo' => $city_allo, 
-//                             'atten_all' => $atten_all, 
-//                             'other_earning' => $other_earning, 
-//                             'other_deduction' => $other_deduction, 
-//                             'leave_allow' => $leave_allow, 
-//                             'bonus' => $bonus, 
-//                             'gratuity' => $gratuity, 
-//                             'total_earn' => $total_earn, 
-//                             'total_ded' => $total_ded, 
-//                             'net_pay' => $net_pay, 
-//                             'pf_amount' => $pf_amount, 
-//                             'ptax_amount' => $ptax_amount, 
-//                             'emp_id' => $emp_id
-//                         ];
-
-
-//     }
-//     $result = ['status' => 'success', 'data' => $preview_data];
-//     if (!empty($error_rows)) {
-//         $result['errors'] = $error_rows;
-//         $result['error_count'] = count($error_rows);
-//     }
-//     echo json_encode($result);
-//     exit;
-// }
-
-// if ($action === 'load_excel') {
-
-//     header('Content-Type: application/json');
-
-//     if (!isset($_FILES['file']) || $_FILES['file']['error'] !== 0) {
-//         echo json_encode([
-//             'status' => 'error',
-//             'message' => 'No file uploaded or file upload error.'
-//         ]);
-//         exit;
-//     }
-
-//     $file     = $_FILES['file']['tmp_name'];
-//     $filename = $_FILES['file']['name'];
-
-//     $rows = $ai_core->aiParseImportFile($file, $filename);
-
-//     if ($rows === false || count($rows) === 0) {
-//         echo json_encode([
-//             'status' => 'error',
-//             'message' => 'Invalid or empty Excel/CSV file.'
-//         ]);
-//         exit;
-//     }
-
-//     /*
-//     |--------------------------------------------------------------------------
-//     | Header Mapping
-//     |--------------------------------------------------------------------------
-//     */
-
-//     $headers = array_shift($rows);
-
-//     $header_map = [];
-
-//     foreach ($headers as $idx => $header_name) {
-
-//         $cleaned_key = strtolower(
-//             preg_replace('/[^a-zA-Z0-9]/', '', (string)$header_name)
-//         );
-
-//         $header_map[$cleaned_key] = $idx;
-//     }
-
-//     /*
-//     |--------------------------------------------------------------------------
-//     | Get Excel Value
-//     |--------------------------------------------------------------------------
-//     */
-
-//     $getVal = function (
-//         $data_row,
-//         $possible_names,
-//         $default_idx = null
-//     ) use ($header_map) {
-
-//         foreach ($possible_names as $name) {
-
-//             $cleaned = strtolower(
-//                 preg_replace('/[^a-zA-Z0-9]/', '', (string)$name)
-//             );
-
-//             if (isset($header_map[$cleaned])) {
-
-//                 return trim(
-//                     (string)($data_row[$header_map[$cleaned]] ?? '')
-//                 );
-//             }
-//         }
-
-//         if ($default_idx !== null) {
-//             return trim(
-//                 (string)($data_row[$default_idx] ?? '')
-//             );
-//         }
-
-//         return '';
-//     };
-
-//     /*
-//     |--------------------------------------------------------------------------
-//     | Number Helper
-//     |--------------------------------------------------------------------------
-//     */
-
-//     $num = function ($value) {
-
-//         if ($value === '' || $value === null) {
-//             return 0;
-//         }
-
-//         // Remove comma, currency symbol etc.
-//         $value = str_replace(',', '', $value);
-
-//         return (float)$value;
-//     };
-
-//     /*
-//     |--------------------------------------------------------------------------
-//     | Preview
-//     |--------------------------------------------------------------------------
-//     */
-
-//     $preview_data = [];
-//     $error_rows   = [];
-
-//     foreach ($rows as $rowIndex => $data_row) {
-
-//         if (empty($data_row)) {
-//             continue;
-//         }
-
-//         /*
-//         |--------------------------------------------------------------------------
-//         | Employee
-//         |--------------------------------------------------------------------------
-//         */
-
-//         $emp_code = $getVal(
-//             $data_row,
-//             [
-//                 'emp cc',
-//                 'emp code',
-//                 'empcode',
-//                 'code',
-//                 'emp id',
-//                 'employee id'
-//             ],
-//             0
-//         );
-
-//         if ($emp_code === '') {
-
-//             $error_rows[] =
-//                 'Excel Row ' . ($rowIndex + 2) .
-//                 ': Employee Code is missing.';
-
-//             continue;
-//         }
-
-//         /*
-//         |--------------------------------------------------------------------------
-//         | Employee Check
-//         |--------------------------------------------------------------------------
-//         */
-
-//         $emp_code_sql = addslashes($emp_code);
-
-//         $emp_check = $ai_db->aiGetQuery("
-//             SELECT
-//                 id,
-//                 emp_name,
-//                 emp_code,
-//                 status,
-//                 pf_applicable,
-//                 pt_applicable
-//             FROM hrms_employeemaster
-//             WHERE company_id = $company_id
-//               AND emp_code = '$emp_code_sql'
-//             LIMIT 1
-//         ");
-
-//         if (count($emp_check) === 0) {
-
-//             $error_rows[] =
-//                 "Code: $emp_code - Employee not found in master.";
-
-//             continue;
-//         }
-
-//         $emp = $emp_check[0];
-
-//         if ($emp['status'] !== 'active') {
-
-//             $error_rows[] =
-//                 "Code: $emp_code - Employee is not active.";
-
-//             continue;
-//         }
-
-//         $emp_id   = (int)$emp['id'];
-//         $emp_name = $emp['emp_name'];
-//         $pay_type = 'MONTHLY';
-
-//         /*
-//         |--------------------------------------------------------------------------
-//         | Attendance
-//         |--------------------------------------------------------------------------
-//         */
-
-//         $month = $getVal(
-//             $data_row,
-//             ['month'],
-//             2
-//         );
-
-//         $pay_days = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['pay day', 'payday', 'pay days'],
-//                 3
-//             )
-//         );
-
-//         /*
-//         |--------------------------------------------------------------------------
-//         | GROSS
-//         |--------------------------------------------------------------------------
-//         */
-
-//         $gross = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['gross', 'gross salary'],
-//                 4
-//             )
-//         );
-
-//         /*
-//         |--------------------------------------------------------------------------
-//         | DEDUCTIONS
-//         |--------------------------------------------------------------------------
-//         */
-
-//         $loan = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['loan'],
-//                 5
-//             )
-//         );
-
-//         $advance = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['advani', 'advance', 'adv'],
-//                 6
-//             )
-//         );
-
-//         $canteen = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['cantee', 'canteen'],
-//                 7
-//             )
-//         );
-
-//         $other_ded_1 = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['other'],
-//                 8
-//             )
-//         );
-
-//         $tds = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['tds'],
-//                 9
-//             )
-//         );
-
-//         $time_lc = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['time lc', 'timelc', 'late deduction'],
-//                 10
-//             )
-//         );
-
-//         $uniform = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['uniform'],
-//                 11
-//             )
-//         );
-
-//         $safety = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['safety'],
-//                 12
-//             )
-//         );
-
-//         $facility = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['facility'],
-//                 13
-//             )
-//         );
-
-//         $att_bo = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['att bo', 'attbo'],
-//                 14
-//             )
-//         );
-
-//         /*
-//         |--------------------------------------------------------------------------
-//         | SALARY STRUCTURE COMPONENTS
-//         |--------------------------------------------------------------------------
-//         */
-
-//         $basic = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['basic'],
-//                 15
-//             )
-//         );
-
-//         $hra = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['hra'],
-//                 16
-//             )
-//         );
-
-//         $medical = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['medica', 'medical'],
-//                 17
-//             )
-//         );
-
-//         $conveyance = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['conv', 'conveyance'],
-//                 18
-//             )
-//         );
-
-//         $education = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['edu', 'education'],
-//                 19
-//             )
-//         );
-
-//         $washing = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['washi', 'washing'],
-//                 20
-//             )
-//         );
-
-//         $paper = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['paper'],
-//                 21
-//             )
-//         );
-
-//         $recovery = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['recovi', 'recovery'],
-//                 22
-//             )
-//         );
-
-//         $city = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['city'],
-//                 23
-//             )
-//         );
-
-//         $att_eno = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['atteno', 'att eno'],
-//                 24
-//             )
-//         );
-
-//         /*
-//         |--------------------------------------------------------------------------
-//         | OTHER DEDUCTION
-//         |--------------------------------------------------------------------------
-//         */
-
-//         $other_deduction = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['other'],
-//                 25
-//             )
-//         );
-
-//         /*
-//         |--------------------------------------------------------------------------
-//         | ADDITIONAL EARNINGS
-//         |--------------------------------------------------------------------------
-//         */
-
-//         $production_incentive = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['prod inc', 'production incentive'],
-//                 26
-//             )
-//         );
-
-//         $ot = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['ot', 'overtime'],
-//                 27
-//             )
-//         );
-
-//         $ot_hour = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['ot hour', 'ot hour', 'overtime hour'],
-//                 28
-//             )
-//         );
-
-//         $leave = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['leave', 'leave amount'],
-//                 29
-//             )
-//         );
-
-//         $leave_deduct = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['leave deduct'],
-//                 30
-//             )
-//         );
-
-//         $lta = $num(
-//             $getVal(
-//                 $data_row,
-//                 ['lta'],
-//                 31
-//             )
-//         );
-
-//         /*
-//         |--------------------------------------------------------------------------
-//         | TOTAL ADDITIONAL EARNINGS
-//         |--------------------------------------------------------------------------
-//         */
-
-//         $additional_earnings =
-//               $production_incentive
-//             + $ot
-//             + $ot_hour
-//             + $leave
-//             + $lta;
-
-//         /*
-//         |--------------------------------------------------------------------------
-//         | TOTAL DEDUCTIONS
-//         |--------------------------------------------------------------------------
-//         */
-
-//         $total_deduction =
-//               $loan
-//             + $advance
-//             + $canteen
-//             + $other_ded_1
-//             + $tds
-//             + $time_lc
-//             + $uniform
-//             + $safety
-//             + $facility
-//             + $att_bo
-//             + $leave_deduct
-//             + $other_deduction;
-
-//         /*
-//         |--------------------------------------------------------------------------
-//         | TOTAL EARNINGS
-//         |--------------------------------------------------------------------------
-//         */
-
-//         $total_earnings =
-//             $gross + $additional_earnings;
-
-//         /*
-//         |--------------------------------------------------------------------------
-//         | NET PAY
-//         |--------------------------------------------------------------------------
-//         */
-
-//         $net_pay =
-//             $total_earnings - $total_deduction;
-
-//         /*
-//         |--------------------------------------------------------------------------
-//         | Preview Row
-//         |--------------------------------------------------------------------------
-//         */
-
-//         $preview_data[] = [
-
-//             'emp_id'   => $emp_id,
-//             //'emp_code' => $emp_code,
-//             'emp_name' => $emp_name,
-//             'pay_type' => 'MONTHLY',
-//             'work_days'    => $month,
-
-//             'pay_days' => $pay_days,
-//             'gross' => $gross,
-//             'loan'          => $loan,
-//             'advance'       => $advance,
-//             'canteen'       => $canteen,
-//             'other_ded_1'   => $other_ded_1,
-//             'tds'           => $tds,
-//             'time_lc'       => $time_lc,
-//             'uniform'       => $uniform,
-//             'safety'        => $safety,
-//             'facility'      => $facility,
-//             'att_bo'        => $att_bo,
-//             //'other_deduction' => $other_deduction,
-
-//             /*
-//             | Salary Structure
-//             */
-//             'basic'       => $basic,
-//             'hra'         => $hra,
-//             'medical'     => $medical,
-//             'conveyance'  => $conveyance,
-//             'education'   => $education,
-//             'washing'     => $washing,
-//             'paper'       => $paper,
-//             'recovery'    => $recovery,
-//             'city'        => $city,
-//             'att_eno'     => $att_eno,
-//             'other_deduction' => $other_deduction,
-
-//             /*
-//             | Additional Earnings
-//             */
-//             'production_incentive' => $production_incentive,
-//             'ot'                   => $ot,
-//             'ot_hour'           => $ot_hour,
-//             'leave_amount'                => $leave,
-//             'leave_deduct'          => $leave_deduct,
-//             'lta'                  => $lta,
-
-//             /*
-//             | Calculated
-//             */
-//             'additional_earnings' => $additional_earnings,
-//             'total_earnings'      => $total_earnings,
-//             'total_deduction'     => $total_deduction,
-//             'net_pay'             => $net_pay
-//         ];
-//     }
-
-//     /*
-//     |--------------------------------------------------------------------------
-//     | Response
-//     |--------------------------------------------------------------------------
-//     */
-
-//     $result = [
-//         'status' => 'success',
-//         'data'   => $preview_data
-//     ];
-
-//     if (!empty($error_rows)) {
-
-//         $result['errors'] = $error_rows;
-//         $result['error_count'] = count($error_rows);
-//     }
-
-//     echo json_encode($result);
-//     exit;
-// }
 if ($action === 'load_excel') {
 
     header('Content-Type: application/json; charset=utf-8');
@@ -1253,6 +238,51 @@ if ($action === 'load_excel') {
     */
 
     $headers = array_shift($excelRows);
+
+    $salary_period = trim((string)($_POST['salary_period'] ?? ''));
+    if ($salary_period === '7') {
+        $grossColIndex = find_index($headers, ['GROSS', 'GROSS SALARY']);
+        if ($grossColIndex === null) {
+            echo json_encode([
+                'status'  => 'error',
+                'message' => 'Gross field Data not found'
+            ]);
+            exit;
+        }
+
+        // Check if rows have gross value > 0
+        $hasValidGross = false;
+        $zeroGrossEmployees = [];
+        foreach ($excelRows as $rIdx => $rData) {
+            if (!is_array($rData) || empty(array_filter($rData, fn($v) => trim((string)$v) !== ''))) {
+                continue;
+            }
+            $gVal = str_replace([',', '₹', '$', '€', '£'], '', trim((string)($rData[$grossColIndex] ?? '')));
+            $gValNum = is_numeric($gVal) ? (float)$gVal : 0;
+            $rowEmpCode = trim((string)($rData[0] ?? ''));
+
+            if ($gValNum <= 0) {
+                $zeroGrossEmployees[] = $rowEmpCode ? "Code: $rowEmpCode (Row " . ($rIdx + 2) . ")" : "Row " . ($rIdx + 2);
+            } else {
+                $hasValidGross = true;
+            }
+        }
+
+        if (!$hasValidGross || !empty($zeroGrossEmployees)) {
+            $msg = 'Gross field Data not found or value is 0';
+            if (!empty($zeroGrossEmployees)) {
+                $msg .= ' for: ' . implode(', ', array_slice($zeroGrossEmployees, 0, 5));
+                if (count($zeroGrossEmployees) > 5) {
+                    $msg .= ' and ' . (count($zeroGrossEmployees) - 5) . ' more';
+                }
+            }
+            echo json_encode([
+                'status'  => 'error',
+                'message' => $msg
+            ]);
+            exit;
+        }
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -1439,8 +469,9 @@ if ($action === 'load_excel') {
         |--------------------------------------------------------------------------
         */
 
+        $grossColToRead = isset($grossColIndex) && $grossColIndex !== null ? $grossColIndex : 4;
         $gross = $num(
-            $excelValue($data_row, 4)
+            $excelValue($data_row, $grossColToRead)
         );
 
         /*
@@ -1588,6 +619,51 @@ if ($action === 'load_excel') {
                 $att_eno         = $num($excelValue($data_row, 24));
                 $other_deduction = $num($excelValue($data_row, 25));
             }
+        } elseif ($salary_period === '7') {
+            // Month days calculation: column C or input field month_day
+            $month_days = $work_days > 0 ? (float)$work_days : (float)($_POST['month_day'] ?? 30);
+            if ($month_days <= 0) {
+                $month_days = 30;
+            }
+
+            // Fetch payroll record for basic_rate and gross_rate
+            $payroll_rows = $ai_db->aiGetQuery("
+                SELECT * FROM hrms_employee_payroll
+                WHERE employee_id = $emp_id
+                LIMIT 1
+            ");
+            $payroll = (!empty($payroll_rows) && is_array($payroll_rows)) ? $payroll_rows[0] : null;
+
+            $basic_rate = $payroll ? (float)($payroll['basic_amt'] ?: $payroll['basic_rate']) : 0;
+            $gross_rate = $payroll ? (float)($payroll['net_amount'] ?: $payroll['basic_amt']) : 0;
+
+            // Basic calculation: round(($basic_rate / $month_days) * $pay_days)
+            $basic = $basic_rate > 0 ? round(($basic_rate / $month_days) * $pay_days) : 0;
+
+            // HRA calculation: Gross (from uploaded excel) minus Basic
+            if ($gross > $basic) {
+                $hra = $gross - $basic;
+            } else {
+                $pay_days = round(($gross * $month_days) / $basic_rate);
+                $perDays = round($basic_rate / $month_days);
+                $basic = $perDays * $pay_days;
+                $hra = $gross - $basic;
+            }
+
+
+            // All other allowance fields must be 0
+            $medical         = 0;
+            $conveyance      = 0;
+            $education       = 0;
+            $washing         = 0;
+            $paper           = 0;
+            $recovery        = 0;
+            $city            = 0;
+            $att_eno         = 0;
+            $other_deduction = 0;
+            $bonus_val       = 0;
+            $gratuity_val    = 0;
+            $leave_amount    = 0;
         } else {
             $bonus_val = 0;
             $gratuity_val = 0;
@@ -1651,7 +727,12 @@ if ($action === 'load_excel') {
         );
 
         // AD = LEAVE AMOUNT
-        if ($salary_period !== '3') {
+        if ($salary_period === '7') {
+            $production_incentive = 0;
+            $ot                   = 0;
+            $leave_amount         = 0;
+            $lta                  = 0;
+        } elseif ($salary_period !== '3') {
             $leave_amount = $num(
                 $excelValue($data_row, 29)
             );
@@ -1663,9 +744,11 @@ if ($action === 'load_excel') {
         );
 
         // AF = LTA
-        $lta = $num(
-            $excelValue($data_row, 31)
-        );
+        if ($salary_period !== '7') {
+            $lta = $num(
+                $excelValue($data_row, 31)
+            );
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -1841,8 +924,11 @@ if ($action === 'load_excel') {
                 $active_components[$c_id] = $c_def;
             }
         }
+    } elseif ($salary_period === '7') {
+        // Period 7: Only HRA is calculated, hide other allowances (MED, CONV, EDU, WASHING, PAPER, RECOVERY, CITY, ATTEN, OTHER, etc.)
+        $active_components['hra'] = $all_component_defs['hra'];
     } else {
-        // If not salary_period 3, all standard components remain active
+        // If not salary_period 3 or 7, all standard components remain active
         $active_components = $all_component_defs;
     }
 
@@ -1891,38 +977,37 @@ if ($action === 'start_process') {
     $activeComponentsJson = $_POST['active_components'] ?? '';
     $activeComponentsList = !empty($activeComponentsJson) ? json_decode($activeComponentsJson, true) : null;
 
-    $standardHeaders = salary_output_headers();
-    $salaryPeriod = trim((string)($_POST['salary_period'] ?? ''));
-
-    // If salary_period == 3 and activeComponentsList is provided, dynamically adjust component columns
-    if ($salaryPeriod === '3' && is_array($activeComponentsList)) {
-        // Collect active output header names
-        $activeOutNames = array_map(function($c) { return $c['out_name'] ?? $c['label']; }, $activeComponentsList);
-        
-        // All potential component columns that can be removed if not active
-        $allPotentialComponentNames = [
-            'HRA', 'MED', 'CONV', 'EDU', 'WASHING', 'PAPER', 'RECOVERY', 'CITY',
-            'PRD INC/ATTN.BONUS', 'OTHER ALLOW', 'LEAVE AMT', 'BONUS', 'GRATUITY'
-        ];
-
-        $outputHeaders = [];
-        foreach ($standardHeaders as $h) {
-            if (in_array($h, $allPotentialComponentNames, true)) {
-                if (in_array($h, $activeOutNames, true)) {
-                    $outputHeaders[] = $h;
-                }
-            } else {
-                $outputHeaders[] = $h;
-            }
-        }
-    } else {
-        $outputHeaders = $standardHeaders;
-    }
+    $outputHeaders = salary_output_headers();
 
     $outputRows = [];
 
     $year = (int) ($_POST['year'] ?? date('Y'));
     $month = (int) ($_POST['month'] ?? date('n'));
+
+    // Month column name map for hrms_ptax_slabs
+    $monthColMap = [
+        1 => 'jan', 2 => 'feb', 3 => 'mar', 4 => 'apr',
+        5 => 'may', 6 => 'jun', 7 => 'jul', 8 => 'aug',
+        9 => 'sep', 10 => 'oct', 11 => 'nov', 12 => 'dec'
+    ];
+    $ptMonthCol = $monthColMap[$month] ?? 'apr';
+
+    // Fetch PT slabs for the company based on latest effective rule
+    $ptRuleQuery = $ai_db->aiGetQuery("
+        SELECT id FROM hrms_ptax_rules 
+        WHERE company_id = $company_id 
+        ORDER BY effective_date DESC, id DESC 
+        LIMIT 1
+    ");
+    $ptSlabs = [];
+    if (!empty($ptRuleQuery) && isset($ptRuleQuery[0]['id'])) {
+        $ptRuleId = (int)$ptRuleQuery[0]['id'];
+        $ptSlabs = $ai_db->aiGetQuery("
+            SELECT * FROM hrms_ptax_slabs 
+            WHERE ptax_rule_id = $ptRuleId 
+            ORDER BY salary_from ASC
+        ");
+    }
 
     foreach ($sourceData as $employeeIndex => $employeeRow) {
         if (!is_array($employeeRow)) 
@@ -1992,12 +1077,6 @@ if ($action === 'start_process') {
                 'CODE'
             ])
         );
-        $put(['MACHINE CODE'], $sourceValue([
-                'MACHINE NO.',
-                'MACHINE NO',
-                'MACHINE CODE'
-            ])
-        );
         $put(['NAME'], 
             isset($emp_check[0]['emp_name']) ? $emp_check[0]['emp_name'] : ''
         );
@@ -2058,7 +1137,7 @@ if ($action === 'start_process') {
         
         $salaryPeriod = trim((string)($_POST['salary_period'] ?? ''));
 
-        if ($salaryPeriod === '3') {
+        if ($salaryPeriod === '3' || $salaryPeriod === '7') {
             $payroll_check = $ai_db->aiGetQuery("
                 SELECT * FROM hrms_employee_payroll
                 WHERE employee_id = " . (int)($emp_check[0]['id'] ?? 0) . "
@@ -2166,61 +1245,73 @@ if ($action === 'start_process') {
 
         $put(['BASIC'],
             money_value(
-                $pv('basic')
+                $pv('basic', 0)
             )
         );
 
-        $put(['HRA'],
+        $put(['HOUSE RENT ALLOWANCE', 'HRA'],
             money_value(
-                $pv('hra')
+                $pv('hra', 0)
             )
         );
 
-        $put(['MED'],
+        $put(['MEDICAL ALLOWANCE', 'MED', 'MEDICAL'],
             money_value(
-                $pv('medical')
+                $pv('medical', 0)
             )
         );
 
-        $put(['CONV'],
+        $put(['CONVEYANCE ALLOWANCE', 'CONV', 'CONVEYANCE'],
             money_value(
-                $pv('conveyance')
+                $pv('conveyance', 0)
             )
         );
 
-        $put(['EDU'],
+        $put(['EDUCATIONAL ALLOWANCE', 'EDU', 'EDUCATION'],
             money_value(
-                $pv('education')
+                $pv('education', 0)
             )
         );
 
-        $put(['WASHING'],
+        $put(['WASHING ALLOWANCE', 'WASHING'],
             money_value(
-                $pv('washing')
+                $pv('washing', 0)
             )
         );
 
-        $put(['OTHER ALLOW', 'SPE.A'],
+        $put(['PAPER ALLOW', 'PAPER'],
             money_value(
-                $pv('other_deduction')
+                $pv('paper', 0)
             )
         );
 
-        $put(['PAPER'],
+        $put(['RECOVERY ALLOW', 'RECOVERY'],
             money_value(
-                $pv('paper')
+                $pv('recovery', 0)
             )
         );
 
-        $put(['RECOVERY'],
+        $put(['CITY ALLOW', 'CITY'],
             money_value(
-                $pv('recovery')
+                $pv('city', 0)
             )
         );
 
-        $put(['CITY'],
+        $put(['ATTEN ALLOW', 'ATTEN', 'ATTN.BONUS'],
             money_value(
-                $pv('city')
+                $pv('att_eno', 0)
+            )
+        );
+
+        $put(['OTHER ALLOWANCE', 'OTHER ALLOW', 'OTHER', 'SPE.A'],
+            money_value(
+                $pv('other_deduction', 0)
+            )
+        );
+
+        $put(['LEAVE ALLOWANCE', 'LEAVE AMT', 'LEAVE'],
+            money_value(
+                $pv('leave_amount', 0)
             )
         );
 
@@ -2236,15 +1327,9 @@ if ($action === 'start_process') {
             )
         );
 
-        $put(['LEAVE AMT'],
-            money_value(
-                $pv('leave_amount')
-            )
-        );
-
         $put(['OTHER DED'],
             money_value(
-                $pv('other_ded_1')
+                $pv('other_ded_1', 0)
             )
         );
 
@@ -2254,6 +1339,122 @@ if ($action === 'start_process') {
                 $salary
             )
         );
+
+        // Employee pf_applicable and pt_applicable check
+        $pfApplicable = isset($emp_check[0]['pf_applicable']) ? (int)$emp_check[0]['pf_applicable'] : 0;
+        $ptApplicable = isset($emp_check[0]['pt_applicable']) ? (int)$emp_check[0]['pt_applicable'] : 0;
+        $branch_id = isset($emp_check[0]['branch_id']) ? (int)$emp_check[0]['branch_id'] : 0;
+        $company_id = isset($emp_check[0]['company_id']) ? (int)$emp_check[0]['company_id'] : 0;
+
+        // PF calculation: if pf_applicable == 1, calculate 12% on basic (capped at 1800)
+        // $pfAmount = 0.0;
+        // if ($pfApplicable === 1) {
+
+        //     $pf_rate = $ai_db->aiGetQuery("SELECT * FROM hrms_pf_rates WHERE company_id = $company_id AND branch_id = $branch_id ORDER BY effective_date DESC, id DESC LIMIT 1");
+        //     $pf_rate = (!empty($pf_rate) && is_array($pf_rate)) ? $pf_rate[0] : null;
+
+        //     $pf_components = $ai_db->aiGetQuery("SELECT * FROM hrms_pf_branch_components WHERE company_id = $company_id AND branch_id = $branch_id AND is_applicable='1' ");
+        //     $pf_components = (!empty($pf_components) && is_array($pf_components)) ? $pf_components : null;
+            
+        //     $basicVal = number_value($pv('basic', 0));
+        //     if ($basicVal <= 0 && isset($basic_salary)) {
+        //         $basicVal = (float)$basic_salary;
+        //     }
+        // }
+        // $put(['PF'], money_value($pfAmount));
+
+        $pfAmount = 0.0;
+
+        if ($pfApplicable === 1) {
+
+            // PF Rate
+            $pf_rate = $ai_db->aiGetQuery("
+                SELECT *
+                FROM hrms_pf_rates
+                WHERE company_id = $company_id
+                AND branch_id = $branch_id
+                AND YEAR(effective_date) <= $year
+                AND (
+                        YEAR(effective_date) < $year
+                        OR MONTH(effective_date) <= $month
+                    )
+                ORDER BY effective_date DESC, id DESC
+                LIMIT 1
+            ");
+
+            $pf_rate = (!empty($pf_rate) && is_array($pf_rate))
+                ? $pf_rate[0]
+                : null;
+            
+            if($pf_rate != null)
+            {
+                $pf_components = $ai_db->aiGetQuery("
+                    SELECT *
+                    FROM hrms_pf_branch_components
+                    WHERE company_id = $company_id
+                    AND branch_id = $branch_id
+                    AND is_applicable = '1'
+                ");
+    
+                $pf_components = (!empty($pf_components) && is_array($pf_components))
+                    ? $pf_components
+                    : [];
+    
+                $basicVal = number_value($pv('basic', 0));
+    
+                if ($basicVal <= 0 && isset($basic_salary)) {
+                    $basicVal = (float)$basic_salary;
+                }
+    
+                $pfWage = 0.0;
+    
+                foreach ($pf_components as $component) {    
+                    $componentName = strtoupper(trim($component['component_name'] ?? ''));    
+                    switch ($componentName) {    
+                        case 'BASIC':
+                            $pfWage += $basicVal;
+                            break;    
+                        case 'HOUSE RENT ALLOWANCE':
+                            $pfWage += number_value($pv('hra', 0));
+                            break;    
+                        case 'MEDICAL ALLOWANCE':
+                            $pfWage += number_value($pv('medical', 0));
+                            break;    
+                        default:
+                            $pfWage += number_value($pv($componentName, 0));
+                            break;
+                    }
+                }
+    
+                $pfCeiling = number_value($pf_rate['pf_ceiling_amount'] ?? 0);    
+                if ($pfCeiling > 0 && $pfWage > $pfCeiling) {
+                    $pfWage = $pfCeiling;
+                }
+    
+                $employeePfRate = number_value($pf_rate['employee_pf'] ?? 0);
+    
+                $pfAmount = ($pfWage * $employeePfRate) / 100;
+            }
+        }
+
+        $put(['PF'], money_value($pfAmount));
+
+        // PT calculation: if pt_applicable == 1, lookup slab based on employee ceiling_amount
+        $ptAmount = 0.0;
+        if ($ptApplicable === 1) {
+            $ceilingAmt = isset($emp_check[0]['ceiling_amount']) ? (float)$emp_check[0]['ceiling_amount'] : 0.0;
+            if (!empty($ptSlabs) && is_array($ptSlabs)) {
+                foreach ($ptSlabs as $slab) {
+                    $salFrom = (float)($slab['salary_from'] ?? 0);
+                    $salTo   = (float)($slab['salary_to'] ?? 0);
+                    if ($ceilingAmt >= $salFrom && $ceilingAmt <= $salTo) {
+                        $ptAmount = isset($slab[$ptMonthCol]) ? (float)$slab[$ptMonthCol] : (float)($slab['rate'] ?? 0);
+                        break;
+                    }
+                }
+            }
+        }
+        $put(['PT'], money_value($ptAmount));
 
         $deductionFields = [
             'loan',
@@ -2268,7 +1469,7 @@ if ($action === 'start_process') {
             'leave_deduct'
         ];
 
-        $totalDeduction = 0;
+        $totalDeduction = $pfAmount + $ptAmount;
         foreach ($deductionFields as $field) 
         {
             $totalDeduction += number_value($pv($field, 0));
@@ -2301,6 +1502,8 @@ if ($action === 'start_process') {
 
     foreach ([
             'GROSS',
+            'PF',
+            'PT',
             'TOT DED',
             'NET SALARY'
         ] as $field
@@ -2329,6 +1532,38 @@ if ($action === 'start_process') {
             : 'CHECKLIST'
     ) .
     '.xlsx';
+
+    if ($salaryPeriod === '7') {
+        $hiddenInPeriod7 = [
+            'MED',
+            'CONV',
+            'EDU',
+            'WASHING',
+            'PAPER',
+            'RECOVERY',
+            'CITY',
+            'ATTEN',
+            'OTHER'
+        ];
+        $filteredHeaders = [];
+        $keepIndices = [];
+        foreach ($outputHeaders as $idx => $hdr) {
+            if (!in_array(trim($hdr), $hiddenInPeriod7, true)) {
+                $filteredHeaders[] = $hdr;
+                $keepIndices[] = $idx;
+            }
+        }
+        $filteredRows = [];
+        foreach ($outputRows as $r) {
+            $newRow = [];
+            foreach ($keepIndices as $kIdx) {
+                $newRow[] = $r[$kIdx] ?? '';
+            }
+            $filteredRows[] = $newRow;
+        }
+        $outputHeaders = $filteredHeaders;
+        $outputRows = $filteredRows;
+    }
 
     download_sample_xlsx(
         $filename,

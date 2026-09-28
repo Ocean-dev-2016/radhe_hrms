@@ -64,6 +64,13 @@ include 'header.php';
               PF Calculated On Components
             </button>
           </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'history') ? 'active' : ''; ?> fw-bold py-1 px-3" 
+              id="history-tab" data-bs-toggle="tab" data-bs-target="#history-pane" type="button" role="tab" 
+              aria-controls="history-pane" aria-selected="<?php echo (isset($_GET['tab']) && $_GET['tab'] === 'history') ? 'true' : 'false'; ?>" style="font-size: 11px;">
+              PF Rate Master History
+            </button>
+          </li>
         </ul>
 
         <!-- Tab Contents -->
@@ -120,7 +127,7 @@ include 'header.php';
                   <button type="button" id="btnEdit" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
                     <i class="ti ti-edit me-1 text-warning"></i>Edit
                   </button>
-                  <button type="button" id="btnDelete" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+                  <button type="button" id="btnDelete" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important; display: none !important;">
                     <i class="ti ti-trash me-1 text-danger"></i>Delete
                   </button>
                   <button type="button" id="btnSave" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
@@ -280,6 +287,70 @@ include 'header.php';
             </form>
           </div>
 
+          
+          <!-- Tab 4: PF Rate Master History -->
+          <div class="tab-pane fade <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'history') ? 'show active' : ''; ?>" 
+            id="history-pane" role="tabpanel" aria-labelledby="history-tab">
+            
+            <form id="pfHistoryForm">
+              <input type="hidden" name="id" id="pf_history_db_id" value="0">
+              <fieldset class="border p-3 rounded mb-2" style="border-color: #a3b8cc !important; background-color: #ffffff;">
+                <legend class="float-none w-auto px-2 fw-bold text-primary" style="font-size: 12px; margin-bottom: 0;">
+                  PF Rate History Detail
+                </legend>
+
+                <div class="row py-3 justify-content-center">
+                  <div class="col-md-8">
+                    <div class="row mb-2 align-items-center">
+                      <label class="col-sm-5 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">Employer PF</label>
+                      <div class="col-sm-6">
+                        <input type="number" step="0.001" class="form-control form-control-sm text-end" name="employer_pf" id="history_employer_pf" value="0.000" style="font-size: 11px;" readonly disabled />
+                      </div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                      <label class="col-sm-5 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">Employee PF</label>
+                      <div class="col-sm-6">
+                        <input type="number" step="0.001" class="form-control form-control-sm text-end" name="employee_pf" id="history_employee_pf" value="0.000" style="font-size: 11px;" readonly disabled />
+                      </div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                      <label class="col-sm-5 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">PF Ceiling Amount</label>
+                      <div class="col-sm-6">
+                        <input type="number" step="0.01" class="form-control form-control-sm text-end" name="pf_ceiling_amount" id="history_pf_ceiling_amount" value="0.00" style="font-size: 11px;" readonly disabled />
+                      </div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                      <label class="col-sm-5 col-form-label col-form-label-sm text-end fw-semibold text-dark-blue" style="font-size: 11px;">Effective Date</label>
+                      <div class="col-sm-6">
+                        <input type="text" class="form-control form-control-sm text-center" name="effective_date" id="history_effective_date" placeholder="DD/MM/YYYY" style="font-size: 11px;" readonly disabled />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+
+              <!-- Bottom Action Toolbar / Footer Buttons for History tab -->
+              <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mt-3 pt-2 border-top">
+                <div class="d-flex flex-wrap gap-1 align-items-center bg-white p-1 rounded border shadow-xs" style="border-color: #c9c8cc !important;">
+                  <button type="button" id="btnExitHistory" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+                    <i class="ti ti-logout me-1 text-danger"></i>Exit
+                  </button>
+                  <button type="button" id="btnSearchHistory" class="btn btn-xs btn-outline-secondary px-2 py-1" style="font-size: 11px; height: 26px; border-color: #a3b8cc !important;">
+                    <i class="ti ti-search me-1 text-info"></i>Search
+                  </button>
+                </div>
+
+                <!-- Right Side: Record Navigation Slider for History -->
+                <div class="d-flex align-items-center bg-white p-1 rounded border shadow-xs" style="border-color: #c9c8cc !important; font-size: 11px; height: 26px;">
+                  <span id="navLabelHistory" class="px-2 fw-bold border-end me-2" style="min-width: 50px; text-align: center; white-space: nowrap;">0 / 0</span>
+                  <button type="button" id="btnPrevHistory" class="btn btn-xs btn-outline-secondary px-2 py-0" style="font-size: 11px; line-height: 1.2; border-color: #a3b8cc !important; height: 20px; font-weight: bold; background-color: #f8f9fa;">&lt;</button>
+                  <input type="range" id="rangeSliderHistory" class="form-range mx-2" min="0" max="0" value="0" style="height: 4px; flex-grow: 1; min-width: 120px;" disabled />
+                  <button type="button" id="btnNextHistory" class="btn btn-xs btn-outline-secondary px-2 py-0" style="font-size: 11px; line-height: 1.2; border-color: #a3b8cc !important; height: 20px; font-weight: bold; background-color: #f8f9fa;">&gt;</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
         </div>
       </div>
 
@@ -411,6 +482,9 @@ include 'header.php';
         challanRecords = [];
         currentChallanIndex = -1;
         clearChallanForm();
+        historyRecords = [];
+        currentHistoryIndex = -1;
+        clearHistoryForm();
         return;
       }
 
@@ -418,10 +492,11 @@ include 'header.php';
       pfSettingsContainer.style.display = "block";
       selectBranchPlaceholder.style.display = "none";
 
-      // Load Rates, Challan Rates and Components for the selected Branch
+      // Load Rates, Challan Rates, Components and History for the selected Branch
       fetchRates();
       fetchChallanRates();
       fetchComponents(selectedBranchId);
+      fetchRatesHistory();
     });
 
     // ------------------------------------
@@ -589,11 +664,10 @@ include 'header.php';
       .then(response => {
         if (response.status === 'success') {
           alert(response.message);
-          if (currentMode === 'add' && response.insert_id) {
-            currentIndex = 0;
-          }
+          currentIndex = 0;
           setMode('view');
           fetchRates();
+          fetchRatesHistory();
         } else {
           alert("Error: " + response.message);
         }
@@ -994,6 +1068,133 @@ include 'header.php';
       window.location.href = 'index';
     });
 
+    // ------------------------------------
+    // TAB 4: PF RATE MASTER HISTORY LOGIC
+    // ------------------------------------
+    let historyRecords = [];
+    let currentHistoryIndex = -1;
+    let pfHistorySelectModalInstance = null;
+
+    function fetchRatesHistory(showSearchModal = false) {
+      const branchId = globalBranchSelect.value;
+      if (!branchId) return;
+
+      fetch(`actions/pf-rate-master-action.php?action=view_rates_history&branch_id=${branchId}`)
+        .then(res => res.json())
+        .then(response => {
+          if (response.status === 'success') {
+            historyRecords = response.data;
+            if (historyRecords.length > 0) {
+              if (currentHistoryIndex === -1 || currentHistoryIndex >= historyRecords.length) {
+                currentHistoryIndex = 0;
+              }
+              displayHistoryRecord(currentHistoryIndex);
+
+              if (showSearchModal) {
+                populateHistorySearchModalAndShow();
+              }
+            } else {
+              currentHistoryIndex = -1;
+              clearHistoryForm();
+              document.getElementById("navLabelHistory").innerText = "0 / 0";
+              const slider = document.getElementById("rangeSliderHistory");
+              slider.max = 0;
+              slider.value = 0;
+              slider.disabled = true;
+            }
+          }
+        })
+        .catch(err => console.error("Error fetching rate history records: ", err));
+    }
+
+    function displayHistoryRecord(index) {
+      if (index < 0 || index >= historyRecords.length) return;
+      const record = historyRecords[index];
+
+      document.getElementById("pf_history_db_id").value = record.id;
+      document.getElementById("history_employer_pf").value = parseFloat(record.employer_pf || 0).toFixed(3);
+      document.getElementById("history_employee_pf").value = parseFloat(record.employee_pf || 0).toFixed(3);
+      document.getElementById("history_pf_ceiling_amount").value = parseFloat(record.pf_ceiling_amount || 0).toFixed(2);
+      document.getElementById("history_effective_date").value = formatDateForDisplay(record.effective_date);
+
+      // Update Nav Label & Slider for History
+      document.getElementById("navLabelHistory").innerText = `${index + 1} / ${historyRecords.length}`;
+      const slider = document.getElementById("rangeSliderHistory");
+      slider.max = historyRecords.length - 1;
+      slider.value = index;
+      slider.disabled = false;
+    }
+
+    function clearHistoryForm() {
+      document.getElementById("pf_history_db_id").value = "0";
+      document.getElementById("history_employer_pf").value = "0.000";
+      document.getElementById("history_employee_pf").value = "0.000";
+      document.getElementById("history_pf_ceiling_amount").value = "0.00";
+      document.getElementById("history_effective_date").value = "";
+    }
+
+    // Search Mode for History
+    document.getElementById("btnSearchHistory").addEventListener('click', () => {
+      fetchRatesHistory(true);
+    });
+
+    function populateHistorySearchModalAndShow() {
+      const selectBody = document.getElementById("pfHistorySelectBody");
+      selectBody.innerHTML = "";
+
+      if (historyRecords.length === 0) {
+        selectBody.innerHTML = "<tr><td colspan='4' class='text-center'>No history records found.</td></tr>";
+      } else {
+        historyRecords.forEach((record, index) => {
+          const row = document.createElement("tr");
+          row.style.cursor = "pointer";
+          row.innerHTML = `
+            <td>${formatDateForDisplay(record.effective_date)}</td>
+            <td class="text-end">${parseFloat(record.employee_pf || 0).toFixed(3)}%</td>
+            <td class="text-end">${parseFloat(record.employer_pf || 0).toFixed(3)}%</td>
+            <td class="text-end">${parseFloat(record.pf_ceiling_amount || 0).toFixed(2)}</td>
+          `;
+          row.addEventListener('click', () => {
+            currentHistoryIndex = index;
+            displayHistoryRecord(currentHistoryIndex);
+            if (pfHistorySelectModalInstance) {
+              pfHistorySelectModalInstance.hide();
+            }
+          });
+          selectBody.appendChild(row);
+        });
+      }
+
+      if (!pfHistorySelectModalInstance) {
+        pfHistorySelectModalInstance = new bootstrap.Modal(document.getElementById('pfHistorySelectModal'));
+      }
+      pfHistorySelectModalInstance.show();
+    }
+
+    // Slider & Navigation for History
+    document.getElementById("btnPrevHistory").addEventListener('click', () => {
+      if (currentHistoryIndex > 0) {
+        currentHistoryIndex--;
+        displayHistoryRecord(currentHistoryIndex);
+      }
+    });
+
+    document.getElementById("btnNextHistory").addEventListener('click', () => {
+      if (currentHistoryIndex < historyRecords.length - 1) {
+        currentHistoryIndex++;
+        displayHistoryRecord(currentHistoryIndex);
+      }
+    });
+
+    document.getElementById("rangeSliderHistory").addEventListener('input', (e) => {
+      currentHistoryIndex = parseInt(e.target.value);
+      displayHistoryRecord(currentHistoryIndex);
+    });
+
+    document.getElementById("btnExitHistory").addEventListener('click', () => {
+      window.location.href = 'index';
+    });
+
   });
 
   // Simple Draggable Functionality
@@ -1101,6 +1302,43 @@ include 'header.php';
               </tr>
             </thead>
             <tbody id="challanSelectBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PF Rate History Selection Modal (For Search) -->
+<div class="modal fade" id="pfHistorySelectModal" tabindex="-1" data-bs-backdrop="static"
+  aria-labelledby="pfHistorySelectModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-content border shadow-lg"
+      style="border-radius: 6px !important; border-color: #a3b8cc !important;">
+      <div class="modal-header text-white p-2 px-3"
+        style="background: linear-gradient(90deg, #135ca3 0%, #00a2e8 100%); border-top-left-radius: 5px !important; border-top-right-radius: 5px !important; border-bottom: 1px solid #104f9b;">
+        <h6 class="modal-title fw-bold text-white d-flex align-items-center" id="pfHistorySelectModalLabel"
+          style="font-size: 13px; margin: 0;">
+          <i class="ti ti-search me-2" style="font-size: 15px;"></i>Select PF Rate History Record
+        </h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"
+          style="font-size: 10px;"></button>
+      </div>
+      <div class="modal-body p-3" style="background-color: #e8f0fe !important;">
+        <div class="table-responsive bg-white rounded p-2 border"
+          style="max-height: 300px; overflow-y: auto; border-color: #a3b8cc !important;">
+          <table class="table table-sm table-striped table-bordered table-hover mb-0" style="font-size: 11px;">
+            <thead class="table-light">
+              <tr>
+                <th>Effective Date</th>
+                <th class="text-end">Employee PF %</th>
+                <th class="text-end">Employer PF %</th>
+                <th class="text-end">PF Ceiling Amt</th>
+              </tr>
+            </thead>
+            <tbody id="pfHistorySelectBody">
               <!-- Dynamically populated -->
             </tbody>
           </table>

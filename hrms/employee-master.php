@@ -4,13 +4,13 @@ include 'header.php';
 ?>
 
 <!-- Content wrapper -->
-<div class="container-fluid flex-grow-1 container-p-y position-relative emp-master-container">
+<div class="container-fluid flex-grow-1 container-p-y position-relative popup-master-container">
 
   <!-- Draggable Floating Dialog Card -->
-  <div id="draggableCard" class="card shadow-lg border-1 emp-master-card">
+  <div id="draggableCard" class="card shadow-lg border-1 popup-master-card">
 
     <!-- Dialog Header (Acts as Drag Handle) -->
-    <div class="card-header p-2 px-3 text-white d-flex align-items-center justify-content-between emp-master-header">
+    <div class="card-header p-2 px-3 text-white d-flex align-items-center justify-content-between popup-master-header">
       <h6 class="m-0 text-white fw-bold d-flex align-items-center emp-header-title">
         <i class="ti ti-user me-2"></i>EMPLOYEE MASTER INFORMATION
       </h6>

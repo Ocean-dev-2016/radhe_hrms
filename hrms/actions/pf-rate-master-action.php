@@ -54,6 +54,23 @@ if ($action === 'view_rates') {
     ]);
     exit;
 
+} else if ($action === 'view_rates_history') {
+    $branch_id = isset($_GET['branch_id']) ? intval($_GET['branch_id']) : 0;
+    if ($branch_id <= 0) {
+        echo json_encode([
+            'status' => 'success',
+            'data' => []
+        ]);
+        exit;
+    }
+    // Get all PF rate history records for this company and branch
+    $history = $ai_db->aiGetQuery("SELECT * FROM hrms_pf_rates_history WHERE company_id = $company_id AND branch_id = $branch_id ORDER BY effective_date DESC, id DESC");
+    echo json_encode([
+        'status' => 'success',
+        'data' => $history
+    ]);
+    exit;
+
 } else if ($action === 'save_rate') {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
@@ -87,7 +104,40 @@ if ($action === 'view_rates') {
         }
         $effective_date = mysqli_real_escape_string($ai_conn, $effective_date);
 
-        if ($id > 0) {
+        // Check if a record already exists for this company and branch
+        $existing = $ai_db->aiGetQuery("SELECT * FROM hrms_pf_rates WHERE company_id = $company_id AND branch_id = $branch_id LIMIT 1");
+        $target_id = (!empty($existing) && isset($existing[0]['id'])) ? intval($existing[0]['id']) : ($id > 0 ? $id : 0);
+
+        if ($target_id > 0) {
+            // If target_id wasn't in $existing, fetch it
+            $old_record = (!empty($existing) && intval($existing[0]['id']) === $target_id) 
+                ? $existing[0] 
+                : null;
+            if (!$old_record) {
+                $old_data = $ai_db->aiGetQuery("SELECT * FROM hrms_pf_rates WHERE id = $target_id AND company_id = $company_id LIMIT 1");
+                $old_record = (!empty($old_data)) ? $old_data[0] : null;
+            }
+
+            // Archive old data into hrms_pf_rates_history before updating
+            if ($old_record) {
+                $old_employer_pf = floatval($old_record['employer_pf'] ?? 0);
+                $old_employee_pf = floatval($old_record['employee_pf'] ?? 0);
+                $old_ceiling = floatval($old_record['pf_ceiling_amount'] ?? 0);
+                $old_eff_date = mysqli_real_escape_string($ai_conn, $old_record['effective_date'] ?? '');
+                $old_created_by = mysqli_real_escape_string($ai_conn, $old_record['updated_by'] ?: ($old_record['created_by'] ?: $username));
+
+                $history_sql = "INSERT INTO hrms_pf_rates_history (
+                                    company_id, branch_id, pf_rate_id, 
+                                    employer_pf, employee_pf, pf_ceiling_amount, 
+                                    effective_date, created_by, updated_by
+                                ) VALUES (
+                                    $company_id, $branch_id, $target_id, 
+                                    $old_employer_pf, $old_employee_pf, $old_ceiling, 
+                                    '$old_eff_date', '$old_created_by', '$username'
+                                )";
+                $ai_db->aiQuery($history_sql);
+            }
+
             $sql = "UPDATE hrms_pf_rates SET 
                         branch_id = $branch_id,
                         employer_pf = $employer_pf,
@@ -95,11 +145,11 @@ if ($action === 'view_rates') {
                         pf_ceiling_amount = $pf_ceiling_amount,
                         effective_date = '$effective_date',
                         updated_by = '$username'
-                    WHERE id = $id AND company_id = $company_id";
+                    WHERE id = $target_id AND company_id = $company_id";
 
             $result = $ai_db->aiQuery($sql);
             if ($result) {
-                echo json_encode(['status' => 'success', 'message' => 'PF Rate updated successfully.']);
+                echo json_encode(['status' => 'success', 'message' => 'PF Rate updated successfully.', 'record_id' => $target_id]);
             } else {
                 echo json_encode(['status' => 'error', 'message' => 'Failed to update PF Rate.']);
             }
@@ -114,7 +164,9 @@ if ($action === 'view_rates') {
 
             $result = $ai_db->aiQuery($sql);
             if ($result) {
-                echo json_encode(['status' => 'success', 'message' => 'PF Rate created successfully.', 'insert_id' => $ai_db->aiLastInsert()]);
+                $new_insert_id = $ai_db->aiLastInsert();
+
+                echo json_encode(['status' => 'success', 'message' => 'PF Rate created successfully.', 'insert_id' => $new_insert_id]);
             } else {
                 echo json_encode(['status' => 'error', 'message' => 'Failed to create PF Rate.']);
             }

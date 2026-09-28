@@ -8,18 +8,18 @@ body {
     height: 100%;
 }
 
-body:has(.emp-master-container) {
+body:has(.popup-master-container) {
     overflow: hidden !important;
 }
 
-.emp-master-container {
+.popup-master-container {
     height: calc(100vh - 100px);
     min-height: auto;
     overflow: hidden !important;
 }
 
 /* Draggable Floating Card */
-#draggableCard.emp-master-card {
+#draggableCard.popup-master-card {
     max-width: 1400px;
     width: 96%;
     border-radius: 8px !important;
@@ -30,20 +30,20 @@ body:has(.emp-master-container) {
     transition: opacity 0.15s ease-in-out;
     z-index: 1;
     max-height: calc(100vh - 120px) !important;
-    display: flex;
+    display: flex !important;
     flex-direction: column;
     overflow: hidden;
 }
 
-#draggableCard.emp-master-card>.card-header {
+#draggableCard.popup-master-card>.card-header {
     flex-shrink: 0;
 }
 
-#draggableCard.emp-master-card>.card-footer {
+#draggableCard.popup-master-card>.card-footer {
     flex-shrink: 0;
 }
 
-#draggableCard.emp-master-card>.card-body {
+#draggableCard.popup-master-card>.card-body {
     padding: 10px 15px !important;
     flex: 1 1 auto;
     min-height: 0;
@@ -63,7 +63,7 @@ body:has(.emp-master-container) {
 }
 
 /* Dialog Header (Acts as Drag Handle) */
-.emp-master-header {
+.popup-master-header {
     background: linear-gradient(90deg, #135ca3 0%, #00a2e8 100%);
     border-top-left-radius: 7px !important;
     border-top-right-radius: 7px !important;
@@ -71,11 +71,11 @@ body:has(.emp-master-container) {
     user-select: none;
 }
 
-.emp-master-header .emp-header-title {
+.popup-master-header .emp-header-title {
     font-size: 14px;
 }
 
-.emp-master-header .emp-header-title i {
+.popup-master-header .emp-header-title i {
     font-size: 16px;
 }
 
@@ -348,4 +348,280 @@ body:has(.emp-master-container) {
 
 .modal {
     z-index: 1200 !important;
+}
+
+/* ==========================================================================
+   Salary Process Styles
+   ========================================================================== */
+.salary-process-container {
+    min-height: calc(100vh - 120px);
+}
+
+#salaryProcessCard {
+    max-width: 1150px;
+    width: 100%;
+    border-radius: 8px !important;
+    border: 1px solid #c9c8cc !important;
+    background: #fff;
+    position: absolute;
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+    z-index: 1;
+}
+
+.salary-body {
+    background: #fff !important;
+}
+
+.salary-body .control-row,
+.salary-body .file-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 6px 7px;
+    background: #e8f0fe;
+    border: 1px solid #a3b8cc;
+    margin-bottom: 6px;
+}
+
+.salary-body .second-row {
+    min-height: 42px;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.control-group label,
+.check-label {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    color: #135ca3;
+}
+
+.salary-body .check-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.salary-body .check-label input {
+    width: 13px;
+    height: 13px;
+    margin: 0;
+    accent-color: #135ca3;
+}
+
+.process-group {
+    flex: 1 1 560px;
+}
+
+.process-group select {
+    width: 100%;
+}
+
+.small-group select {
+    width: 75px;
+}
+
+.monthday-group input {
+    width: 58px;
+}
+
+.salary-body .form-select-sm,
+.salary-body .form-control-sm {
+    height: 27px !important;
+    min-height: 27px !important;
+    padding: 2px 7px !important;
+    border: 1px solid #135ca3 !important;
+    border-radius: 2px !important;
+    font-size: 11px !important;
+    background: #fff !important;
+    color: #111 !important;
+}
+
+.salary-body .form-select-sm:focus,
+.salary-body .form-control-sm:focus {
+    border-color: #00a2e8 !important;
+    box-shadow: 0 0 4px rgba(0, 162, 232, 0.4) !important;
+}
+
+.process-type {
+    margin-left: auto;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.radio-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #135ca3;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.radio-label input {
+    margin: 0;
+    accent-color: #d39e00;
+}
+
+.file-row .btn {
+    height: 27px;
+    padding: 3px 9px !important;
+    border-radius: 2px;
+    font-size: 11px !important;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.file-name {
+    flex: 1 1 250px;
+    max-width: 430px;
+}
+
+.employee-count-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 8px;
+    margin-bottom: 6px;
+    background: #e8f0fe;
+    border: 1px solid #a3b8cc;
+    font-size: 11px;
+    color: #135ca3;
+}
+
+.employee-count-row strong {
+    font-size: 13px;
+    color: #111;
+}
+
+.count-note {
+    color: #6c757d;
+}
+
+.salary-table-wrapper {
+    background: #aaa;
+    border: 1px solid #a3b8cc;
+    overflow: auto;
+    height: 430px;
+    position: relative;
+}
+
+.salary-table {
+    min-width: 2500px;
+    font-size: 10px;
+    color: #111;
+    background: #aaa;
+}
+
+.salary-table th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: #f0f4f8 !important;
+    color: #135ca3 !important;
+    border: 1px solid #a3b8cc !important;
+    padding: 4px 7px !important;
+    height: 25px;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.salary-table td {
+    padding: 3px 7px !important;
+    height: 24px;
+    white-space: nowrap;
+    background: #fff;
+    border: 1px solid #c4d6ec !important;
+}
+
+.salary-table tbody tr:hover td {
+    background: #e8f0fe !important;
+}
+
+.empty-row {
+    height: 395px !important;
+    text-align: center;
+    vertical-align: middle !important;
+    color: #555;
+    background: #e8f0fe !important;
+}
+
+.empty-row .ti {
+    display: block;
+    font-size: 38px;
+    margin-bottom: 8px;
+    color: #135ca3;
+}
+
+.summary-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-top: 7px;
+    padding: 6px;
+    background: #e8f0fe;
+    border: 1px solid #a3b8cc;
+}
+
+.summary-row > div {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #135ca3;
+}
+
+.summary-row strong {
+    font-size: 11px;
+    color: #111;
+}
+
+.net-value {
+    color: #198754 !important;
+}
+
+.salary-footer {
+    min-height: 36px;
+    padding: 6px 10px;
+    background: #f0f4f8;
+    border-top: 1px solid #a3b8cc;
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: #4b465c;
+}
+
+@media (max-width: 900px) {
+    .process-type {
+        margin-left: 0;
+    }
+    .summary-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .salary-footer {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .summary-row {
+        grid-template-columns: 1fr;
+    }
+    .process-group {
+        flex-basis: 100%;
+    }
 }

@@ -3,11 +3,11 @@ $pageTitle = "Salary Check List / Final Salary Processing";
 include 'header.php';
 ?>
 
-<div class="container-fluid flex-grow-1 container-p-y position-relative" style="min-height: calc(100vh - 120px);">
-    <div id="salaryProcessCard" class="card shadow-lg border-1" style="max-width:1150px;width:100%;border-radius:8px!important;border:1px solid #c9c8cc!important;background:#fff;position:absolute;opacity:0;transition:opacity .15s ease-in-out;z-index:1;">
-        <div class="card-header p-2 px-3 text-white d-flex align-items-center justify-content-between" style="background:linear-gradient(90deg,#135ca3 0%,#00a2e8 100%);border-top-left-radius:7px!important;border-top-right-radius:7px!important;border-bottom:1px solid #104f9b;user-select:none;">
-            <h6 class="m-0 text-white fw-bold d-flex align-items-center" style="font-size:14px;"><i class="ti ti-calculator me-2" style="font-size:16px;"></i>SALARY CHECK LIST / FINAL SALARY PROCESSING</h6>
-            <span class="badge bg-danger px-2 py-1" style="font-size:10px;font-weight:600;"># Press [Esc] For Cancel</span>
+<div class="container-fluid flex-grow-1 container-p-y position-relative salary-process-container">
+    <div id="salaryProcessCard" class="card shadow-lg border-1">
+        <div class="card-header p-2 px-3 text-white d-flex align-items-center justify-content-between popup-master-header">
+            <h6 class="m-0 text-white fw-bold d-flex align-items-center emp-header-title"><i class="ti ti-calculator me-2"></i>SALARY CHECK LIST / FINAL SALARY PROCESSING</h6>
+            <span class="badge bg-danger px-2 py-1 emp-badge-shortcuts"># Press [Esc] For Cancel</span>
         </div>
 
         <div class="card-body p-3 bg-white salary-body">
@@ -39,8 +39,8 @@ include 'header.php';
                     </select>
                 </div>
                 <div class="control-group small-group"><label>First Day</label><select id="firstDay" class="form-select form-select-sm"><?php for($i=1;$i<=31;$i++): ?><option value="<?= $i ?>" <?= $i===1?'selected':'' ?>><?= $i ?></option><?php endfor; ?></select></div>
-                <div class="control-group small-group"><label>Year</label><select id="salaryYear" class="form-select form-select-sm"><?php $cy=(int)date('Y'); for($y=$cy-4;$y<=$cy+3;$y++): ?><option value="<?= $y ?>" <?= $y===$cy?'selected':'' ?>><?= $y ?></option><?php endfor; ?></select></div>
-                <div class="control-group small-group"><label>Month</label><select id="salaryMonth" class="form-select form-select-sm"><?php $months=[1=>'January',2=>'February',3=>'March',4=>'April',5=>'May',6=>'June',7=>'July',8=>'August',9=>'September',10=>'October',11=>'November',12=>'December']; $cm=(int)date('n'); foreach($months as $n=>$m): ?><option value="<?= $n ?>" <?= $n===$cm?'selected':'' ?>><?= $m ?></option><?php endforeach; ?></select></div>
+                <div class="control-group small-group"><label>Year</label><select id="salaryYear" class="form-select form-select-sm"><?php $defaultYear = (int)date('n') === 1 ? (int)date('Y') - 1 : (int)date('Y'); $cy=(int)date('Y'); for($y=$cy-4;$y<=$cy+3;$y++): ?><option value="<?= $y ?>" <?= $y===$defaultYear?'selected':'' ?>><?= $y ?></option><?php endfor; ?></select></div>
+                <div class="control-group small-group"><label>Month</label><select id="salaryMonth" class="form-select form-select-sm"><?php $months=[1=>'January',2=>'February',3=>'March',4=>'April',5=>'May',6=>'June',7=>'July',8=>'August',9=>'September',10=>'October',11=>'November',12=>'December']; $prevMonth = (int)date('n') === 1 ? 12 : (int)date('n') - 1; foreach($months as $n=>$m): ?><option value="<?= $n ?>" <?= $n===$prevMonth?'selected':'' ?>><?= $m ?></option><?php endforeach; ?></select></div>
             </div>
 
             <div class="control-row second-row">
@@ -75,7 +75,7 @@ include 'header.php';
                         <th>TIMELOSS</th><th>UNIFORM</th><th>SAFETY EQU</th><th>FACILITY</th><th>ATTBONUS</th>
                         <th>BASIC</th><th>HRA</th><th>MEDICAL</th><th>CONV.</th><th>EDU</th><th>WASHING</th>
                         <th>PAPER</th><th>RECOVERY</th><th>CITY</th><th>ATTEN</th><th>OTHER</th><th>PRO INC.</th>
-                        <th>OT AMOUNT</th><th>OT HOUR</th><th>SAVE AMOUNT</th><th>SAVE DEDUCTION</th>
+                        <th>OT AMOUNT</th><th>OT HOUR</th><th>LEAVE AMOUNT</th><th>LEAVE DEDUCTION</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"><tr><td colspan="2" class="empty-row"><i class="ti ti-file-spreadsheet"></i><span>Upload Employee Master Excel and click Load Data.</span></td></tr></tbody>
@@ -94,10 +94,6 @@ include 'header.php';
     </div>
 </div>
 
-<style>
-.salary-body{background:#fff!important}.salary-body .control-row,.salary-body .file-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:6px 7px;background:#e8f0fe;border:1px solid #a3b8cc;margin-bottom:6px}.salary-body .second-row{min-height:42px}.control-group{display:flex;align-items:center;gap:5px}.control-group label,.check-label{margin:0;font-size:11px;font-weight:600;white-space:nowrap;color:#135ca3}.salary-body .check-label{display:inline-flex;align-items:center;gap:5px}.salary-body .check-label input{width:13px;height:13px;margin:0;accent-color:#135ca3}.process-group{flex:1 1 560px}.process-group select{width:100%}.small-group select{width:75px}.monthday-group input{width:58px}.form-select-sm,.form-control-sm{height:27px!important;min-height:27px!important;padding:2px 7px!important;border:1px solid #135ca3!important;border-radius:2px!important;font-size:11px!important;background:#fff!important;color:#111!important}.form-select-sm:focus,.form-control-sm:focus{border-color:#00a2e8!important;box-shadow:0 0 4px rgba(0,162,232,.4)!important}.process-type{margin-left:auto;display:flex;gap:12px;align-items:center}.radio-label{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:#135ca3;cursor:pointer;white-space:nowrap}.radio-label input{margin:0;accent-color:#d39e00}.file-row .btn,.card-header .btn{height:27px;padding:3px 9px!important;border-radius:2px;font-size:11px!important;font-weight:600;line-height:1.2}.file-name{flex:1 1 250px;max-width:430px}.employee-count-row{display:flex;align-items:center;gap:7px;padding:5px 8px;margin-bottom:6px;background:#e8f0fe;border:1px solid #a3b8cc;font-size:11px;color:#135ca3}.employee-count-row strong{font-size:13px;color:#111}.count-note{color:#6c757d}.salary-table-wrapper{background:#aaa;border:1px solid #a3b8cc;overflow:auto;height:430px;position:relative}.salary-table{min-width:2500px;font-size:10px;color:#111;background:#aaa}.salary-table th{position:sticky;top:0;z-index:3;background:#f0f4f8!important;color:#135ca3!important;border:1px solid #a3b8cc!important;padding:4px 7px!important;height:25px;white-space:nowrap;font-weight:700}.salary-table td{padding:3px 7px!important;height:24px;white-space:nowrap;background:#fff;border:1px solid #c4d6ec!important}.salary-table tbody tr:hover td{background:#e8f0fe!important}.empty-row{height:395px!important;text-align:center;vertical-align:middle!important;color:#555;background:#e8f0fe!important}.empty-row .ti{display:block;font-size:38px;margin-bottom:8px;color:#135ca3}.summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:7px;padding:6px;background:#e8f0fe;border:1px solid #a3b8cc}.summary-row>div{display:flex;justify-content:center;gap:8px;font-size:11px;color:#135ca3}.summary-row strong{font-size:11px;color:#111}.net-value{color:#198754!important}.salary-footer{min-height:36px;padding:6px 10px;background:#f0f4f8;border-top:1px solid #a3b8cc;display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#4b465c}@media(max-width:900px){.process-type{margin-left:0}.summary-row{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.salary-footer{align-items:flex-start;flex-direction:column;gap:6px}.summary-row{grid-template-columns:1fr}.process-group{flex-basis:100%}}
-</style>
-
 <script>
 document.addEventListener('DOMContentLoaded',function(){
     const card=document.getElementById('salaryProcessCard');
@@ -111,17 +107,18 @@ document.addEventListener('DOMContentLoaded',function(){
     const summary=document.getElementById('summaryRow');
     const countEl=document.getElementById('employeeSalaryCount');
 
+    const salaryYear = document.getElementById('salaryYear');
     const salaryMonth = document.getElementById('salaryMonth');
     const paymentDate = document.getElementById('paymentDate');
 
     function updatePaymentDate() {
 
         const selectedMonth = parseInt(salaryMonth.value);
-        const currentYear = new Date().getFullYear();
+        const selectedYear = salaryYear ? parseInt(salaryYear.value) : new Date().getFullYear();
 
         // Next month
         let paymentMonth = selectedMonth + 1;
-        let paymentYear = currentYear;
+        let paymentYear = selectedYear;
 
         // December -> January of next year
         if (paymentMonth > 12) {
@@ -137,6 +134,9 @@ document.addEventListener('DOMContentLoaded',function(){
     }
 
     salaryMonth.addEventListener('change', updatePaymentDate);
+    if (salaryYear) {
+        salaryYear.addEventListener('change', updatePaymentDate);
+    }
 
     // Set initial payment date
     updatePaymentDate();
@@ -147,8 +147,14 @@ document.addEventListener('DOMContentLoaded',function(){
 
     let sourceHeaders = [];
     let sourceData = [];
- if(card){card.style.left=Math.max(0,(window.innerWidth-card.offsetWidth)/2)+'px';card.style.top='100px';card.style.opacity='1';dragElement(card)}
- browse.onclick=()=>fileInput.click();
+    if(card){
+        card.style.left=Math.max(0,(window.innerWidth-card.offsetWidth)/2)+'px';
+        card.style.top='100px';
+        card.style.opacity='1';
+        dragElement(card)
+    }
+
+    browse.onclick=()=>fileInput.click();
     fileInput.onchange=()=>{
         fileName.value=fileInput.files.length?fileInput.files[0].name:'';
         start.disabled = true;
@@ -233,20 +239,9 @@ document.addEventListener('DOMContentLoaded',function(){
         })
 
         .then(function (res) {
-
-            console.log(
-                'SERVER RESPONSE:',
-                res
-            );
-
-            /*
-            |--------------------------------------------------------------------------
-            | Success
-            |--------------------------------------------------------------------------
-            */
-
             if (res.status === 'success') {
-
+                // const previewTable = document.getElementById('previewTable');
+                // previewTable.innerHTML = res.preview_html;
                 rows = Array.isArray(res.data)
                     ? res.data
                     : [];
@@ -263,12 +258,6 @@ document.addEventListener('DOMContentLoaded',function(){
                     ? res.active_components
                     : [];
 
-                console.log('SOURCE HEADERS:', sourceHeaders);
-                console.log('SOURCE DATA:', sourceData);
-                console.log('ACTIVE COMPONENTS:', activeComponents);
-                console.log('SALARY ROWS:', rows);
-
-
                 renderTable(rows);
 
                 start.disabled =
@@ -276,12 +265,6 @@ document.addEventListener('DOMContentLoaded',function(){
 
                 countEl.textContent =
                     rows.length;
-
-                /*
-                |--------------------------------------------------------------------------
-                | Validation Warnings
-                |--------------------------------------------------------------------------
-                */
 
                 if (
                     Array.isArray(res.errors) &&
@@ -295,6 +278,8 @@ document.addEventListener('DOMContentLoaded',function(){
                 }
 
             } else {
+
+                alert(res.message || 'Error loading Excel file.');
 
                 showError(
                     res.message ||
@@ -534,67 +519,7 @@ document.addEventListener('DOMContentLoaded',function(){
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
     }
-    
-    // start.onclick=()=>{
-    //     if(!rows.length)return alert('Please click Load Data first.');
 
-    //     start.disabled=true;
-    //     start.innerHTML='<span class="spinner-border spinner-border-sm me-1"></span>Generating...';
-
-    //     const f=document.createElement('form');
-    //     f.method='POST';
-    //     f.action='actions/salary-process-action.php?action=start_process';
-    //     f.target='_blank';
-
-    //     const processType=(document.querySelector('input[name="processType"]:checked')||{}).value||'checklist';
-
-    //     // [
-    //     //     ['year',val('salaryYear')],
-    //     //     ['month',val('salaryMonth')],
-    //     //     ['first_day',val('firstDay')],
-    //     //     ['payment_date',val('paymentDate')],
-    //     //     ['month_day',val('monthDay')],
-    //     //     ['leave_enabled',checked('leaveEnabled')],
-    //     //     ['bonus_enabled',checked('bonusEnabled')],
-    //     //     ['gratuity_enabled',checked('gratuityEnabled')],
-    //     //     ['consider_woff',checked('considerWoff')],
-    //     //     ['random_week_off',checked('randomWeekOff')],
-    //     //     ['leave_in_muster',checked('leaveInMuster')],
-    //     //     ['process_type',processType],
-    //     //     ['source_headers',JSON.stringify(sourceHeaders||[])],
-    //     //     ['source_data',JSON.stringify(sourceData||[])],
-    //     //     ['preview_headers',JSON.stringify(headers||[])],
-    //     //     ['preview_data',JSON.stringify(rows||[])]
-    //     // ].forEach(x=>hidden(f,x[0],x[1]));
-    //     [
-    //         ['year', val('salaryYear')],
-    //         ['month', val('salaryMonth')],
-    //         ['first_day', val('firstDay')],
-    //         ['payment_date', val('paymentDate')],
-    //         ['month_day', val('monthDay')],
-    //         ['leave_enabled', checked('leaveEnabled')],
-    //         ['bonus_enabled', checked('bonusEnabled')],
-    //         ['gratuity_enabled', checked('gratuityEnabled')],
-    //         ['consider_woff', checked('considerWoff')],
-    //         ['random_week_off', checked('randomWeekOff')],
-    //         ['leave_in_muster', checked('leaveInMuster')],
-    //         ['process_type', processType],
-
-    //         // Send processed salary rows
-    //         ['preview_data', JSON.stringify(rows)]
-    //     ].forEach(function (x) {
-    //         hidden(f, x[0], x[1]);
-    //     });
-
-    //     document.body.appendChild(f);
-    //     f.submit();
-    //     f.remove();
-
-    //     setTimeout(()=>{
-    //         start.disabled=false;
-    //         start.innerHTML='<i class="ti ti-player-play me-1"></i>Start';
-    //     },500);
-    // };
     start.onclick = function () {
 
         /*
@@ -846,10 +771,24 @@ document.addEventListener('DOMContentLoaded',function(){
         }, 1000);
 
     };
- document.getElementById('btnExit').onclick=()=>location.href='index?change_company=1';document.addEventListener('keydown',e=>{if(e.key==='Escape')location.href='index?change_company=1'});
- document.getElementById('btnRegenerate').onclick=()=>{const y=val('salaryYear'),m=val('salaryMonth');if(confirm('Regenerate muster for '+y+'-'+String(m).padStart(2,'0')+'?'))location.href='actions/salary-process-action.php?action=regenerate_muster&year='+encodeURIComponent(y)+'&month='+encodeURIComponent(m)};
- function hidden(f,n,v){const i=document.createElement('input');i.type='hidden';i.name=n;i.value=v;f.appendChild(i)}function val(id){return document.getElementById(id).value}function checked(id){return document.getElementById(id).checked?1:0}function num(v){const n=parseFloat(String(v??'').replace(/,/g,''));return isNaN(n)?0:n}function find(h,names){const a=names.map(x=>String(x).toLowerCase().replace(/[^a-z0-9]/g,''));return h.findIndex(x=>a.includes(String(x).toLowerCase().replace(/[^a-z0-9]/g,'')))}function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
- function dragElement(el){let x=0,y=0,x0=0,y0=0;const h=el.querySelector('.card-header');if(!h)return;h.style.cursor='move';h.onmousedown=e=>{if(e.target.closest('button,a,input,select,textarea'))return;x0=e.clientX;y0=e.clientY;document.onmouseup=up;document.onmousemove=move};function move(e){e.preventDefault();x=x0-e.clientX;y=y0-e.clientY;x0=e.clientX;y0=e.clientY;el.style.top=(el.offsetTop-y)+'px';el.style.left=(el.offsetLeft-x)+'px'}function up(){document.onmouseup=null;document.onmousemove=null}}
 });
+document.getElementById('btnExit').onclick=()=>location.href='index?change_company=1';
+document.addEventListener('keydown',e=>{
+    if(e.key==='Escape')
+        location.href='index?change_company=1'
+});
+document.getElementById('btnRegenerate').onclick=()=>{
+    const y=val('salaryYear'),m=val('salaryMonth');
+    if(confirm('Regenerate muster for '+y+'-'+String(m).padStart(2,'0')+'?'))
+        location.href='actions/salary-process-action.php?action=regenerate_muster&year='+encodeURIComponent(y)+'&month='+encodeURIComponent(m)
+};
+
+function hidden(f,n,v){const i=document.createElement('input');i.type='hidden';i.name=n;i.value=v;f.appendChild(i)}
+function val(id){return document.getElementById(id).value}
+function checked(id){return document.getElementById(id).checked?1:0}
+function num(v){const n=parseFloat(String(v??'').replace(/,/g,''));return isNaN(n)?0:n}
+function find(h,names){const a=names.map(x=>String(x).toLowerCase().replace(/[^a-z0-9]/g,''));return h.findIndex(x=>a.includes(String(x).toLowerCase().replace(/[^a-z0-9]/g,'')))}
+function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+function dragElement(el){let x=0,y=0,x0=0,y0=0;const h=el.querySelector('.card-header');if(!h)return;h.style.cursor='move';h.onmousedown=e=>{if(e.target.closest('button,a,input,select,textarea'))return;x0=e.clientX;y0=e.clientY;document.onmouseup=up;document.onmousemove=move};function move(e){e.preventDefault();x=x0-e.clientX;y=y0-e.clientY;x0=e.clientX;y0=e.clientY;el.style.top=(el.offsetTop-y)+'px';el.style.left=(el.offsetLeft-x)+'px'}function up(){document.onmouseup=null;document.onmousemove=null}}
 </script>
 <?php include 'footer.php'; ?>

@@ -1,0 +1,1 @@
+hrms_pf_rates_history tbl add krvu testing ane live ma
