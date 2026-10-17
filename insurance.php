@@ -4,6 +4,265 @@ $ai_core->aiCheckLogin();
 
 $mode = $_REQUEST['mode'] ?? 'list';
 
+// ---- EARLY AJAX INTERCEPT (must be before header.php) ----
+if ($mode === 'list' && isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == 1) {
+    // This block handles AJAX filter/pagination requests.
+    // It must run before header.php to avoid HTML contaminating the JSON response.
+
+    $table = "tbl_insurance";
+    $page_req = isset($_REQUEST['page']) ? intval($_REQUEST['page']) : 1;
+    $limit = 10;
+    $offset = ($page_req - 1) * $limit;
+
+    $where = " WHERE 1=1";
+    $search = $_REQUEST['search'] ?? '';
+    if (!empty($search)) {
+        $where .= " AND (t.policy_no LIKE '%$search%' OR t.email LIKE '%$search%' OR t.mobile LIKE '%$search%' OR t.gst_no LIKE '%$search%' OR c.name LIKE '%$search%' OR cons.name LIKE '%$search%')";
+    }
+    if (!empty($_REQUEST['insurance_type'])) {
+        $where .= " AND t.insurance_type LIKE '" . addslashes($_REQUEST['insurance_type']) . "'";
+    }
+    if (!empty($_REQUEST['business_type'])) {
+        $where .= " AND t.business_type LIKE '" . addslashes($_REQUEST['business_type']) . "'";
+    }
+    if (!empty($_REQUEST['customer_type'])) {
+        $where .= " AND t.customer_type LIKE '" . addslashes($_REQUEST['customer_type']) . "'";
+    }
+    if (!empty($_REQUEST['medical_cover'])) {
+        $where .= " AND t.medical_cover = '" . intval($_REQUEST['medical_cover']) . "'";
+    }
+    if (!empty($_REQUEST['insurance_company'])) {
+        $where .= " AND t.insurance_company = '" . intval($_REQUEST['insurance_company']) . "'";
+    }
+    if (!empty($_REQUEST['from_date'])) {
+        $where .= " AND t.start_date >= '" . addslashes($_REQUEST['from_date']) . "'";
+    }
+    if (!empty($_REQUEST['to_date'])) {
+        $where .= " AND t.start_date <= '" . addslashes($_REQUEST['to_date']) . "'";
+    }
+    if (!empty($_REQUEST['policy_status'])) {
+        $ps = $_REQUEST['policy_status'];
+        if ($ps === 'Running') {
+            $where .= " AND CURDATE() BETWEEN t.start_date AND t.end_date";
+        } elseif ($ps === 'Close') {
+            $where .= " AND CURDATE() > t.end_date";
+        } elseif ($ps === 'Pending') {
+            $where .= " AND CURDATE() < t.start_date";
+        }
+    }
+
+    $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table t
+            LEFT JOIN tbl_vendors_companies c ON t.company_id = c.id
+            LEFT JOIN tbl_vendors_consumers cons ON t.consumer_id = cons.id $where");
+    $total_records = $total_res[0]->total ?? 0;
+    $total_pages = $total_records > 0 ? ceil($total_records / $limit) : 1;
+    $page = $page_req;
+
+    $sql = "SELECT t.*,
+                   CONCAT(IFNULL(c.name, ''), IF(c.name IS NOT NULL AND cons.name IS NOT NULL, ' / ', ''), IFNULL(cons.name, '')) as client_name,
+                   mc.name as mc_name, ic.name as ic_name
+            FROM $table t
+            LEFT JOIN tbl_vendors_companies c ON t.company_id = c.id
+            LEFT JOIN tbl_vendors_consumers cons ON t.consumer_id = cons.id
+            LEFT JOIN tbl_medical_covers mc ON t.medical_cover = mc.id
+            LEFT JOIN tbl_insurance_companies ic ON t.insurance_company = ic.id
+            $where ORDER BY t.id DESC LIMIT $limit OFFSET $offset";
+    $list_data = $ai_db->aiGetQueryObj($sql);
+    if (!is_array($list_data)) $list_data = [];
+
+    ob_start();
+    $type_colors = [
+        'life'    => ['bg' => '#e8f5e9', 'color' => '#2e7d32', 'label' => 'Life'],
+        'health'  => ['bg' => '#e3f2fd', 'color' => '#1565c0', 'label' => 'Health'],
+        'vehicle' => ['bg' => '#fff3e0', 'color' => '#e65100', 'label' => 'Vehicle'],
+        'fire'    => ['bg' => '#fce4ec', 'color' => '#c62828', 'label' => 'Fire'],
+        'ecp'     => ['bg' => '#f3e5f5', 'color' => '#6a1b9a', 'label' => 'ECP'],
+    ];
+    $redirection_url_ajax = 'insurance.php';
+    $today = date('Y-m-d');
+    $sr_no = ($page - 1) * $limit + 1;
+    ?>
+        <table class="table table-hover align-middle mb-0" style="font-size:12.2px;">
+            <thead style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
+                <tr>
+                    <th class="ps-4 py-3 text-muted fw-bold" style="width:40px;">Sr</th>
+                    <th class="py-3 text-muted fw-bold">Insurance Type</th>
+                    <th class="py-3 text-muted fw-bold">Vendor Detail</th>
+                    <th class="py-3 text-muted fw-bold">Type Details</th>
+                    <th class="py-3 text-muted fw-bold">Policy Detail</th>
+                    <th class="py-3 text-muted fw-bold">Insurance/Medical</th>
+                    <th class="py-3 text-muted fw-bold">Gross Premium</th>
+                    <th class="py-3 text-muted fw-bold">Status</th>
+                    <th class="py-3 text-muted fw-bold">Document</th>
+                    <th class="py-3 text-muted fw-bold text-end pe-4">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($list_data)): ?>
+                    <tr>
+                        <td colspan="10" class="text-center py-5 text-muted">
+                            <i class="ti ti-file-off fs-40 mb-2 d-block"></i>
+                            No policies found.
+                        </td>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach ($list_data as $row):
+                        $t = strtolower($row->insurance_type ?? '');
+                        $tc = $type_colors[$t] ?? ['bg' => '#f5f5f5', 'color' => '#555', 'label' => ucfirst($t)];
+
+                        $ps_label = '—';
+                        $ps_class = 'bg-light text-muted';
+                        if (!empty($row->start_date) && !empty($row->end_date)) {
+                            if ($today < $row->start_date) {
+                                $ps_label = 'Pending';
+                                $ps_class = 'bg-soft-info text-info';
+                            } elseif ($today >= $row->start_date && $today <= $row->end_date) {
+                                $ps_label = 'Running';
+                                $ps_class = 'bg-soft-success text-success';
+                            } else {
+                                $ps_label = 'Close';
+                                $ps_class = 'bg-soft-danger text-danger';
+                            }
+                        }
+                        $start_disp = (!empty($row->start_date) && $row->start_date != '0000-00-00') ? date('d M, Y', strtotime($row->start_date)) : '—';
+                        $end_disp   = (!empty($row->end_date) && $row->end_date != '0000-00-00') ? date('d M, Y', strtotime($row->end_date)) : '—';
+                        $can_edit   = $ai_core->aiCheckPermission('insurance', 'edit');
+                        $can_delete = $ai_core->aiCheckPermission('insurance', 'delete');
+                    ?>
+                        <tr>
+                            <td class="ps-4 py-3 text-muted fw-bold"><?php echo $sr_no++; ?></td>
+                            <td>
+                                <span class="badge fw-bold px-2 py-1 rounded" style="background:<?php echo $tc['bg']; ?>;color:<?php echo $tc['color']; ?>;font-size:11px;">
+                                    <?php echo htmlspecialchars($tc['label']); ?>
+                                </span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark mb-1"><?php echo htmlspecialchars($row->client_name ?: '—'); ?></div>
+                                <?php if (!empty($row->email)): ?>
+                                    <div class="text-muted small"><i class="ti ti-mail me-1"></i><?php echo htmlspecialchars($row->email); ?></div>
+                                <?php endif; ?>
+                                <?php if (!empty($row->mobile)): ?>
+                                    <div class="text-muted small"><i class="ti ti-phone me-1"></i><?php echo htmlspecialchars($row->mobile); ?></div>
+                                <?php endif; ?>
+                                <?php if (!empty($row->gst_no)): ?>
+                                    <div class="text-muted small"><i class="ti ti-file-invoice me-1"></i><?php echo htmlspecialchars($row->gst_no); ?></div>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <div class="fw-semibold small"><?php echo htmlspecialchars($row->business_type ?: '—'); ?></div>
+                                <div class="text-muted small"><?php echo htmlspecialchars($row->customer_type ?: '—'); ?></div>
+                            </td>
+                            <td>
+                                <?php if (!empty($row->policy_no)): ?>
+                                    <div class="fw-bold text-dark mb-1">
+                                        <i class="ti ti-hash me-1 text-muted"></i><?php echo htmlspecialchars($row->policy_no); ?>
+                                    </div>
+                                <?php endif; ?>
+                                <div class="text-muted small"><i class="ti ti-calendar me-1"></i><?php echo $start_disp; ?></div>
+                                <div class="text-muted small"><i class="ti ti-calendar me-1"></i><?php echo $end_disp; ?></div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark mb-1">
+                                    <?php echo htmlspecialchars($row->ic_name ?? ($row->insurance_company ?: '—')); ?>
+                                </div>
+                                <?php if ($row->mc_name): ?>
+                                    <div class="badge bg-soft-primary text-primary border-0 fw-normal"
+                                        style="font-size:10px;"><?php echo htmlspecialchars($row->mc_name); ?></div>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-dark" style="font-size:14px;">₹<?php echo number_format($row->gross_premium, 2); ?></span>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill <?php echo $ps_class; ?> px-3 py-2 fw-bold"
+                                    style="font-size:10px; letter-spacing:0.5px;">
+                                    <?php echo strtoupper($ps_label); ?>
+                                </span>
+                            </td>
+                            <td>
+                                <?php if (!empty($row->policy_doc)): ?>
+                                    <a href="uploads/insurance/<?php echo htmlspecialchars($row->policy_doc); ?>" target="_blank"
+                                        class="btn btn-soft-primary btn-sm rounded-circle shadow-none" title="View Document">
+                                        <i class="ti ti-file-text fs-18"></i>
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-muted small">—</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <?php if ($can_edit): ?>
+                                        <a href="insurance.php?mode=edit&id=<?php echo $row->id; ?>" class="btn btn-soft-primary btn-sm rounded-circle shadow-none" title="Edit">
+                                            <i class="ti ti-edit fs-16"></i>
+                                        </a>
+                                    <?php endif; ?>
+                                    <?php if ($can_delete): ?>
+                                        <a href="insurance.php?mode=delete&id=<?php echo $row->id; ?>" onclick="return confirm('Delete this policy?')" class="btn btn-soft-danger btn-sm rounded-circle shadow-none" title="Delete">
+                                            <i class="ti ti-trash fs-16"></i>
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+        <?php if ($total_records > $limit): ?>
+            <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top bg-light">
+                <small class="text-muted"><?php echo $total_records; ?> records found</small>
+                <nav>
+                    <ul class="pagination pagination-sm justify-content-end mb-0">
+                        <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                            <a class="page-link ajax-page" href="#" data-page="<?php echo $page - 1; ?>">Previous</a>
+                        </li>
+                        <?php
+                        if ($total_pages <= 10) {
+                            for ($i = 1; $i <= $total_pages; $i++) {
+                                $active = ($i == $page) ? 'active' : '';
+                                echo "<li class='page-item $active'><a class='page-link ajax-page' href='#' data-page='$i'>$i</a></li>";
+                            }
+                        } else {
+                            if ($page < 4) {
+                                for ($i = 1; $i <= 4; $i++) {
+                                    $active = ($i == $page) ? 'active' : '';
+                                    echo "<li class='page-item $active'><a class='page-link ajax-page' href='#' data-page='$i'>$i</a></li>";
+                                }
+                                echo "<li class='page-item disabled'><span class='page-link'>...</span></li>";
+                                echo "<li class='page-item'><a class='page-link ajax-page' href='#' data-page='$total_pages'>$total_pages</a></li>";
+                            } elseif ($page >= 4 && $page < $total_pages - 3) {
+                                echo "<li class='page-item'><a class='page-link ajax-page' href='#' data-page='1'>1</a></li>";
+                                echo "<li class='page-item disabled'><span class='page-link'>...</span></li>";
+                                for ($i = $page; $i <= $page + 3; $i++) {
+                                    $active = ($i == $page) ? 'active' : '';
+                                    echo "<li class='page-item $active'><a class='page-link ajax-page' href='#' data-page='$i'>$i</a></li>";
+                                }
+                                echo "<li class='page-item disabled'><span class='page-link'>...</span></li>";
+                                echo "<li class='page-item'><a class='page-link ajax-page' href='#' data-page='$total_pages'>$total_pages</a></li>";
+                            } else {
+                                echo "<li class='page-item'><a class='page-link ajax-page' href='#' data-page='1'>1</a></li>";
+                                echo "<li class='page-item disabled'><span class='page-link'>...</span></li>";
+                                for ($i = $total_pages - 4; $i <= $total_pages; $i++) {
+                                    $active = ($i == $page) ? 'active' : '';
+                                    echo "<li class='page-item $active'><a class='page-link ajax-page' href='#' data-page='$i'>$i</a></li>";
+                                }
+                            }
+                        }
+                        ?>
+                        <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
+                            <a class="page-link ajax-page" href="#" data-page="<?php echo $page + 1; ?>">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        <?php endif; ?>
+    <?php
+    $html = ob_get_clean();
+    header('Content-Type: application/json');
+    echo json_encode(['html' => $html]);
+    exit;
+}
+
 // Check Permissions
 if ($mode == 'list' && !$ai_core->aiCheckPermission('insurance', 'view')) {
     $_SESSION['error'] = "You do not have permission to view insurance records.";
@@ -676,6 +935,131 @@ if (!function_exists('getInsuranceSampleFieldLabel')) {
     }
 }
 
+// --- HANDLE EXCEL EXPORT ---
+if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
+    if (!$ai_core->aiCheckPermission('insurance', 'view')) {
+        $_SESSION['error'] = "You do not have permission to export insurance records.";
+        $ai_core->aiGoPage($redirection_url);
+        exit;
+    }
+    ob_clean();
+    require_once 'includes/xlsx_helper.php';
+
+    $where = " WHERE 1=1";
+    $search = $_REQUEST['search'] ?? '';
+    if (!empty($search)) {
+        $where .= " AND (t.policy_no LIKE '%$search%' OR t.email LIKE '%$search%' OR t.mobile LIKE '%$search%' OR t.gst_no LIKE '%$search%' OR c.name LIKE '%$search%' OR cons.name LIKE '%$search%')";
+    }
+
+    if (!empty($_REQUEST['insurance_type'])) {
+        $where .= " AND t.insurance_type LIKE '" . addslashes($_REQUEST['insurance_type']) . "'";
+    }
+    if (!empty($_REQUEST['business_type'])) {
+        $where .= " AND t.business_type LIKE '" . addslashes($_REQUEST['business_type']) . "'";
+    }
+    if (!empty($_REQUEST['customer_type'])) {
+        $where .= " AND t.customer_type LIKE '" . addslashes($_REQUEST['customer_type']) . "'";
+    }
+    if (!empty($_REQUEST['medical_cover'])) {
+        $where .= " AND t.medical_cover = '" . intval($_REQUEST['medical_cover']) . "'";
+    }
+    if (!empty($_REQUEST['insurance_company'])) {
+        $where .= " AND t.insurance_company = '" . intval($_REQUEST['insurance_company']) . "'";
+    }
+    if (!empty($_REQUEST['policy_status'])) {
+        $ps = $_REQUEST['policy_status'];
+        if ($ps === 'Running') {
+            $where .= " AND CURDATE() BETWEEN t.start_date AND t.end_date";
+        } elseif ($ps === 'Close') {
+            $where .= " AND CURDATE() > t.end_date";
+        } elseif ($ps === 'Pending') {
+            $where .= " AND CURDATE() < t.start_date";
+        }
+    }
+
+    $f_start = $_REQUEST['start_date'] ?? ($_REQUEST['from_date'] ?? '');
+    $f_end = $_REQUEST['end_date'] ?? ($_REQUEST['to_date'] ?? '');
+    if (!empty($f_start)) {
+        $where .= " AND t.start_date >= '" . addslashes($f_start) . "'";
+    }
+    if (!empty($f_end)) {
+        $where .= " AND t.start_date <= '" . addslashes($f_end) . "'";
+    }
+
+    $sql = "SELECT t.*, 
+                   CONCAT(IFNULL(c.name, ''), IF(c.name IS NOT NULL AND cons.name IS NOT NULL, ' / ', ''), IFNULL(cons.name, '')) as client_name,
+                   mc.name as mc_name, ic.name as ic_name 
+            FROM $table t 
+            LEFT JOIN tbl_vendors_companies c ON t.company_id = c.id
+            LEFT JOIN tbl_vendors_consumers cons ON t.consumer_id = cons.id
+            LEFT JOIN tbl_medical_covers mc ON t.medical_cover = mc.id
+            LEFT JOIN tbl_insurance_companies ic ON t.insurance_company = ic.id
+            $where ORDER BY t.id DESC";
+    $policies = $ai_db->aiGetQueryObj($sql);
+    if (!is_array($policies)) {
+        $policies = [];
+    }
+
+    $columns = [
+        'Sr No',
+        'Insurance Type',
+        'Vendor / Client Name',
+        'Email Address',
+        'Mobile Number',
+        'GST Number',
+        'Business Type',
+        'Customer Type',
+        'Policy Number',
+        'Start Date',
+        'End Date',
+        'Insurance Company',
+        'Medical Cover',
+        'Gross Premium',
+        'Status'
+    ];
+
+    $rows = [];
+    $sr = 1;
+    $today = date('Y-m-d');
+    foreach ($policies as $row) {
+        $start_d = (!empty($row->start_date) && $row->start_date != '0000-00-00') ? date('d-m-Y', strtotime($row->start_date)) : '';
+        $end_d = (!empty($row->end_date) && $row->end_date != '0000-00-00') ? date('d-m-Y', strtotime($row->end_date)) : '';
+
+        $ps_label = '—';
+        if (!empty($row->start_date) && !empty($row->end_date)) {
+            if ($today < $row->start_date) {
+                $ps_label = 'Pending';
+            } elseif ($today >= $row->start_date && $today <= $row->end_date) {
+                $ps_label = 'Running';
+            } else {
+                $ps_label = 'Close';
+            }
+        }
+
+        $rows[] = [
+            $sr++,
+            strtoupper($row->insurance_type ?? ''),
+            $row->client_name ?: '—',
+            $row->email ?: '',
+            $row->mobile ?: '',
+            $row->gst_no ?: '',
+            $row->business_type ?: '',
+            $row->customer_type ?: '',
+            $row->policy_no ?: '',
+            $start_d,
+            $end_d,
+            $row->ic_name ?? ($row->insurance_company ?: ''),
+            $row->mc_name ?: '',
+            $row->gross_premium ?? '0',
+            $ps_label
+        ];
+    }
+
+    $export_filename = 'Insurance_Policies_' . date('Ymd_His') . '.xlsx';
+    download_sample_xlsx($export_filename, $columns, $rows);
+    exit;
+}
+
 // --- HANDLE SAMPLE DOWNLOAD ---
 if (isset($_GET['action']) && $_GET['action'] == 'download_sample') {
     if (!$ai_core->aiCheckPermission('insurance', 'add')) {
@@ -1143,12 +1527,15 @@ $segments = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_segments WHERE statu
                     </h3>
                 </div>
                 <div class="mb-2 d-flex gap-2">
-                    <button class="btn btn-soft-primary d-flex align-items-center shadow-sm" type="button"
+                    <button class="btn btn-soft-secondary d-flex align-items-center shadow-sm" type="button"
                         data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false">
                         <i class="ti ti-filter me-2"></i>Filter
                     </button>
+                    <a href="javascript:void(0)" onclick="exportInsuranceData()" class="btn btn-soft-success d-flex align-items-center px-3 shadow-sm" title="Export to Excel" style="text-transform: capitalize !important; font-weight: 600;">
+                        <i class="ti ti-file-spreadsheet me-2"></i>Export
+                    </a>
                     <?php if ($ai_core->aiCheckPermission('insurance', 'add')): ?>
-                        <button class="btn btn-soft-success d-flex align-items-center shadow-sm" type="button"
+                        <button class="btn btn-soft-primary d-flex align-items-center shadow-sm" type="button"
                             data-bs-toggle="modal" data-bs-target="#importModal">
                             <i class="ti ti-file-import me-2"></i>Import
                         </button>
@@ -2112,6 +2499,65 @@ $segments = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_segments WHERE statu
         }
 
         $(document).ready(function () {
+            // footer.php already initializes $('select').select2() globally
+            toggleFields();
+
+            $('#insurance_type').on('change', function () {
+                // When insurance type changes, dependent client/company selection and auto-filled fields
+                // must be cleared so old values don't remain.
+                resetClientSelectors();
+                clearClientDetails();
+                toggleFields();
+            });
+
+            $('#client_combined').on('change select2:select', function () {
+                fillClientDetails('client_combined');
+            });
+
+            $('#company_only').on('change select2:select', function () {
+                fillClientDetails('company_only');
+            });
+
+            $('#consumer_id').on('change select2:select', function () {
+                fillClientDetails('consumer_id');
+            });
+
+            // Date validation: End Date cannot be before Start Date
+            $('#policy_start_date').on('change', function () {
+                var startDate = $(this).val();
+                $('#policy_end_date').attr('min', startDate);
+                if ($('#policy_end_date').val() && $('#policy_end_date').val() < startDate) {
+                    $('#policy_end_date').val('');
+                }
+            });
+
+            if ($('#policy_start_date').val()) {
+                $('#policy_end_date').attr('min', $('#policy_start_date').val());
+            }
+
+            // Bootstrap 5 form validation
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        });
+    </script>
+<?php endif; ?>
+
+<?php if ($mode == 'list'): ?>
+    <script>
+        function exportInsuranceData() {
+            var filterData = $('#ajaxFilterForm').serialize();
+            window.location.href = 'insurance.php?action=export_excel&' + filterData;
+        }
+
+        $(document).ready(function () {
             // --- AJAX FILTERING LOGIC ---
             function loadListData() {
                 var formData = $('#ajaxFilterForm').serialize();
@@ -2155,17 +2601,6 @@ $segments = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_segments WHERE statu
                 }
             });
 
-            // Live filtering disabled as per request - Only filter on button click
-            /*
-            var filterTimeout;
-            $('.filter-input').on('change keyup', function() {
-                clearTimeout(filterTimeout);
-                filterTimeout = setTimeout(function() {
-                    loadListData();
-                }, 600);
-            });
-            */
-
             $(document).on('click', '.ajax-page', function (e) {
                 e.preventDefault();
                 var page = $(this).data('page');
@@ -2179,55 +2614,6 @@ $segments = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_segments WHERE statu
                 $('.filter-input').val('').trigger('change');
                 $('#currentPage').val(1);
                 loadListData();
-            });
-
-            // footer.php already initializes $('select').select2() globally
-            toggleFields();
-
-            $('#insurance_type').on('change', function () {
-                // When insurance type changes, dependent client/company selection and auto-filled fields
-                // must be cleared so old values don't remain.
-                resetClientSelectors();
-                clearClientDetails();
-                toggleFields();
-            });
-
-            $('#client_combined').on('change select2:select', function () {
-                fillClientDetails('client_combined');
-            });
-
-            $('#company_only').on('change select2:select', function () {
-                fillClientDetails('company_only');
-            });
-
-            $('#consumer_id').on('change select2:select', function () {
-                fillClientDetails('consumer_id');
-            });
-
-            // Date validation: End Date cannot be before Start Date
-            $('#policy_start_date').on('change', function () {
-                var startDate = $(this).val();
-                $('#policy_end_date').attr('min', startDate);
-                if ($('#policy_end_date').val() && $('#policy_end_date').val() < startDate) {
-                    $('#policy_end_date').val('');
-                }
-            });
-
-            if ($('#policy_start_date').val()) {
-                $('#policy_end_date').attr('min', $('#policy_start_date').val());
-            }
-
-
-            // Bootstrap 5 form validation
-            var forms = document.querySelectorAll('.needs-validation');
-            Array.prototype.slice.call(forms).forEach(function (form) {
-                form.addEventListener('submit', function (event) {
-                    if (!form.checkValidity()) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                    }
-                    form.classList.add('was-validated');
-                }, false);
             });
 
             // Initial Load

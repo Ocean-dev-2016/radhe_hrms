@@ -126,6 +126,62 @@ if (isset($_POST['btn_import'])) {
     }
 }
 
+// --- HANDLE EXCEL EXPORT ---
+if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
+    if (!$ai_core->aiCheckPermission('vendors_consumers', 'view')) {
+        $_SESSION['error'] = "You do not have permission to export consumers.";
+        $ai_core->aiGoPage($redirection_url);
+        exit;
+    }
+    ob_clean();
+    require_once 'includes/xlsx_helper.php';
+
+    $where = " WHERE 1=1";
+    $search = $_GET['search'] ?? '';
+    $status_filter = $_GET['status_filter'] ?? '';
+
+    if (!empty($search)) {
+        $search_esc = addslashes($search);
+        $where .= " AND (name LIKE '%$search_esc%' OR email LIKE '%$search_esc%' OR phone LIKE '%$search_esc%')";
+    }
+    if (!empty($status_filter)) {
+        $status_esc = addslashes($status_filter);
+        $where .= " AND status = '$status_esc'";
+    }
+
+    $sql = "SELECT * FROM $table $where ORDER BY id DESC";
+    $consumers = $ai_db->aiGetQueryObj($sql);
+    if (!is_array($consumers)) {
+        $consumers = [];
+    }
+
+    $columns = [
+        'Sr No',
+        'Consumer Name',
+        'Email Address',
+        'Phone Number',
+        'Full Address',
+        'Status'
+    ];
+
+    $rows = [];
+    $sr = 1;
+    foreach ($consumers as $row) {
+        $rows[] = [
+            $sr++,
+            $row->name ?? '',
+            $row->email ?? '',
+            $row->phone ?? '',
+            $row->address ?? '',
+            ucfirst($row->status ?? '')
+        ];
+    }
+
+    $export_filename = 'Consumers_' . date('Ymd_His') . '.xlsx';
+    download_sample_xlsx($export_filename, $columns, $rows);
+    exit;
+}
+
 // --- HANDLE SAMPLE DOWNLOAD ---
 if (isset($_GET['action']) && $_GET['action'] == 'download_sample') {
     if (!$ai_core->aiCheckPermission('vendors_consumers', 'add')) {
@@ -308,12 +364,15 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
                     </nav>
                 </div>
                 <div class="mb-2 d-flex gap-2">
-                    <button class="btn btn-soft-primary d-flex align-items-center shadow-sm" type="button"
+                    <button class="btn btn-soft-secondary d-flex align-items-center shadow-sm" type="button"
                         data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false">
                         <i class="ti ti-filter me-2"></i>Filter
                     </button>
+                    <a href="javascript:void(0)" onclick="exportData()" class="btn btn-soft-success d-flex align-items-center px-3" title="Export to Excel" style="text-transform: capitalize !important; font-weight: 600;">
+                        <i class="ti ti-file-spreadsheet me-2"></i>Export
+                    </a>
                     <?php if ($ai_core->aiCheckPermission('vendors_consumers', 'add')): ?>
-                        <button class="btn btn-soft-success d-flex align-items-center shadow-sm" type="button"
+                        <button class="btn btn-soft-primary d-flex align-items-center shadow-sm" type="button"
                             data-bs-toggle="modal" data-bs-target="#importModal">
                             <i class="ti ti-file-import me-2"></i>Import
                         </button>
@@ -616,6 +675,19 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
     function resetFilters() {
         document.getElementById('filterForm').reset();
         loadData(1);
+    }
+
+    function exportData() {
+        const search = document.getElementById('searchInput') ? encodeURIComponent(document.getElementById('searchInput').value.trim()) : '';
+        const status = document.getElementById('statusFilter') ? encodeURIComponent(document.getElementById('statusFilter').value.trim()) : '';
+        let url = 'vendors_consumers.php?action=export_excel';
+        if (search) {
+            url += '&search=' + search;
+        }
+        if (status) {
+            url += '&status_filter=' + status;
+        }
+        window.location.href = url;
     }
 
     let timeout = null;

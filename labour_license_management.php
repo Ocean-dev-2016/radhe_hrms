@@ -327,6 +327,63 @@ if (isset($_POST['btn_import'])) {
     }
 }
 
+// --- HANDLE EXCEL EXPORT ---
+if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
+    if (!$ai_core->aiCheckPermission('labour_license', 'view')) {
+        $_SESSION['error'] = "You do not have permission to export labour licenses.";
+        $ai_core->aiGoPage($redirection_url);
+        exit;
+    }
+    ob_clean();
+    require_once 'includes/xlsx_helper.php';
+
+    $where = " WHERE 1=1";
+    $search = $_GET['search'] ?? '';
+
+    if (!empty($search)) {
+        $search_esc = addslashes($search);
+        $where .= " AND (t.license_number LIKE '%$search_esc%' OR c.company_name LIKE '%$search_esc%')";
+    }
+
+    $sql = "SELECT t.*, c.company_name as company_name 
+            FROM $table t 
+            LEFT JOIN tbl_vendors_companies c ON t.company_id = c.id 
+            $where ORDER BY t.id DESC";
+    $licenses = $ai_db->aiGetQueryObj($sql);
+    if (!is_array($licenses)) {
+        $licenses = [];
+    }
+
+    $columns = [
+        'Sr No',
+        'Company Name',
+        'License Number',
+        'License Expiry Date',
+        'License Type',
+        'Remarks',
+        'Status'
+    ];
+
+    $rows = [];
+    $sr = 1;
+    foreach ($licenses as $row) {
+        $license_date = (!empty($row->license_date) && $row->license_date != '0000-00-00') ? date('d-m-Y', strtotime($row->license_date)) : '';
+        $rows[] = [
+            $sr++,
+            $row->company_name ?? '',
+            $row->license_number ?? '',
+            $license_date,
+            $row->license_type ?? '',
+            $row->remarks ?? '',
+            ucfirst($row->status ?? '')
+        ];
+    }
+
+    $export_filename = 'Labour_Licenses_' . date('Ymd_His') . '.xlsx';
+    download_sample_xlsx($export_filename, $columns, $rows);
+    exit;
+}
+
 // --- HANDLE SAMPLE DOWNLOAD ---
 if (isset($_GET['action']) && $_GET['action'] == 'download_sample') {
     if (!$ai_core->aiCheckPermission('labour_license', 'add')) {
@@ -396,12 +453,15 @@ if ($mode === 'list') {
                     <h3 class="page-title mb-1"><?php echo $page_nm; ?></h3>
                 </div>
                 <div class="mb-2 d-flex gap-2">
-                    <button class="btn btn-soft-primary d-flex align-items-center shadow-sm" type="button"
+                    <button class="btn btn-soft-secondary d-flex align-items-center shadow-sm" type="button"
                         data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false">
                         <i class="ti ti-filter me-2"></i>Filter
                     </button>
+                    <a href="javascript:void(0)" onclick="exportData()" class="btn btn-soft-success d-flex align-items-center px-3" title="Export to Excel" style="text-transform: capitalize !important; font-weight: 600;">
+                        <i class="ti ti-file-spreadsheet me-2"></i>Export
+                    </a>
                     <?php if ($ai_core->aiCheckPermission('labour_license', 'add')): ?>
-                        <button class="btn btn-soft-success d-flex align-items-center shadow-sm" type="button"
+                        <button class="btn btn-soft-primary d-flex align-items-center shadow-sm" type="button"
                             data-bs-toggle="modal" data-bs-target="#importModal">
                             <i class="ti ti-file-import me-2"></i>Import
                         </button>
@@ -778,6 +838,15 @@ if ($mode === 'list') {
         e.preventDefault();
         loadData(1);
     });
+
+    function exportData() {
+        const search = document.getElementById('searchInput') ? encodeURIComponent(document.getElementById('searchInput').value.trim()) : '';
+        let url = 'labour_license_management.php?action=export_excel';
+        if (search) {
+            url += '&search=' + search;
+        }
+        window.location.href = url;
+    }
 
     let timeout = null;
     document.getElementById('searchInput')?.addEventListener('keyup', function () {
