@@ -1,8 +1,6 @@
 <?php
 include 'root/config.php';
 ob_start();
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 $ai_core->aiCheckLogin();
 
 $mode = $_REQUEST['mode'] ?? 'list';
@@ -475,6 +473,92 @@ if (isset($_GET['action']) && $_GET['action'] == 'download_sample_excel') {
     download_sample_xlsx('sample_stability_import.xlsx', $sample_columns, [$sample_row], $xlsx_required);
 }
 
+// --- HANDLE EXCEL EXPORT ---
+if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
+    if (!$ai_core->aiCheckPermission('stability', 'view')) {
+        $_SESSION['error'] = "You do not have permission to export stability records.";
+        $ai_core->aiGoPage($redirection_url);
+        exit;
+    }
+    ob_clean();
+    require_once 'includes/xlsx_helper.php';
+
+    $where = " WHERE 1=1";
+    $search = $_GET['search'] ?? '';
+    if (!empty($search)) {
+        $search_esc = addslashes($search);
+        $where .= " AND (company_name LIKE '%$search_esc%' OR phone LIKE '%$search_esc%')";
+    }
+
+    $sql = "SELECT * FROM $table $where ORDER BY id DESC";
+    $stability_records = $ai_db->aiGetQueryObj($sql);
+    if (!is_array($stability_records)) {
+        $stability_records = [];
+    }
+
+    $columns = [
+        'Sr No',
+        'Company Name',
+        'Address',
+        'Phone Number',
+        'Email Address',
+        'Load Type',
+        'Status',
+        'Mail Status',
+        'Assigned Date',
+        'Stability Date',
+        'Expiry Date',
+        'Approval Date'
+    ];
+
+    $rows = [];
+    $sr = 1;
+    foreach ($stability_records as $r) {
+        // Status formatting
+        $disp_status = $r->status ?? '';
+        if ($r->status == 'Active' || $r->status == 'Approved') {
+            $disp_status = 'Active';
+        } elseif ($r->status == 'In Progress') {
+            $disp_status = 'In Progress';
+        } elseif ($r->status == 'Submitted') {
+            $disp_status = 'Submitted';
+        } elseif ($r->status == 'Deactive' || $r->status == 'Rejected') {
+            $disp_status = ($r->status == 'Rejected') ? 'Rejected' : 'Deactive';
+        }
+        if (!empty($r->validity_date) && $r->validity_date != '0000-00-00' && strtotime($r->validity_date) < strtotime(date('Y-m-d'))) {
+            $disp_status = 'Deactive';
+        }
+
+        // Mail status
+        $mail_st = !empty($r->mail_sent_to_checker) ? 'Sent (' . date('d/m/Y', strtotime($r->checker_mail_date)) . ')' : 'Pending Mail';
+
+        // Dates
+        $assigned_d = (!empty($r->assigned_date) && $r->assigned_date !== '0000-00-00') ? date('d/m/Y', strtotime($r->assigned_date)) : '';
+        $stability_d = (!empty($r->stability_date) && $r->stability_date !== '0000-00-00') ? date('d/m/Y', strtotime($r->stability_date)) : '';
+        $expiry_d = (!empty($r->stability_date) && $r->stability_date !== '0000-00-00') ? date('d/m/Y', strtotime(stabilityExpiryDate($r->stability_date))) : '';
+        $approval_d = (!empty($r->approval_date) && $r->approval_date !== '0000-00-00') ? date('d/m/Y', strtotime($r->approval_date)) : '';
+
+        $rows[] = [
+            $sr++,
+            $r->company_name ?? '',
+            $r->address ?? '',
+            $r->phone ?? '',
+            $r->email ?? '',
+            $r->load_type ?? '',
+            $disp_status,
+            $mail_st,
+            $assigned_d,
+            $stability_d,
+            $expiry_d,
+            $approval_d
+        ];
+    }
+
+    $export_filename = 'Stability_' . date('Ymd_His') . '.xlsx';
+    download_sample_xlsx($export_filename, $columns, $rows);
+    exit;
+}
+
 // --- AJAX HANDLER FOR INSTANT ACTIONS ---
 if (isset($_GET['action']) && $id) {
     $action = $_GET['action'];
@@ -890,12 +974,19 @@ include 'includes/sidebar.php';
                     <h3 class="page-title mb-1"><?php echo $page_nm; ?> Statistics</h3>
                 </div>
                 <div class="mb-2 d-flex gap-2">
-                    <button class="btn btn-soft-primary d-flex align-items-center shadow-sm" type="button"
+                    <button class="btn btn-soft-secondary d-flex align-items-center shadow-sm" type="button"
                         data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false">
                         <i class="ti ti-filter me-2"></i>Filter
                     </button>
+                    <?php
+                    $export_search = !empty($_GET['search']) ? urlencode($_GET['search']) : '';
+                    $export_url = "stability_management.php?action=export_excel" . (!empty($export_search) ? "&search=" . $export_search : '');
+                    ?>
+                    <a href="<?php echo $export_url; ?>" class="btn btn-soft-success d-flex align-items-center px-3" title="Export to Excel" style="text-transform: capitalize !important; font-weight: 600;">
+                        <i class="ti ti-file-spreadsheet me-2"></i>Export
+                    </a>
                     <?php if ($ai_core->aiCheckPermission('stability', 'add')): ?>
-                    <button class="btn btn-import-green d-flex align-items-center shadow-sm" type="button"
+                    <button class="btn btn-soft-primary d-flex align-items-center shadow-sm" type="button"
                         data-bs-toggle="modal" data-bs-target="#importModal">
                         <i class="ti ti-file-import me-2"></i>Import
                     </button>

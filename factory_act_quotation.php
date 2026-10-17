@@ -747,6 +747,158 @@ if (isset($_GET['action']) && $_GET['action'] == 'download_sample') {
     download_sample_xlsx('sample_factory_act_quotation_import.xlsx', $sample_columns, [$sample_row]);
 }
 
+// --- HANDLE EXCEL EXPORT ---
+if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
+    if (!$ai_core->aiCheckPermission('factory_quotation', 'view')) {
+        $_SESSION['error'] = "You do not have permission to export quotations.";
+        $ai_core->aiGoPage($redirection_url);
+        exit;
+    }
+    ob_clean();
+    require_once 'includes/xlsx_helper.php';
+
+    $where = " WHERE 1=1";
+    if (isset($_SESSION['role']) && $_SESSION['role'] === 'Plan Maker') {
+        $user_id = $_SESSION['id'] ?? 0;
+        $where .= " AND plan_maker_id = '$user_id' AND plan_approval_status != 'Assigned' AND plan_approval_status IS NOT NULL AND plan_approval_status != ''";
+    }
+
+    $search = $_GET['search'] ?? '';
+    if (!empty($search)) {
+        $search_esc = addslashes($search);
+        $where .= " AND (company_name LIKE '%$search_esc%' OR phone LIKE '%$search_esc%' OR email LIKE '%$search_esc%')";
+    }
+
+    $quotations = $ai_db->aiGetQueryObj("SELECT * FROM $table $where ORDER BY created_at DESC, id DESC");
+    if (!is_array($quotations)) {
+        $quotations = [];
+    }
+
+    $is_admin = (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'admin');
+
+    $columns = [
+        'Sr No',
+        'Company Name',
+        'Owner Name',
+        'Phone Number',
+        'Address',
+        'Owner Address',
+        'Email Address',
+        'With Load',
+        'Workers',
+        'Horse Power',
+        'Years Multiplier',
+        'Status',
+        'Mail Status'
+    ];
+
+    if ($is_admin) {
+        $columns[] = 'Calc Amount';
+        $columns[] = 'Stability Cert Amount';
+        $columns[] = 'Admin Charge';
+        $columns[] = 'Consultancy Fees';
+        $columns[] = 'Plan Charge';
+        $columns[] = 'Excess Fees';
+        $columns[] = 'Maked Status';
+        $columns[] = 'Total Amount';
+    }
+
+    $columns[] = 'Client Approval Status';
+    $columns[] = 'Plan Maker';
+    $columns[] = 'Plan Status';
+    $columns[] = 'Stability Status';
+    $columns[] = 'License Approval Status';
+    $columns[] = 'Created Date';
+
+    // Build Plan Maker lookup map
+    $pm_map = [];
+    $pm_list = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_users");
+    if (is_array($pm_list)) {
+        foreach ($pm_list as $pm) {
+            $pm_map[$pm->id] = $pm->name;
+        }
+    }
+
+    $rows = [];
+    $sr = 1;
+    foreach ($quotations as $q) {
+        $disp_status = ($q->status === '0' || empty($q->status)) ? 'Active' : ucfirst($q->status);
+
+        $mail_st = strtolower(trim($q->mail_status ?? 'pending'));
+        $client_app_st = strtolower(trim($q->client_approval_status ?? ''));
+        $is_mail_sent = ($mail_st === 'send' || in_array($client_app_st, ['mail sent', 'approved by client', 'approved', 'cancelled by client', 'cancelled'], true));
+        $disp_mail_status = $is_mail_sent ? 'Send' : 'Pending';
+
+        // Plan maker name
+        $pm_name = (!empty($q->plan_maker_id) && isset($pm_map[$q->plan_maker_id])) ? $pm_map[$q->plan_maker_id] : '';
+
+        // Plan status
+        $plan_st = $q->plan_approval_status ?: 'Pending';
+
+        // Stability status
+        $stab_status = '';
+        if ($q->client_approval_status == 'Approved by Client' && $plan_st == 'Plan Approved') {
+            if ($q->stability_mail_sent == 1) {
+                $comp_esc = addslashes($q->company_name);
+                $stab_res = $ai_db->aiGetQueryObj("SELECT status FROM tbl_stability WHERE company_name='$comp_esc' ORDER BY id DESC LIMIT 1");
+                if (!empty($stab_res)) {
+                    $stab_status = $stab_res[0]->status ?? '';
+                }
+            } else {
+                $stab_status = 'Pending';
+            }
+        }
+
+        // License status
+        $lic_status = '';
+        if ($stab_status === 'Approved') {
+            $lic_status = $q->final_approval_status ?: 'Pending';
+        }
+
+        $created_date = (!empty($q->created_at) && $q->created_at !== '0000-00-00 00:00:00') ? date('d/m/Y', strtotime($q->created_at)) : '';
+
+        $row_data = [
+            $sr++,
+            $q->company_name ?? '',
+            $q->owner_name ?? '',
+            $q->phone ?? '',
+            $q->address ?? '',
+            $q->owner_address ?? '',
+            $q->email ?? '',
+            normalizeFactoryLoadType($q->with_load ?? ''),
+            normalizeFactoryWorkers($q->num_workers ?? ''),
+            normalizeFactoryHorsePower($q->horse_power ?? ''),
+            $q->years_multiplier ?? '',
+            $disp_status,
+            $disp_mail_status
+        ];
+
+        if ($is_admin) {
+            $row_data[] = number_format((float) ($q->calc_amount ?? 0), 2, '.', '');
+            $row_data[] = number_format((float) ($q->stability_cert_amount ?? 0), 2, '.', '');
+            $row_data[] = number_format((float) ($q->admin_charge ?? 0), 2, '.', '');
+            $row_data[] = number_format((float) ($q->consultancy_fees ?? 0), 2, '.', '');
+            $row_data[] = number_format((float) ($q->plan_charge ?? 0), 2, '.', '');
+            $row_data[] = number_format((float) ($q->excess_fees ?? 0), 2, '.', '');
+            $row_data[] = normalizeFactoryMakedStatus($q->maked_status ?? '');
+            $row_data[] = number_format((float) ($q->total_amount ?? 0), 2, '.', '');
+        }
+
+        $row_data[] = $q->client_approval_status ?? '';
+        $row_data[] = $pm_name;
+        $row_data[] = $plan_st;
+        $row_data[] = $stab_status;
+        $row_data[] = $lic_status;
+        $row_data[] = $created_date;
+
+        $rows[] = $row_data;
+    }
+
+    $export_filename = 'Quotations_' . date('Ymd_His') . '.xlsx';
+    download_sample_xlsx($export_filename, $columns, $rows);
+    exit;
+}
+
 // --- AJAX HANDLER FOR INSTANT MAIL ---
 if (isset($_GET['action']) && $_GET['action'] == 'ajax_send_mail' && $id) {
     ob_clean();
@@ -1326,8 +1478,15 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
                         data-bs-toggle="collapse" data-bs-target="#filterCollapse">
                         <i class="ti ti-filter me-2"></i>Filter
                     </button>
+                    <?php
+                    $export_search = !empty($_GET['search']) ? urlencode($_GET['search']) : '';
+                    $export_url = "factory_act_quotation.php?action=export_excel" . (!empty($export_search) ? "&search=" . $export_search : '');
+                    ?>
+                    <a href="<?php echo $export_url; ?>" class="btn btn-soft-success d-flex align-items-center px-3" title="Export to Excel" style="text-transform: capitalize !important; font-weight: 600;">
+                        <i class="ti ti-file-spreadsheet me-2"></i>Export
+                    </a>
                     <?php if ($ai_core->aiCheckPermission('factory_quotation', 'add')): ?>
-                        <button class="btn btn-soft-success d-flex align-items-center px-3" type="button" data-bs-toggle="modal"
+                        <button class="btn btn-soft-primary d-flex align-items-center px-3" type="button" data-bs-toggle="modal"
                             data-bs-target="#importModal">
                             <i class="ti ti-file-import me-2"></i>Import
                         </button>
@@ -1345,11 +1504,16 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
                     <div class="card-body p-3">
                         <form action="factory_act_quotation.php" method="GET" class="row g-3">
                             <input type="hidden" name="mode" value="list">
-                            <div class="col-md-10"><input type="text" name="search" class="form-control"
+                            <div class="col-md-10">
+                                <input type="text" name="search" class="form-control"
                                     value="<?php echo $_GET['search'] ?? ''; ?>"
-                                    placeholder="Search by Company, Phone, or Email..."></div>
-                            <div class="col-md-2"><button type="submit"
-                                    class="btn btn-primary w-100 shadow-sm">Filter</button></div>
+                                    placeholder="Search by Company, Phone, or Email...">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100 shadow-sm">
+                                    Filter
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>

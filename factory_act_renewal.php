@@ -23,9 +23,6 @@ if ($mode == 'delete' && !$ai_core->aiCheckPermission('factory_renewal', 'delete
     $ai_core->aiGoPage("factory_act_renewal.php");
 }
 
-include 'includes/header.php';
-include 'includes/sidebar.php';
-
 // --- CONFIGURATION ---
 $page_nm = "Factory Act Renewals";
 $table = "tbl_factory_renewals";
@@ -111,6 +108,57 @@ if (!function_exists('normalizeRenewalStatusValue')) {
             return 'Expired';
         }
         return '';
+    }
+}
+
+if (!function_exists('normalizeWorkers')) {
+    function normalizeWorkers($value)
+    {
+        $raw = trim((string) $value);
+        if ($raw === '') {
+            return '';
+        }
+
+        $compact = strtolower(preg_replace('/[^a-z0-9]/', '', $raw));
+        $map = [
+            'upto20' => 'Up To 20',
+            '21to50' => '21 to 50',
+            '51to100' => '51 to 100',
+            '101to250' => '101 to 250',
+            '251to500' => '251 to 500',
+            '501to1000' => '501 to 1000',
+            '1001to2000' => '1001 to 2000',
+            '2001to5000' => '2001 to 5000',
+            '5001toabove' => '5001 to above'
+        ];
+
+        return $map[$compact] ?? $raw;
+    }
+}
+
+if (!function_exists('normalizeHorsePower')) {
+    function normalizeHorsePower($value)
+    {
+        $raw = trim((string) $value);
+        if ($raw === '') {
+            return '';
+        }
+
+        $compact = strtolower(preg_replace('/[^a-z0-9]/', '', str_ireplace('hp', '', $raw)));
+        $map = [
+            '0' => '0',
+            'upto10' => 'Up to 10',
+            '10to50' => '10 to 50',
+            '50to100' => '50 to 100',
+            '100to250' => '100 to 250',
+            '250to500' => '250 to 500',
+            '500to1000' => '500 to 1000',
+            '1000to2000' => '1000 to 2000',
+            '2000to5000' => '2000 to 5000',
+            'above5000' => 'Above 5000'
+        ];
+
+        return $map[$compact] ?? $raw;
     }
 }
 
@@ -489,6 +537,85 @@ if (isset($_GET['action']) && $_GET['action'] == 'download_sample') {
     download_sample_xlsx('sample_factory_act_renewal_import.xlsx', $sample_columns, [$sample_row], $xlsx_required);
 }
 
+// --- HANDLE EXCEL EXPORT ---
+if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
+    if (!$ai_core->aiCheckPermission('factory_renewal', 'view')) {
+        $_SESSION['error'] = "You do not have permission to export renewals.";
+        $ai_core->aiGoPage($redirection_url);
+        exit;
+    }
+    ob_clean();
+    require_once 'includes/xlsx_helper.php';
+
+    $where = " WHERE 1=1";
+    $search = isset($_GET['search']) ? addslashes(trim($_GET['search'])) : '';
+    if (!empty($search)) {
+        $where .= " AND (r.company_name LIKE '%$search%' OR r.phone LIKE '%$search%')";
+    }
+
+    $sql = "SELECT r.*, c.factory_license_number FROM $table r LEFT JOIN tbl_vendors_companies c ON (r.company_code = c.company_code AND r.company_code != '' AND r.company_code IS NOT NULL) $where ORDER BY r.id DESC";
+    $renewals = $ai_db->aiGetQueryObj($sql);
+    if (!is_array($renewals)) {
+        $renewals = [];
+    }
+
+    $is_admin = (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'admin');
+
+    $columns = [
+        'Sr No',
+        'Company Code',
+        'Company Name',
+        'Address',
+        'Phone Number',
+        'Email Address',
+        'Workers',
+        'Horse Power',
+        'Years Multiplier',
+        'Factory License Number',
+        'Renewal Date',
+        'Expiry Date',
+        'Status'
+    ];
+
+    if ($is_admin) {
+        $columns[] = 'Total Amount';
+    }
+
+    $rows = [];
+    $sr = 1;
+    foreach ($renewals as $r) {
+        $disp_status = ($r->status === '0' || empty($r->status)) ? 'Active' : ucfirst($r->status);
+        $renewal_d = (!empty($r->renewal_date) && $r->renewal_date !== '0000-00-00') ? date('d/m/Y', strtotime($r->renewal_date)) : '';
+        $expiry_d = (!empty($r->expiry_date) && $r->expiry_date !== '0000-00-00') ? date('d/m/Y', strtotime($r->expiry_date)) : '';
+
+        $row_data = [
+            $sr++,
+            $r->company_code ?? '',
+            $r->company_name ?? '',
+            $r->address ?? '',
+            $r->phone ?? '',
+            $r->email ?? '',
+            normalizeWorkers($r->num_workers ?? ''),
+            normalizeHorsePower($r->horse_power ?? ''),
+            $r->years_multiplier ?? '',
+            $r->factory_license_number ?? '',
+            $renewal_d,
+            $expiry_d,
+            $disp_status
+        ];
+
+        if ($is_admin) {
+            $row_data[] = number_format((float) ($r->total_amount ?? 0), 2, '.', '');
+        }
+
+        $rows[] = $row_data;
+    }
+
+    $export_filename = 'Renewals_' . date('Ymd_His') . '.xlsx';
+    download_sample_xlsx($export_filename, $columns, $rows);
+    exit;
+}
+
 // --- AUTO-UPDATE EXPIRED RECORDS ---
 $ai_db->aiQuery("UPDATE $table SET status='Deactive' WHERE (expiry_date IS NOT NULL AND expiry_date != '' AND expiry_date != '0000-00-00') AND expiry_date < CURDATE() AND status != 'Deactive'");
 
@@ -686,6 +813,9 @@ $js_matrix = [];
 foreach ($full_matrix_res as $m) {
     $js_matrix[$m->hp_range][$m->worker_range] = (float) $m->fee;
 }
+
+include 'includes/header.php';
+include 'includes/sidebar.php';
 ?>
 
 <style>
@@ -784,12 +914,19 @@ foreach ($full_matrix_res as $m) {
                     </h3>
                 </div>
                 <div class="mb-2 d-flex gap-2">
-                    <button class="btn btn-soft-primary d-flex align-items-center shadow-sm" type="button"
+                    <button class="btn btn-soft-secondary d-flex align-items-center shadow-sm" type="button"
                         data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false">
                         <i class="ti ti-filter me-2"></i>Filter
                     </button>
+                    <?php
+                    $export_search = !empty($_GET['search']) ? urlencode($_GET['search']) : '';
+                    $export_url = "factory_act_renewal.php?action=export_excel" . (!empty($export_search) ? "&search=" . $export_search : '');
+                    ?>
+                    <a href="<?php echo $export_url; ?>" class="btn btn-soft-success d-flex align-items-center px-3" title="Export to Excel" style="text-transform: capitalize !important; font-weight: 600;">
+                        <i class="ti ti-file-spreadsheet me-2"></i>Export
+                    </a>
                     <?php if ($ai_core->aiCheckPermission('factory_renewal', 'add')): ?>
-                        <button class="btn btn-import-green d-flex align-items-center shadow-sm" type="button"
+                        <button class="btn btn-soft-primary d-flex align-items-center shadow-sm" type="button"
                             data-bs-toggle="modal" data-bs-target="#importModal">
                             <i class="ti ti-file-import me-2"></i>Import
                         </button>
