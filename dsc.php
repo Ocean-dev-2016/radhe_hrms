@@ -326,6 +326,72 @@ if (isset($_POST['btn_import'])) {
     }
 }
 
+// --- HANDLE EXCEL EXPORT ---
+if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
+    if (!$ai_core->aiCheckPermission('dsc', 'view')) {
+        $_SESSION['error'] = "You do not have permission to export DSC records.";
+        $ai_core->aiGoPage($redirection_url);
+        exit;
+    }
+    ob_clean();
+    require_once 'includes/xlsx_helper.php';
+
+    $where = " WHERE 1=1";
+    $search = $_GET['search'] ?? '';
+    $expiry_month = isset($_GET['expiry_month']) ? intval($_GET['expiry_month']) : 0;
+    $expiry_year = isset($_GET['expiry_year']) ? intval($_GET['expiry_year']) : 0;
+
+    if (!empty($search)) {
+        $search_esc = addslashes($search);
+        $where .= " AND (entity_name LIKE '%$search_esc%' OR certification_name LIKE '%$search_esc%' OR email LIKE '%$search_esc%')";
+    }
+    if ($expiry_month > 0 && $expiry_month <= 12) {
+        $where .= " AND MONTH(dsc_date) = '$expiry_month'";
+    }
+    if ($expiry_year > 1900 && $expiry_year < 2100) {
+        $where .= " AND YEAR(dsc_date) = '$expiry_year'";
+    }
+
+    $sql = "SELECT * FROM $table $where ORDER BY id DESC";
+    $dsc_records = $ai_db->aiGetQueryObj($sql);
+    if (!is_array($dsc_records)) {
+        $dsc_records = [];
+    }
+
+    $columns = [
+        'Sr No',
+        'Entity Name',
+        'Email Address',
+        'Phone Number',
+        'Certification Name',
+        'DSC Expiry Date',
+        'DSC Type',
+        'Status',
+        'Remarks'
+    ];
+
+    $rows = [];
+    $sr = 1;
+    foreach ($dsc_records as $row) {
+        $dsc_date = (!empty($row->dsc_date) && $row->dsc_date != '0000-00-00') ? date('d-m-Y', strtotime($row->dsc_date)) : '';
+        $rows[] = [
+            $sr++,
+            $row->entity_name ?? '',
+            $row->email ?? '',
+            $row->phone ?? '',
+            $row->certification_name ?? '',
+            $dsc_date,
+            $row->dsc_type ?? '',
+            ucfirst($row->status ?? ''),
+            $row->remarks ?? ''
+        ];
+    }
+
+    $export_filename = 'DSC_Records_' . date('Ymd_His') . '.xlsx';
+    download_sample_xlsx($export_filename, $columns, $rows);
+    exit;
+}
+
 // --- HANDLE SAMPLE DOWNLOAD ---
 if (isset($_GET['action']) && $_GET['action'] == 'download_sample') {
     if (!$ai_core->aiCheckPermission('dsc', 'add')) {
@@ -435,12 +501,15 @@ if ($mode === 'list') {
                     <h3 class="page-title mb-1"><?php echo $page_nm; ?></h3>
                 </div>
                 <div class="mb-2 d-flex gap-2">
-                    <button class="btn btn-soft-primary d-flex align-items-center shadow-sm" type="button"
+                    <button class="btn btn-soft-secondary d-flex align-items-center shadow-sm" type="button"
                         data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false">
                         <i class="ti ti-filter me-2"></i>Filter
                     </button>
+                    <a href="javascript:void(0)" onclick="exportData()" class="btn btn-soft-success d-flex align-items-center px-3" title="Export to Excel" style="text-transform: capitalize !important; font-weight: 600;">
+                        <i class="ti ti-file-spreadsheet me-2"></i>Export
+                    </a>
                     <?php if ($ai_core->aiCheckPermission('dsc', 'add')): ?>
-                    <button class="btn btn-soft-success d-flex align-items-center shadow-sm" type="button"
+                    <button class="btn btn-soft-primary d-flex align-items-center shadow-sm" type="button"
                         data-bs-toggle="modal" data-bs-target="#importModal">
                         <i class="ti ti-file-import me-2"></i>Import
                     </button>
@@ -892,6 +961,23 @@ if ($mode === 'list') {
 
         loadData(1);
     });
+
+    function exportData() {
+        const search = document.getElementById('searchInput') ? encodeURIComponent(document.getElementById('searchInput').value.trim()) : '';
+        const expiryMonth = document.getElementById('expiryMonth') ? encodeURIComponent(document.getElementById('expiryMonth').value.trim()) : '';
+        const expiryYear = document.getElementById('expiryYear') ? encodeURIComponent(document.getElementById('expiryYear').value.trim()) : '';
+        let url = 'dsc.php?action=export_excel';
+        if (search) {
+            url += '&search=' + search;
+        }
+        if (expiryMonth) {
+            url += '&expiry_month=' + expiryMonth;
+        }
+        if (expiryYear) {
+            url += '&expiry_year=' + expiryYear;
+        }
+        window.location.href = url;
+    }
 
     let timeout = null;
     document.getElementById('searchInput')?.addEventListener('keyup', function () {

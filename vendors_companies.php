@@ -518,6 +518,105 @@ if (isset($_POST['btn_import'])) {
     }
 }
 
+// --- HANDLE EXCEL EXPORT ---
+if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
+    if (!$ai_core->aiCheckPermission('vendors_companies', 'view')) {
+        $_SESSION['error'] = "You do not have permission to export companies.";
+        $ai_core->aiGoPage($redirection_url);
+        exit;
+    }
+    ob_clean();
+    require_once 'includes/xlsx_helper.php';
+
+    $where = " WHERE 1=1";
+    $search = $_GET['search'] ?? '';
+    $status_filter = $_GET['status_filter'] ?? '';
+
+    if (!empty($search)) {
+        $search_esc = addslashes($search);
+        $where .= " AND (t.company_name LIKE '%$search_esc%' OR t.phone LIKE '%$search_esc%' OR t.email LIKE '%$search_esc%' OR t.company_code LIKE '%$search_esc%')";
+    }
+    if (!empty($status_filter)) {
+        $status_esc = addslashes($status_filter);
+        $where .= " AND t.status = '$status_esc'";
+    }
+
+    $sql = "SELECT t.*, ft.name as firm_type_name, ct.name as company_type_name 
+            FROM $table t 
+            LEFT JOIN tbl_firm_types ft ON t.firm_type = ft.id 
+            LEFT JOIN tbl_company_types ct ON t.company_type = ct.id 
+            $where ORDER BY t.id DESC";
+    $companies = $ai_db->aiGetQueryObj($sql);
+    if (!is_array($companies)) {
+        $companies = [];
+    }
+
+    $columns = [
+        'Sr No',
+        'Company Code',
+        'Company Name',
+        'Company Address',
+        'Owner Name',
+        'Owner Address',
+        'Designation',
+        'Firm Type',
+        'Type Of Company',
+        'Nature of Work',
+        'Phone Number',
+        'Email Address',
+        'GST Number',
+        'PAN Number',
+        'MSME Number',
+        'Factory License No.',
+        'Labour License No.',
+        'Workstart Date',
+        'Office Branch',
+        'PF Code',
+        'ESIC Code',
+        'LWF ID',
+        'PTRC Number',
+        'PTEC Number',
+        'Status'
+    ];
+
+    $rows = [];
+    $sr = 1;
+    foreach ($companies as $row) {
+        $workstart = (!empty($row->workstart_date) && $row->workstart_date != '0000-00-00') ? date('d-m-Y', strtotime($row->workstart_date)) : '';
+        $rows[] = [
+            $sr++,
+            $row->company_code ?? '',
+            $row->company_name ?? '',
+            $row->address ?? '',
+            $row->owner_name ?? '',
+            $row->owner_address ?? '',
+            $row->designation ?? '',
+            $row->firm_type_name ?: ($row->firm_type ?? ''),
+            $row->company_type_name ?: ($row->company_type ?? ''),
+            $row->nature_of_work ?? '',
+            $row->phone ?? '',
+            $row->email ?? '',
+            $row->gst_no ?? '',
+            $row->pan_number ?? '',
+            $row->msme_number ?? '',
+            $row->factory_license_number ?? '',
+            $row->labour_license_number ?? '',
+            $workstart,
+            $row->office_branch ?? '',
+            $row->pf_code ?? '',
+            $row->esic_code ?? '',
+            $row->lwf_id ?? '',
+            $row->ptrc_number ?? '',
+            $row->ptec_number ?? '',
+            ucfirst($row->status ?? '')
+        ];
+    }
+
+    $export_filename = 'Companies_' . date('Ymd_His') . '.xlsx';
+    download_sample_xlsx($export_filename, $columns, $rows);
+    exit;
+}
+
 // --- HANDLE SAMPLE DOWNLOAD ---
 if (isset($_GET['action']) && $_GET['action'] == 'download_sample') {
     if (!$ai_core->aiCheckPermission('vendors_companies', 'add')) {
@@ -609,12 +708,15 @@ $company_types = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_company_types W
                     </nav>
                 </div>
                 <div class="mb-2 d-flex gap-2">
-                    <button class="btn btn-soft-primary d-flex align-items-center shadow-sm" type="button"
+                    <button class="btn btn-soft-secondary d-flex align-items-center shadow-sm" type="button"
                         data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false">
                         <i class="ti ti-filter me-2"></i>Filter
                     </button>
+                    <a href="javascript:void(0)" onclick="exportData()" class="btn btn-soft-success d-flex align-items-center px-3" title="Export to Excel" style="text-transform: capitalize !important; font-weight: 600;">
+                        <i class="ti ti-file-spreadsheet me-2"></i>Export
+                    </a>
                     <?php if ($ai_core->aiCheckPermission('vendors_companies', 'add')): ?>
-                        <button class="btn btn-soft-success d-flex align-items-center shadow-sm" type="button"
+                        <button class="btn btn-soft-primary d-flex align-items-center shadow-sm" type="button"
                             data-bs-toggle="modal" data-bs-target="#importModal">
                             <i class="ti ti-file-import me-2"></i>Import
                         </button>
@@ -1673,6 +1775,19 @@ $company_types = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_company_types W
             $('.form-select').val('').trigger('change');
         }
         loadData(1);
+    }
+
+    function exportData() {
+        const search = document.getElementById('searchInput') ? encodeURIComponent(document.getElementById('searchInput').value.trim()) : '';
+        const status = document.getElementById('statusFilter') ? encodeURIComponent(document.getElementById('statusFilter').value.trim()) : '';
+        let url = 'vendors_companies.php?action=export_excel';
+        if (search) {
+            url += '&search=' + search;
+        }
+        if (status) {
+            url += '&status_filter=' + status;
+        }
+        window.location.href = url;
     }
 </script>
 
