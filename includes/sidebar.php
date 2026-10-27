@@ -380,9 +380,18 @@ function hasPerm($module, $action = 'view')
                             <?php endif; ?>
                             <!-- <?php if ($user_type === 'admin' || hasPerm('renewal_logs')): ?>
                         <li><a href="renewal_log.php"
-                                class="<?= ($current_page == 'renewal_log.php') ? 'active' : '' ?>">Renewal Log</a></li>
+                                 class="<?= ($current_page == 'renewal_log.php') ? 'active' : '' ?>">Renewal Log</a></li>
                         <?php endif; ?> -->
                         </ul>
+                    </li>
+                <?php endif; ?>
+
+                <!-- Bulk Email -->
+                <?php if ($user_role !== 'Plan Maker' && ($user_type === 'admin' || hasPerm('bulk_email'))): ?>
+                    <li>
+                        <a href="bulk_email.php" class="<?= ($current_page == 'bulk_email.php') ? 'active' : '' ?>">
+                            <i class="ti ti-mail-fast"></i><span>Bulk Email</span>
+                        </a>
                     </li>
                 <?php endif; ?>
 

@@ -67,6 +67,9 @@ $system_modules = [
     'dsc_logs' => ['title' => 'Logs (DSC)', 'icon' => 'ti-report'],
     'work_logs' => ['title' => 'Logs (User Role Work)', 'icon' => 'ti-clipboard-list'],
 
+    // 10) Bulk Email
+    'bulk_email' => ['title' => 'Bulk Email', 'icon' => 'ti-mail-fast'],
+
     // 11) Configuration
     'settings' => ['title' => 'System Settings', 'icon' => 'ti-settings']
 ];

@@ -114,5 +114,47 @@ class RadheMailer
             return false;
         }
     }
+
+    /**
+     * Create and return a configured PHPMailer instance for batch mailing with KeepAlive
+     */
+    public function createBatchMailer()
+    {
+        if (empty($this->config)) {
+            $this->lastError = "SMTP Configuration missing.";
+            return null;
+        }
+
+        if (!class_exists('SMTP')) {
+            require_once dirname(__DIR__) . '/include/class.smtp.php';
+        }
+        if (!class_exists('PHPMailer')) {
+            require_once dirname(__DIR__) . '/include/class.phpmailer.php';
+        }
+
+        $mail = new PHPMailer(true);
+        $mail->isSMTP();
+        $mail->Host = $this->config['host'];
+        $mail->SMTPAuth = true;
+        $mail->Username = $this->config['username'];
+        $mail->Password = $this->config['password'];
+        $mail->SMTPSecure = $this->config['encryption'];
+        $mail->Port = $this->config['port'];
+        $mail->Timeout = 15;
+        $mail->SMTPAutoTLS = true;
+        $mail->SMTPKeepAlive = true; // Keep TCP/SMTP connection open during batch
+        $mail->SMTPOptions = [
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ]
+        ];
+        $mail->setFrom($this->config['from_email'], $this->config['from_name']);
+        if (!empty($this->config['reply_to'])) {
+            $mail->addReplyTo($this->config['reply_to'], $this->config['from_name']);
+        }
+        return $mail;
+    }
 }
 ?>
