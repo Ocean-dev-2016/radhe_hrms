@@ -2,12 +2,18 @@
 /**
  * AJAX Dispatcher for Bulk Email with Smart Attachment & Ultra-Fast KeepAlive Batching
  */
+ob_start();
 include 'root/config.php';
 $ai_core->aiCheckLogin();
+
+// Suppress raw HTML error display so PHP notices/warnings do not break JSON syntax
+@ini_set('display_errors', '0');
+error_reporting(0);
 
 header('Content-Type: application/json; charset=utf-8');
 
 if (!$ai_core->aiCheckPermission('bulk_email', 'view')) {
+    ob_clean();
     echo json_encode(['status' => 'error', 'message' => 'Permission denied.']);
     exit;
 }
@@ -94,6 +100,8 @@ if ($action === 'prepare_bulk_email') {
         exit;
     }
 
+    // All selected companies will be queued (daily limit of 5 is enforced by cron queue runner)
+
     // Handle File Attachment
     $uploaded_file_name = '';
     $attachment_path = '';
@@ -175,35 +183,72 @@ if ($action === 'prepare_bulk_email') {
         </div>
     </div>";
 
-    // Set batch size: 10 recipients per batch for ultra-reliable SMTP throughput
-    $batch_size = 10;
+    // Auto-create tbl_email_queue & tbl_bulk_email_logs if not exist
+    $ai_db->aiQuery("CREATE TABLE IF NOT EXISTS `tbl_bulk_email_logs` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `title` VARCHAR(255) NOT NULL,
+        `description` LONGTEXT NULL,
+        `attachment` VARCHAR(255) NULL,
+        `to_email` TEXT NULL,
+        `from_email` VARCHAR(255) NULL,
+        `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    // Generate unique Job ID and store in session
-    $job_id = 'job_' . uniqid() . '_' . time();
-    $_SESSION['bulk_email_job'][$job_id] = [
-        'title' => $title,
-        'description' => $description,
-        'email_html' => $email_html,
-        'uploaded_file_name' => $uploaded_file_name,
-        'attachment_path' => $attachment_path,
-        'is_large_file' => $is_large_file,
-        'original_attachment_name' => $orig_name,
-        'company_ids' => $company_ids,
-        'recipients' => $unique_recipients,
-        'total' => count($unique_recipients),
-        'sent_count' => 0,
-        'fail_count' => 0,
-        'created_at' => time()
-    ];
+    $ai_db->aiQuery("CREATE TABLE IF NOT EXISTS `tbl_email_queue` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `log_id` INT DEFAULT 0,
+        `company_id` INT DEFAULT 0,
+        `company_name` VARCHAR(255) NULL,
+        `to_email` VARCHAR(255) NOT NULL,
+        `subject` VARCHAR(255) NOT NULL,
+        `body_html` LONGTEXT NOT NULL,
+        `attachment` VARCHAR(255) NULL,
+        `status` ENUM('pending', 'processing', 'sent', 'failed') DEFAULT 'pending',
+        `attempts` INT DEFAULT 0,
+        `error_message` TEXT NULL,
+        `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+        `sent_at` DATETIME NULL,
+        INDEX idx_status (`status`),
+        INDEX idx_created (`created_at`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    // Create log record
+    $smtp_conf = include 'root/config_smtp.php';
+    $from_email = $smtp_conf['from_email'] ?? 'info@oceaninfotech.co.in';
+
+    $to_email_stored = implode(',', $company_ids);
+    $title_esc = addslashes($title);
+    $desc_esc = addslashes($description);
+    $attach_esc = addslashes($uploaded_file_name);
+    $to_email_esc = addslashes($to_email_stored);
+    $from_email_esc = addslashes($from_email);
+
+    $ai_db->aiQuery("INSERT INTO tbl_bulk_email_logs 
+        (title, description, attachment, to_email, from_email, created_at) 
+        VALUES 
+        ('$title_esc', '$desc_esc', '$attach_esc', '$to_email_esc', '$from_email_esc', NOW())");
+    $log_id = $ai_db->aiLastInsert();
+
+    // Insert all recipients into tbl_email_queue with status = 'pending'
+    $queued_count = 0;
+    foreach ($unique_recipients as $item) {
+        $comp_name_esc = addslashes($item['company_name'] ?? '');
+        $to_addr_esc = addslashes($item['email']);
+        $body_esc = addslashes($email_html);
+        $attach_path_esc = (!$is_large_file && !empty($attachment_path)) ? addslashes($attachment_path) : '';
+
+        $ai_db->aiQuery("INSERT INTO tbl_email_queue 
+            (log_id, company_name, to_email, subject, body_html, attachment, status, created_at) 
+            VALUES 
+            ('$log_id', '$comp_name_esc', '$to_addr_esc', '$title_esc', '$body_esc', '$attach_path_esc', 'pending', NOW())");
+        $queued_count++;
+    }
+
+    ob_clean();
     echo json_encode([
-        'status' => 'success',
-        'job_id' => $job_id,
-        'total' => count($unique_recipients),
-        'batch_size' => $batch_size,
-        'is_large_file' => $is_large_file,
-        'file_size_mb' => $file_size_mb,
-        'message' => 'Job initialized successfully'
+        'status' => 'queued',
+        'total' => $queued_count,
+        'message' => "Successfully added {$queued_count} emails into Queue! (Max 5 emails will be sent per day via Cron Runner)."
     ]);
     exit;
 }
@@ -310,6 +355,7 @@ if ($action === 'send_bulk_batch') {
         unset($_SESSION['bulk_email_job'][$job_id]);
     }
 
+    ob_clean();
     echo json_encode([
         'status' => $is_complete ? 'complete' : 'progress',
         'processed' => $next_offset,
@@ -324,5 +370,6 @@ if ($action === 'send_bulk_batch') {
     exit;
 }
 
+ob_clean();
 echo json_encode(['status' => 'error', 'message' => 'Invalid action.']);
 exit;

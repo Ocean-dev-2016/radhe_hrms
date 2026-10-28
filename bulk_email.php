@@ -407,11 +407,23 @@ include 'includes/sidebar.php';
                     </div>
                 </div>
 
+                <div id="modalSuccessQueueBox" class="alert alert-success py-3 px-3 small mt-3 d-none mb-0 text-start">
+                    <div class="fw-bold mb-1 fs-15"><i class="ti ti-circle-check fs-18 align-middle me-1"></i> Emails Added to Queue Successfully!</div>
+                    <div id="queueSuccessMsg" class="mb-2"></div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a href="cron_bulk_email_queue.php?token=radhe_queue_secure_2026" target="_blank" class="btn btn-sm btn-primary px-3">
+                            <i class="ti ti-player-play me-1"></i> Run Queue Now (Send 5 Emails)
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-secondary px-3" onclick="window.location.reload();">
+                            Done & Close
+                        </button>
+                    </div>
+                </div>
                 <div id="modalErrorNotice" class="alert alert-danger py-2 px-3 small mt-3 d-none mb-0"></div>
             </div>
             <div class="modal-footer border-0 pt-0 justify-content-center pb-4">
-                <button type="button" class="btn btn-primary px-4 d-none" id="btnModalFinish" onclick="window.location.reload();">
-                    <i class="ti ti-check me-1"></i> Done & Refresh
+                <button type="button" class="btn btn-secondary px-4 d-none" id="btnModalFinish" onclick="window.location.reload();">
+                    Close
                 </button>
             </div>
         </div>
@@ -577,6 +589,22 @@ document.getElementById('bulkEmailForm').addEventListener('submit', function(e) 
         contentType: false,
         dataType: 'json',
         success: function(initRes) {
+            if (initRes.status === 'queued') {
+                document.getElementById('statTotal').textContent = initRes.total;
+                document.getElementById('modalStatusTitle').textContent = 'Queued for Scheduled Sending';
+                document.getElementById('modalStatusSubtitle').textContent = initRes.total + ' emails queued (Daily limit: 5 emails/day)';
+                document.getElementById('modalStatusIcon').className = 'ti ti-clock-check fs-28 text-success';
+                document.getElementById('progressStatusText').textContent = 'Emails added into Queue';
+                document.getElementById('progressPercentText').textContent = '100%';
+                document.getElementById('bulkProgressBar').style.width = '100%';
+                document.getElementById('bulkProgressBar').classList.remove('progress-bar-animated', 'progress-bar-striped');
+                document.getElementById('bulkProgressBar').classList.add('bg-success');
+                
+                document.getElementById('queueSuccessMsg').innerHTML = initRes.message || 'All emails added to the queue.';
+                document.getElementById('modalSuccessQueueBox').classList.remove('d-none');
+                return;
+            }
+
             if (initRes.status !== 'success') {
                 document.getElementById('modalStatusTitle').textContent = 'Initialization Error';
                 document.getElementById('modalStatusSubtitle').textContent = 'Failed to prepare job';
