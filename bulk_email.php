@@ -179,48 +179,48 @@ include 'includes/sidebar.php';
 <link rel="stylesheet" href="assets/plugins/quill/quill.snow.css">
 
 <style>
-/* Disable uppercase transformation for email editor and title */
-.email-normal-case,
-.email-normal-case input,
-.email-normal-case textarea,
-.email-normal-case .ql-editor,
-.email-normal-case .ql-container {
-    text-transform: none !important;
-}
+    /* Disable uppercase transformation for email editor and title */
+    .email-normal-case,
+    .email-normal-case input,
+    .email-normal-case textarea,
+    .email-normal-case .ql-editor,
+    .email-normal-case .ql-container {
+        text-transform: none !important;
+    }
 
-#editor-container {
-    min-height: 220px;
-    background: #ffffff;
-    font-size: 15px;
-    font-family: inherit;
-}
+    #editor-container {
+        min-height: 220px;
+        background: #ffffff;
+        font-size: 15px;
+        font-family: inherit;
+    }
 
-.ql-toolbar.ql-snow {
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-    background-color: #f8fafc;
-    border-color: #dee2e6;
-    padding: 10px 12px;
-}
+    .ql-toolbar.ql-snow {
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        background-color: #f8fafc;
+        border-color: #dee2e6;
+        padding: 10px 12px;
+    }
 
-.ql-container.ql-snow {
-    border-bottom-left-radius: 8px;
-    border-bottom-right-radius: 8px;
-    border-color: #dee2e6;
-}
+    .ql-container.ql-snow {
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+        border-color: #dee2e6;
+    }
 
-/* Ensure quill select elements are hidden and custom pickers render cleanly */
-.ql-snow select {
-    display: none !important;
-}
+    /* Ensure quill select elements are hidden and custom pickers render cleanly */
+    .ql-snow select {
+        display: none !important;
+    }
 
-.ql-snow .ql-picker {
-    font-size: 13px !important;
-}
+    .ql-snow .ql-picker {
+        font-size: 13px !important;
+    }
 
-.ql-snow .select2-container {
-    display: none !important;
-}
+    .ql-snow .select2-container {
+        display: none !important;
+    }
 </style>
 
 <div class="page-wrapper">
@@ -285,8 +285,8 @@ include 'includes/sidebar.php';
                                     Title / Subject <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group">
-                                    <input type="text" name="title" id="email_title" class="form-control border-start-0 email-normal-case" 
-                                           placeholder="e.g. Important Compliance Notice / Renewal Reminder" required>
+                                    <input type="text" name="title" id="email_title" class="form-control border-start-0 email-normal-case"
+                                        placeholder="e.g. Important Compliance Notice / Renewal Reminder" required>
                                 </div>
                             </div>
 
@@ -295,10 +295,10 @@ include 'includes/sidebar.php';
                                 <label class="form-label fw-semibold text-dark">
                                     Description / Message Content <span class="text-danger">*</span>
                                 </label>
-                                
+
                                 <!-- Quill Rich Text Editor Container -->
                                 <div id="editor-container"></div>
-                                
+
                                 <!-- Hidden textarea to submit rich HTML -->
                                 <textarea name="description" id="hidden_description" style="display: none;"></textarea>
                             </div>
@@ -314,20 +314,20 @@ include 'includes/sidebar.php';
                                             <i class="ti ti-paperclip fs-28"></i>
                                         </div>
                                         <div class="flex-grow-1">
-                                            <input type="file" name="attachment_file" id="attachment_file" class="form-control" 
-                                                   accept=".pdf, .doc, .docx, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/pdf, image/png, image/jpeg, image/jpg, image/webp" 
-                                                   onchange="previewAttachment(this)">
+                                            <input type="file" name="attachment_file" id="attachment_file" class="form-control"
+                                                accept=".pdf, .doc, .docx, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/pdf, image/png, image/jpeg, image/jpg, image/webp"
+                                                onchange="previewAttachment(this)">
                                             <small class="text-muted d-block mt-1">
                                                 Accepted formats: <strong>PDF</strong> (.pdf), <strong>Word</strong> (.doc, .docx), <strong>Images</strong> (.png, .jpg, .jpeg, .webp)
                                             </small>
                                         </div>
                                     </div>
-                                    
+
                                     <!-- Dynamic File Preview Container -->
                                     <div id="filePreviewContainer" class="mt-3 text-center d-none">
                                         <div id="imagePreviewBox" class="d-none">
-                                            <img id="imagePreview" src="#" alt="Image Preview" 
-                                                 style="max-height: 180px; max-width: 100%; border-radius: 8px; border: 1px solid #e2e8f0; padding: 4px;">
+                                            <img id="imagePreview" src="#" alt="Image Preview"
+                                                style="max-height: 180px; max-width: 100%; border-radius: 8px; border: 1px solid #e2e8f0; padding: 4px;">
                                         </div>
                                         <div id="docPreviewBox" class="p-3 border rounded-3 bg-white d-inline-flex align-items-center d-none">
                                             <i id="docIcon" class="ti ti-file-text fs-32 me-2 text-danger"></i>
@@ -408,15 +408,19 @@ include 'includes/sidebar.php';
                 </div>
 
                 <div id="modalSuccessQueueBox" class="alert alert-success py-3 px-3 small mt-3 d-none mb-0 text-start">
-                    <div class="fw-bold mb-1 fs-15"><i class="ti ti-circle-check fs-18 align-middle me-1"></i> Emails Added to Queue Successfully!</div>
-                    <div id="queueSuccessMsg" class="mb-2"></div>
-                    <div class="d-flex flex-wrap gap-2 mt-3">
-                        <a href="cron_bulk_email_queue.php?token=radhe_queue_secure_2026" target="_blank" class="btn btn-sm btn-primary px-3">
-                            <i class="ti ti-player-play me-1"></i> Run Queue Now (Send 5 Emails)
-                        </a>
-                        <button type="button" class="btn btn-sm btn-outline-secondary px-3" onclick="window.location.reload();">
-                            Done & Close
-                        </button>
+                    <div class="fw-bold mb-1 fs-15 text-success">
+                        <i class="ti ti-circle-check fs-18 align-middle me-1"></i> Emails Added to Queue Successfully!
+                    </div>
+                    <div id="queueSuccessMsg" class="mb-2 text-muted"></div>
+                    <div class="p-2 rounded bg-light border border-success border-opacity-25 mt-2">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="text-primary fw-medium">
+                                <span class="spinner-border spinner-border-sm me-1 text-primary" role="status"></span>
+                                Background email processing started...
+                            </span>
+                            <span class="badge bg-primary text-white" id="countdownTimerBadge">Closing in 20s</span>
+                        </div>
+                        <small class="text-muted d-block mt-1">Page will automatically refresh in 20 seconds. Emails are sending in the background.</small>
                     </div>
                 </div>
                 <div id="modalErrorNotice" class="alert alert-danger py-2 px-3 small mt-3 d-none mb-0"></div>
@@ -436,257 +440,297 @@ include 'includes/sidebar.php';
 <script src="assets/plugins/quill/quill.min.js"></script>
 
 <script>
-let quill;
-document.addEventListener("DOMContentLoaded", function () {
-    // Initialize Quill Rich Text Editor
-    quill = new Quill('#editor-container', {
-        theme: 'snow',
-        placeholder: 'Type your email message or announcement here...',
-        modules: {
-            toolbar: [
-                [{ 'header': [1, 2, 3, false] }],
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ 'color': [] }, { 'background': [] }],
-                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                [{ 'align': [] }],
-                ['link', 'clean']
-            ]
-        }
-    });
-
-    // Handle "All Companies" option logic in select2
-    $('#company_id').on('select2:select', function (e) {
-        const selectedVal = e.params.data.id;
-        if (selectedVal === 'all') {
-            $('#company_id').val(['all']).trigger('change');
-        } else {
-            const currentVals = $('#company_id').val() || [];
-            if (currentVals.includes('all')) {
-                const filtered = currentVals.filter(v => v !== 'all');
-                $('#company_id').val(filtered).trigger('change');
+    let quill;
+    document.addEventListener("DOMContentLoaded", function() {
+        // Initialize Quill Rich Text Editor
+        quill = new Quill('#editor-container', {
+            theme: 'snow',
+            placeholder: 'Type your email message or announcement here...',
+            modules: {
+                toolbar: [
+                    [{
+                        'header': [1, 2, 3, false]
+                    }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{
+                        'color': []
+                    }, {
+                        'background': []
+                    }],
+                    [{
+                        'list': 'ordered'
+                    }, {
+                        'list': 'bullet'
+                    }],
+                    [{
+                        'align': []
+                    }],
+                    ['link', 'clean']
+                ]
             }
-        }
-    });
-});
+        });
 
-function selectAllCompanies() {
-    $('#company_id').val(['all']).trigger('change');
-}
-
-function clearCompanies() {
-    $('#company_id').val(null).trigger('change');
-}
-
-function handleReset() {
-    document.getElementById('filePreviewContainer').classList.add('d-none');
-    document.getElementById('imagePreviewBox').classList.add('d-none');
-    document.getElementById('docPreviewBox').classList.add('d-none');
-    if (quill) {
-        quill.setText('');
-    }
-    clearCompanies();
-}
-
-function previewAttachment(input) {
-    const fileContainer = document.getElementById('filePreviewContainer');
-    const imgBox = document.getElementById('imagePreviewBox');
-    const docBox = document.getElementById('docPreviewBox');
-    const imgPreview = document.getElementById('imagePreview');
-    const docFileName = document.getElementById('docFileName');
-    const docFileSize = document.getElementById('docFileSize');
-    const docIcon = document.getElementById('docIcon');
-
-    imgBox.classList.add('d-none');
-    docBox.classList.add('d-none');
-    fileContainer.classList.add('d-none');
-
-    if (input.files && input.files[0]) {
-        const file = input.files[0];
-        const ext = file.name.split('.').pop().toLowerCase();
-        const sizeFormatted = (file.size / 1024).toFixed(1) + ' KB';
-
-        fileContainer.classList.remove('d-none');
-
-        if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                imgPreview.src = e.target.result;
-                imgBox.classList.remove('d-none');
-            }
-            reader.readAsDataURL(file);
-        } else {
-            // PDF or Word Document
-            docFileName.textContent = file.name;
-            docFileSize.textContent = sizeFormatted;
-
-            if (ext === 'pdf') {
-                docIcon.className = 'ti ti-file-type-pdf fs-36 me-3 text-danger';
-            } else if (['doc', 'docx'].includes(ext)) {
-                docIcon.className = 'ti ti-file-type-doc fs-36 me-3 text-primary';
+        // Handle "All Companies" option logic in select2
+        $('#company_id').on('select2:select', function(e) {
+            const selectedVal = e.params.data.id;
+            if (selectedVal === 'all') {
+                $('#company_id').val(['all']).trigger('change');
             } else {
-                docIcon.className = 'ti ti-file-text fs-36 me-3 text-secondary';
+                const currentVals = $('#company_id').val() || [];
+                if (currentVals.includes('all')) {
+                    const filtered = currentVals.filter(v => v !== 'all');
+                    $('#company_id').val(filtered).trigger('change');
+                }
             }
+        });
+    });
 
-            docBox.classList.remove('d-none');
+    function selectAllCompanies() {
+        $('#company_id').val(['all']).trigger('change');
+    }
+
+    function clearCompanies() {
+        $('#company_id').val(null).trigger('change');
+    }
+
+    function handleReset() {
+        document.getElementById('filePreviewContainer').classList.add('d-none');
+        document.getElementById('imagePreviewBox').classList.add('d-none');
+        document.getElementById('docPreviewBox').classList.add('d-none');
+        if (quill) {
+            quill.setText('');
+        }
+        clearCompanies();
+    }
+
+    function previewAttachment(input) {
+        const fileContainer = document.getElementById('filePreviewContainer');
+        const imgBox = document.getElementById('imagePreviewBox');
+        const docBox = document.getElementById('docPreviewBox');
+        const imgPreview = document.getElementById('imagePreview');
+        const docFileName = document.getElementById('docFileName');
+        const docFileSize = document.getElementById('docFileSize');
+        const docIcon = document.getElementById('docIcon');
+
+        imgBox.classList.add('d-none');
+        docBox.classList.add('d-none');
+        fileContainer.classList.add('d-none');
+
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const ext = file.name.split('.').pop().toLowerCase();
+            const sizeFormatted = (file.size / 1024).toFixed(1) + ' KB';
+
+            fileContainer.classList.remove('d-none');
+
+            if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imgPreview.src = e.target.result;
+                    imgBox.classList.remove('d-none');
+                }
+                reader.readAsDataURL(file);
+            } else {
+                // PDF or Word Document
+                docFileName.textContent = file.name;
+                docFileSize.textContent = sizeFormatted;
+
+                if (ext === 'pdf') {
+                    docIcon.className = 'ti ti-file-type-pdf fs-36 me-3 text-danger';
+                } else if (['doc', 'docx'].includes(ext)) {
+                    docIcon.className = 'ti ti-file-type-doc fs-36 me-3 text-primary';
+                } else {
+                    docIcon.className = 'ti ti-file-text fs-36 me-3 text-secondary';
+                }
+
+                docBox.classList.remove('d-none');
+            }
         }
     }
-}
 
-// AJAX Batch Sender Handler
-document.getElementById('bulkEmailForm').addEventListener('submit', function(e) {
-    e.preventDefault();
+    // AJAX Batch Sender Handler
+    document.getElementById('bulkEmailForm').addEventListener('submit', function(e) {
+        e.preventDefault();
 
-    const selectedCompanies = $('#company_id').val();
-    if (!selectedCompanies || selectedCompanies.length === 0) {
-        toastr.error('Please select at least one company.');
-        return false;
-    }
+        const selectedCompanies = $('#company_id').val();
+        if (!selectedCompanies || selectedCompanies.length === 0) {
+            toastr.error('Please select at least one company.');
+            return false;
+        }
 
-    const titleVal = document.getElementById('email_title').value.trim();
-    if (!titleVal) {
-        toastr.error('Please enter email title / subject.');
-        return false;
-    }
+        const titleVal = document.getElementById('email_title').value.trim();
+        if (!titleVal) {
+            toastr.error('Please enter email title / subject.');
+            return false;
+        }
 
-    const htmlContent = quill.root.innerHTML.trim();
-    const plainText = quill.getText().trim();
-    if (!plainText && htmlContent === '<p><br></p>') {
-        toastr.error('Please enter description / message content.');
-        return false;
-    }
-    document.getElementById('hidden_description').value = htmlContent;
+        const htmlContent = quill.root.innerHTML.trim();
+        const plainText = quill.getText().trim();
+        if (!plainText && htmlContent === '<p><br></p>') {
+            toastr.error('Please enter description / message content.');
+            return false;
+        }
+        document.getElementById('hidden_description').value = htmlContent;
 
-    // Open progress modal
-    const progressModal = new bootstrap.Modal(document.getElementById('bulkProgressModal'));
-    
-    // Reset modal state
-    document.getElementById('modalStatusTitle').textContent = 'Initializing Batch Job...';
-    document.getElementById('modalStatusSubtitle').textContent = 'Connecting and gathering recipients...';
-    document.getElementById('modalStatusIcon').className = 'ti ti-loader fs-28 fa-spin';
-    document.getElementById('progressStatusText').textContent = 'Please wait...';
-    document.getElementById('progressPercentText').textContent = '0%';
-    document.getElementById('bulkProgressBar').style.width = '0%';
-    document.getElementById('bulkProgressBar').className = 'progress-bar progress-bar-striped progress-bar-animated bg-primary';
-    document.getElementById('statTotal').textContent = '0';
-    document.getElementById('statSent').textContent = '0';
-    document.getElementById('statFailed').textContent = '0';
-    document.getElementById('btnModalFinish').classList.add('d-none');
-    document.getElementById('modalErrorNotice').classList.add('d-none');
-    
-    progressModal.show();
+        // Open progress modal
+        const progressModal = new bootstrap.Modal(document.getElementById('bulkProgressModal'));
 
-    // Prepare Form Data for step 1
-    const formElement = document.getElementById('bulkEmailForm');
-    const formData = new FormData(formElement);
-    formData.append('action', 'prepare_bulk_email');
+        // Reset modal state
+        document.getElementById('modalStatusTitle').textContent = 'Initializing Batch Job...';
+        document.getElementById('modalStatusSubtitle').textContent = 'Connecting and gathering recipients...';
+        document.getElementById('modalStatusIcon').className = 'ti ti-loader fs-28 fa-spin';
+        document.getElementById('progressStatusText').textContent = 'Please wait...';
+        document.getElementById('progressPercentText').textContent = '0%';
+        document.getElementById('bulkProgressBar').style.width = '0%';
+        document.getElementById('bulkProgressBar').className = 'progress-bar progress-bar-striped progress-bar-animated bg-primary';
+        document.getElementById('statTotal').textContent = '0';
+        document.getElementById('statSent').textContent = '0';
+        document.getElementById('statFailed').textContent = '0';
+        document.getElementById('btnModalFinish').classList.add('d-none');
+        document.getElementById('modalErrorNotice').classList.add('d-none');
 
-    // Step 1: Initialize Job
-    $.ajax({
-        url: 'ajax_send_bulk_email.php',
-        type: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        dataType: 'json',
-        success: function(initRes) {
-            if (initRes.status === 'queued') {
-                document.getElementById('statTotal').textContent = initRes.total;
-                document.getElementById('modalStatusTitle').textContent = 'Queued for Scheduled Sending';
-                document.getElementById('modalStatusSubtitle').textContent = initRes.total + ' emails queued (Daily limit: 5 emails/day)';
-                document.getElementById('modalStatusIcon').className = 'ti ti-clock-check fs-28 text-success';
-                document.getElementById('progressStatusText').textContent = 'Emails added into Queue';
-                document.getElementById('progressPercentText').textContent = '100%';
-                document.getElementById('bulkProgressBar').style.width = '100%';
-                document.getElementById('bulkProgressBar').classList.remove('progress-bar-animated', 'progress-bar-striped');
-                document.getElementById('bulkProgressBar').classList.add('bg-success');
-                
-                document.getElementById('queueSuccessMsg').innerHTML = initRes.message || 'All emails added to the queue.';
-                document.getElementById('modalSuccessQueueBox').classList.remove('d-none');
-                return;
-            }
+        progressModal.show();
 
-            if (initRes.status !== 'success') {
-                document.getElementById('modalStatusTitle').textContent = 'Initialization Error';
-                document.getElementById('modalStatusSubtitle').textContent = 'Failed to prepare job';
-                document.getElementById('modalErrorNotice').textContent = initRes.message || 'Unknown error occurred.';
-                document.getElementById('modalErrorNotice').classList.remove('d-none');
-                document.getElementById('btnModalFinish').classList.remove('d-none');
-                return;
-            }
+        // Prepare Form Data for step 1
+        const formElement = document.getElementById('bulkEmailForm');
+        const formData = new FormData(formElement);
+        formData.append('action', 'prepare_bulk_email');
 
-            const jobId = initRes.job_id;
-            const totalRecipients = initRes.total;
-            const batchSize = initRes.batch_size || 10;
+        // Step 1: Initialize Job
+        $.ajax({
+            url: 'ajax_send_bulk_email.php',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(initRes) {
+                if (initRes.status === 'queued') {
+                    document.getElementById('statTotal').textContent = initRes.total;
+                    document.getElementById('modalStatusTitle').textContent = 'Queued for Scheduled Sending';
+                    document.getElementById('modalStatusSubtitle').textContent = initRes.total + ' emails queued (Processing automatically)';
+                    document.getElementById('modalStatusIcon').className = 'ti ti-clock-check fs-28 text-success';
+                    document.getElementById('progressStatusText').textContent = 'Emails added into Queue';
+                    document.getElementById('progressPercentText').textContent = '100%';
+                    document.getElementById('bulkProgressBar').style.width = '100%';
+                    document.getElementById('bulkProgressBar').classList.remove('progress-bar-animated', 'progress-bar-striped');
+                    document.getElementById('bulkProgressBar').classList.add('bg-success');
 
-            document.getElementById('statTotal').textContent = totalRecipients;
-            document.getElementById('modalStatusTitle').textContent = 'Sending Bulk Emails...';
-            document.getElementById('modalStatusSubtitle').textContent = 'Sending in batches of ' + batchSize + ' to prevent server load';
-            document.getElementById('modalStatusIcon').className = 'ti ti-mail-fast fs-28';
+                    document.getElementById('queueSuccessMsg').innerHTML = initRes.message || 'All emails added to the queue.';
+                    document.getElementById('modalSuccessQueueBox').classList.remove('d-none');
 
-            let currentOffset = 0;
+                    // Trigger background queue execution automatically via AJAX (user doesn't need to click anything)
+                    fetch('cron_bulk_email_queue.php?token=radhe_queue_secure_2026&bg=1', {
+                        method: 'GET',
+                        mode: 'no-cors',
+                        cache: 'no-cache'
+                    }).catch(function() {});
 
-            // Step 2: Recursive Batch Sender
-            function processNextBatch() {
-                const batchPercent = Math.min(100, Math.round((currentOffset / totalRecipients) * 100));
-                document.getElementById('progressStatusText').textContent = 'Sending ' + (currentOffset + 1) + ' - ' + Math.min(currentOffset + batchSize, totalRecipients) + ' of ' + totalRecipients + '...';
-                
-                $.ajax({
-                    url: 'ajax_send_bulk_email.php',
-                    type: 'POST',
-                    data: {
-                        action: 'send_bulk_batch',
-                        job_id: jobId,
-                        batch_offset: currentOffset,
-                        batch_size: batchSize
-                    },
-                    dataType: 'json',
-                    success: function(batchRes) {
-                        if (batchRes.status === 'error') {
-                            document.getElementById('modalErrorNotice').textContent = batchRes.message || 'Error occurred during sending.';
+                    // 20-second countdown to automatically close popup and refresh page
+                    let remainingSec = 20;
+                    const countdownBadge = document.getElementById('countdownTimerBadge');
+                    const timerInterval = setInterval(function() {
+                        remainingSec--;
+                        if (countdownBadge) {
+                            countdownBadge.textContent = 'Closing in ' + remainingSec + 's';
+                        }
+                        if (remainingSec <= 0) {
+                            clearInterval(timerInterval);
+                            if (countdownBadge) {
+                                countdownBadge.textContent = 'Refreshing...';
+                            }
+                            try {
+                                progressModal.hide();
+                            } catch (e) {}
+                            window.location.href = window.location.href.split('?')[0].split('#')[0];
+                        }
+                    }, 1000);
+
+                    return;
+                }
+
+                if (initRes.status !== 'success') {
+                    document.getElementById('modalStatusTitle').textContent = 'Initialization Error';
+                    document.getElementById('modalStatusSubtitle').textContent = 'Failed to prepare job';
+                    document.getElementById('modalErrorNotice').textContent = initRes.message || 'Unknown error occurred.';
+                    document.getElementById('modalErrorNotice').classList.remove('d-none');
+                    document.getElementById('btnModalFinish').classList.remove('d-none');
+                    return;
+                }
+
+                const jobId = initRes.job_id;
+                const totalRecipients = initRes.total;
+                const batchSize = initRes.batch_size || 10;
+
+                document.getElementById('statTotal').textContent = totalRecipients;
+                document.getElementById('modalStatusTitle').textContent = 'Sending Bulk Emails...';
+                document.getElementById('modalStatusSubtitle').textContent = 'Sending in batches of ' + batchSize + ' to prevent server load';
+                document.getElementById('modalStatusIcon').className = 'ti ti-mail-fast fs-28';
+
+                let currentOffset = 0;
+
+                // Step 2: Recursive Batch Sender
+                function processNextBatch() {
+                    const batchPercent = Math.min(100, Math.round((currentOffset / totalRecipients) * 100));
+                    document.getElementById('progressStatusText').textContent = 'Sending ' + (currentOffset + 1) + ' - ' + Math.min(currentOffset + batchSize, totalRecipients) + ' of ' + totalRecipients + '...';
+
+                    $.ajax({
+                        url: 'ajax_send_bulk_email.php',
+                        type: 'POST',
+                        data: {
+                            action: 'send_bulk_batch',
+                            job_id: jobId,
+                            batch_offset: currentOffset,
+                            batch_size: batchSize
+                        },
+                        dataType: 'json',
+                        success: function(batchRes) {
+                            if (batchRes.status === 'error') {
+                                document.getElementById('modalErrorNotice').textContent = batchRes.message || 'Error occurred during sending.';
+                                document.getElementById('modalErrorNotice').classList.remove('d-none');
+                                document.getElementById('btnModalFinish').classList.remove('d-none');
+                                return;
+                            }
+
+                            currentOffset = batchRes.processed;
+                            const pct = batchRes.percentage;
+
+                            document.getElementById('progressPercentText').textContent = pct + '%';
+                            document.getElementById('bulkProgressBar').style.width = pct + '%';
+                            document.getElementById('statSent').textContent = batchRes.total_sent;
+                            document.getElementById('statFailed').textContent = batchRes.total_failed;
+
+                            if (batchRes.status === 'complete' || currentOffset >= totalRecipients) {
+                                // Completed!
+                                document.getElementById('bulkProgressBar').classList.remove('progress-bar-animated', 'progress-bar-striped');
+                                document.getElementById('bulkProgressBar').classList.add('bg-success');
+                                document.getElementById('modalStatusTitle').textContent = 'All Emails Sent Successfully!';
+                                document.getElementById('modalStatusSubtitle').textContent = 'Finished sending bulk emails to ' + totalRecipients + ' recipient(s).';
+                                document.getElementById('modalStatusIcon').className = 'ti ti-circle-check fs-28 text-success';
+                                document.getElementById('progressStatusText').textContent = 'Process Complete';
+                                document.getElementById('btnModalFinish').classList.remove('d-none');
+                            } else {
+                                // Brief 100ms pause before next batch
+                                setTimeout(processNextBatch, 100);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            document.getElementById('modalErrorNotice').textContent = 'Server response error: ' + error + '. You can refresh to check logs.';
                             document.getElementById('modalErrorNotice').classList.remove('d-none');
                             document.getElementById('btnModalFinish').classList.remove('d-none');
-                            return;
                         }
+                    });
+                }
 
-                        currentOffset = batchRes.processed;
-                        const pct = batchRes.percentage;
-                        
-                        document.getElementById('progressPercentText').textContent = pct + '%';
-                        document.getElementById('bulkProgressBar').style.width = pct + '%';
-                        document.getElementById('statSent').textContent = batchRes.total_sent;
-                        document.getElementById('statFailed').textContent = batchRes.total_failed;
-
-                        if (batchRes.status === 'complete' || currentOffset >= totalRecipients) {
-                            // Completed!
-                            document.getElementById('bulkProgressBar').classList.remove('progress-bar-animated', 'progress-bar-striped');
-                            document.getElementById('bulkProgressBar').classList.add('bg-success');
-                            document.getElementById('modalStatusTitle').textContent = 'All Emails Sent Successfully!';
-                            document.getElementById('modalStatusSubtitle').textContent = 'Finished sending bulk emails to ' + totalRecipients + ' recipient(s).';
-                            document.getElementById('modalStatusIcon').className = 'ti ti-circle-check fs-28 text-success';
-                            document.getElementById('progressStatusText').textContent = 'Process Complete';
-                            document.getElementById('btnModalFinish').classList.remove('d-none');
-                        } else {
-                            // Brief 100ms pause before next batch
-                            setTimeout(processNextBatch, 100);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        document.getElementById('modalErrorNotice').textContent = 'Server response error: ' + error + '. You can refresh to check logs.';
-                        document.getElementById('modalErrorNotice').classList.remove('d-none');
-                        document.getElementById('btnModalFinish').classList.remove('d-none');
-                    }
-                });
+                // Start sending first batch
+                processNextBatch();
+            },
+            error: function(xhr, status, error) {
+                document.getElementById('modalStatusTitle').textContent = 'Request Failed';
+                document.getElementById('modalErrorNotice').textContent = 'Network or server error: ' + error;
+                document.getElementById('modalErrorNotice').classList.remove('d-none');
+                document.getElementById('btnModalFinish').classList.remove('d-none');
             }
-
-            // Start sending first batch
-            processNextBatch();
-        },
-        error: function(xhr, status, error) {
-            document.getElementById('modalStatusTitle').textContent = 'Request Failed';
-            document.getElementById('modalErrorNotice').textContent = 'Network or server error: ' + error;
-            document.getElementById('modalErrorNotice').classList.remove('d-none');
-            document.getElementById('btnModalFinish').classList.remove('d-none');
-        }
+        });
     });
-});
 </script>

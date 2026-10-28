@@ -1,4 +1,5 @@
 <?php
+
 /**
  * AJAX Dispatcher for Bulk Email with Smart Attachment & Ultra-Fast KeepAlive Batching
  */
@@ -157,22 +158,22 @@ if ($action === 'prepare_bulk_email') {
 
     if (!empty($orig_name)) {
         if ($is_large_file && !empty($download_url)) {
-            // Large file (>10 MB): Render stunning download card/button inside email body
-            $email_html .= "<div style='margin-top: 26px; padding: 18px 20px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; text-align: center;'>
-                <p style='margin: 0 0 10px 0; font-size: 14px; color: #334155; font-weight: 600;'>
-                    📄 Attached Document: " . $orig_name . " (" . $file_size_mb . " MB)
+            // Large file (>10 MB): Render download card/button inside email body without raw emojis
+            $email_html .= "<div style='margin-top: 26px; padding: 20px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; text-align: center;'>
+                <p style='margin: 0 0 12px 0; font-size: 14px; color: #334155; font-weight: 600;'>
+                    Attached Document: " . $orig_name . " (" . $file_size_mb . " MB)
                 </p>
                 <a href='" . $download_url . "' target='_blank' style='display: inline-block; background-color: #2563eb; color: #ffffff; font-weight: bold; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-size: 14px; box-shadow: 0 2px 4px rgba(37,99,235,0.3);'>
-                    📥 Download Attachment (" . $file_size_mb . " MB)
+                    Download Attachment (" . $file_size_mb . " MB)
                 </a>
-                <p style='margin: 8px 0 0 0; font-size: 11px; color: #64748b;'>
+                <p style='margin: 10px 0 0 0; font-size: 11px; color: #64748b;'>
                     (Direct high-speed download link from Radhe Advisory)
                 </p>
             </div>";
         } else {
-            // Normal file (<=10 MB): Sent directly as standard attachment
+            // Normal file (<=10 MB): Sent directly as standard attachment without raw emojis
             $email_html .= "<div style='margin-top: 24px; padding: 14px; background-color: #f1f5f9; border-left: 4px solid #3b82f6; border-radius: 6px; font-size: 13px;'>
-                <i style='font-style: normal;'>📎 <strong>Attached Document:</strong> " . $orig_name . " (" . $file_size_mb . " MB)</i>
+                <span style='color: #2563eb; font-weight: bold;'>[Attachment]</span> <strong>Attached Document:</strong> " . $orig_name . " (" . $file_size_mb . " MB)
             </div>";
         }
     }
@@ -214,7 +215,7 @@ if ($action === 'prepare_bulk_email') {
 
     // Create log record
     $smtp_conf = include 'root/config_smtp.php';
-    $from_email = $smtp_conf['from_email'] ?? 'info@oceaninfotech.co.in';
+    $from_email = $smtp_conf['from_email'] ?? 'info@radheconsultancy.co.in';
 
     $to_email_stored = implode(',', $company_ids);
     $title_esc = addslashes($title);

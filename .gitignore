@@ -1,2 +1,4 @@
 root/config.php
 uploads/
+*.log
+email_cron.log
