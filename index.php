@@ -18,15 +18,16 @@ if (isset($_POST['login_submit'])) {
         $_SESSION['success'] = "Login Successful! Welcome Admin.";
         $ai_core->aiGoPage("dashboard.php");
     } else {
-        $emp_qry = "SELECT * FROM tbl_users WHERE user_type='employee' AND (email='$login_id' OR username='$login_id') AND password='$password' AND status='active'";
+        $emp_qry = "SELECT * FROM tbl_users WHERE (user_type='employee' OR user_type='branch') AND (email='$login_id' OR username='$login_id') AND password='$password' AND status='active'";
         $emp_res = $ai_db->aiGetQuery($emp_qry);
 
         if (count($emp_res) > 0) {
             $_SESSION['id'] = $emp_res[0]['id'];
             $_SESSION['username'] = $emp_res[0]['username'] ? $emp_res[0]['username'] : $emp_res[0]['name'];
             $_SESSION['email'] = $emp_res[0]['email'];
-            $_SESSION['user_type'] = 'employee';
+            $_SESSION['user_type'] = $emp_res[0]['user_type'];
             $_SESSION['role'] = $emp_res[0]['role'];
+            $_SESSION['branch'] = $emp_res[0]['branch'] ?? 'All';
             unset($_SESSION['role_permissions']);
             $_SESSION['success'] = "Login Successful! Welcome back.";
             $ai_core->aiGoPage("dashboard.php");

@@ -27,6 +27,41 @@ $page_nm = "Digital Signature Certificate (DSC)";
 $table = "tbl_dsc";
 $redirection_url = "dsc.php";
 
+// --- ROLE & USER RESTRICTION HELPER ---
+function getDscBranchWhere($table_alias = '') {
+    global $ai_db;
+    $user_type = $_SESSION['user_type'] ?? '';
+    if ($user_type === 'admin') {
+        return ""; // Admin can view all records
+    }
+
+    $user_branch = trim($_SESSION['branch'] ?? '');
+    $prefix = $table_alias ? "$table_alias." : "";
+
+    // Strictly filter purely based on company's office_branch matching entity_name (or company_code)
+    if (!empty($user_branch) && strtolower($user_branch) !== 'all') {
+        $user_branch_esc = addslashes($user_branch);
+        $branch_obj = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_branches WHERE LOWER(name)=LOWER('$user_branch_esc') LIMIT 1");
+        $branch_id = !empty($branch_obj) ? $branch_obj[0]->id : 0;
+
+        $branch_conditions = ["LOWER(TRIM(office_branch)) = LOWER(TRIM('$user_branch_esc'))"];
+        if ($branch_id > 0) {
+            $branch_conditions[] = "office_branch = '$branch_id'";
+        }
+
+        $branch_subquery_names = "SELECT company_name FROM tbl_vendors_companies WHERE (" . implode(" OR ", $branch_conditions) . ") AND company_name != '' AND company_name IS NOT NULL";
+        $branch_subquery_codes = "SELECT company_code FROM tbl_vendors_companies WHERE (" . implode(" OR ", $branch_conditions) . ") AND company_code != '' AND company_code IS NOT NULL";
+
+        $conditions = [];
+        $conditions[] = "{$prefix}entity_name IN ($branch_subquery_names)";
+        $conditions[] = "({$prefix}company_code != '' AND {$prefix}company_code IS NOT NULL AND {$prefix}company_code IN ($branch_subquery_codes))";
+
+        return " AND (" . implode(" OR ", $conditions) . ")";
+    }
+
+    return " AND 1=0";
+}
+
 $mode = $_REQUEST['mode'] ?? 'list';
 $id = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
 $data = null;
@@ -51,6 +86,8 @@ if (isset($_POST['ajax_fetch'])) {
     if ($expiry_year > 1900 && $expiry_year < 2100) {
         $where .= " AND YEAR(dsc_date) = '$expiry_year'";
     }
+
+    $where .= getDscBranchWhere();
 
     $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table $where");
     $total_records = $total_res[0]->total;
@@ -352,6 +389,8 @@ if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
         $where .= " AND YEAR(dsc_date) = '$expiry_year'";
     }
 
+    $where .= getDscBranchWhere();
+
     $sql = "SELECT * FROM $table $where ORDER BY id DESC";
     $dsc_records = $ai_db->aiGetQueryObj($sql);
     if (!is_array($dsc_records)) {
@@ -417,8 +456,15 @@ include 'includes/sidebar.php';
 
 // Fetch for Edit
 if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
-    $result = $ai_db->aiGetQueryObj("SELECT * FROM $table WHERE id='$id' LIMIT 1");
+    $res_where = getDscBranchWhere();
+    $result = $ai_db->aiGetQueryObj("SELECT * FROM $table WHERE id='$id' $res_where LIMIT 1");
     $data = $result[0] ?? null;
+
+    if (!$data && !empty($res_where)) {
+        $_SESSION['error'] = "You do not have permission to access this DSC record.";
+        $ai_core->aiGoPage($redirection_url);
+        exit;
+    }
 }
 
 // Check for old session data (validation errors)
@@ -432,13 +478,27 @@ if (isset($_SESSION['old_post'])) {
     unset($_SESSION['old_post']);
 }
 
-// Fetch Active Companies for Dynamic Select2
+// Fetch Active Companies for Dynamic Select2 (Filtered by Branch for non-admin)
 if ($mode === 'add' || $mode === 'edit') {
+    $comp_where = " WHERE c.status='active'";
+    $u_branch = trim($_SESSION['branch'] ?? '');
+    if (isset($_SESSION['user_type']) && $_SESSION['user_type'] !== 'admin' && !empty($u_branch) && strtolower($u_branch) !== 'all') {
+        $u_branch_esc = addslashes($u_branch);
+        $b_obj = $ai_db->aiGetQueryObj("SELECT id FROM tbl_branches WHERE LOWER(name)=LOWER('$u_branch_esc') LIMIT 1");
+        $b_id = !empty($b_obj) ? $b_obj[0]->id : 0;
+        
+        $comp_branch_conds = ["LOWER(TRIM(c.office_branch)) = LOWER(TRIM('$u_branch_esc'))"];
+        if ($b_id > 0) {
+            $comp_branch_conds[] = "c.office_branch = '$b_id'";
+        }
+        $comp_where .= " AND (" . implode(" OR ", $comp_branch_conds) . ")";
+    }
+
     $companies = $ai_db->aiGetQueryObj("
         SELECT c.company_name, c.phone, c.email, c.company_code,
                (SELECT d.certification_name FROM tbl_dsc d WHERE d.entity_name = c.company_name ORDER BY d.id DESC LIMIT 1) as last_cert 
         FROM tbl_vendors_companies c 
-        WHERE c.status='active' 
+        $comp_where 
         ORDER BY c.company_name ASC
     ");
     if (empty($companies)) {
@@ -476,19 +536,20 @@ if ($mode === 'add' || $mode === 'edit') {
 
 // Initial Stats and List Data
 if ($mode === 'list') {
+    $branch_w = getDscBranchWhere();
     $stats = [
-        'total' => count($ai_db->aiGetQueryObj("SELECT id FROM $table")),
-        'in_progress' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE status='In Progress'")),
-        'submitted' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE status='Submitted'")),
-        'approved' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE status='Approved'")),
-        'rejected' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE status='Rejected'"))
+        'total' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE 1=1 $branch_w")),
+        'in_progress' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE status='In Progress' $branch_w")),
+        'submitted' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE status='Submitted' $branch_w")),
+        'approved' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE status='Approved' $branch_w")),
+        'rejected' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE status='Rejected' $branch_w"))
     ];
 
     $limit = 10;
-    $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table");
+    $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table WHERE 1=1 $branch_w");
     $total_records = $total_res[0]->total;
     $total_pages = ceil($total_records / $limit);
-    $list_data = $ai_db->aiGetQueryObj("SELECT * FROM $table ORDER BY id DESC LIMIT $limit");
+    $list_data = $ai_db->aiGetQueryObj("SELECT * FROM $table WHERE 1=1 $branch_w ORDER BY id DESC LIMIT $limit");
 }
 ?>
 

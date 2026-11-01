@@ -28,6 +28,57 @@ $page_nm = "Stability Management";
 $table = "tbl_stability";
 $redirection_url = "stability_management.php";
 
+// --- ROLE & USER RESTRICTION HELPER ---
+function getStabilityBranchWhere($table_alias = '') {
+    global $ai_db;
+    $user_type = $_SESSION['user_type'] ?? '';
+    if ($user_type === 'admin') {
+        return ""; // Admin can view all records
+    }
+
+    $user_id = intval($_SESSION['id'] ?? 0);
+    $user_role = $_SESSION['role'] ?? '';
+    $user_branch = trim($_SESSION['branch'] ?? '');
+
+    // Stability Maker role handled if needed
+    if ($user_role === 'Stability Maker') {
+        return "";
+    }
+
+    $prefix = $table_alias ? "$table_alias." : "";
+
+    // If logged-in user has a specific branch (e.g. Rajkot, Morbi, Ahmedabad)
+    if (!empty($user_branch) && strtolower($user_branch) !== 'all') {
+        $user_branch_esc = addslashes($user_branch);
+        $branch_obj = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_branches WHERE name='$user_branch_esc' LIMIT 1");
+        $branch_id = !empty($branch_obj) ? $branch_obj[0]->id : 0;
+
+        $branch_subquery_name = "SELECT company_name FROM tbl_vendors_companies WHERE (office_branch='$user_branch_esc'";
+        if ($branch_id > 0) {
+            $branch_subquery_name .= " OR office_branch='$branch_id'";
+        }
+        $branch_subquery_name .= ") AND company_name != '' AND company_name IS NOT NULL";
+
+        $conditions = [];
+        $conditions[] = "({$prefix}company_name != '' AND {$prefix}company_name IS NOT NULL AND {$prefix}company_name IN ($branch_subquery_name))";
+
+        // Also allow if created_by / updated_by is this user
+        if ($user_id > 0) {
+            $conditions[] = "{$prefix}created_by = '$user_id'";
+            $conditions[] = "{$prefix}updated_by = '$user_id'";
+        }
+
+        return " AND (" . implode(" OR ", $conditions) . ")";
+    }
+
+    // Default for user without specific branch: show records created or updated by this user
+    if ($user_id > 0) {
+        return " AND ({$prefix}created_by = '$user_id' OR {$prefix}updated_by = '$user_id')";
+    }
+
+    return " AND 1=0";
+}
+
 function stabilityExpiryDate($baseDate)
 {
     if (empty($baseDate) || $baseDate === '0000-00-00') {
@@ -489,6 +540,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
         $search_esc = addslashes($search);
         $where .= " AND (company_name LIKE '%$search_esc%' OR phone LIKE '%$search_esc%')";
     }
+    $where .= getStabilityBranchWhere();
 
     $sql = "SELECT * FROM $table $where ORDER BY id DESC";
     $stability_records = $ai_db->aiGetQueryObj($sql);
@@ -638,8 +690,15 @@ if (isset($_GET['action']) && $id) {
 
 // --- FETCH DATA FOR EDIT/CHECK ---
 if (($mode === "edit") && $id) {
-    $result = $ai_db->aiGetQueryObj("SELECT * FROM $table WHERE id='$id' LIMIT 1");
+    $res_where = getStabilityBranchWhere();
+    $result = $ai_db->aiGetQueryObj("SELECT * FROM $table WHERE id='$id' $res_where LIMIT 1");
     $data = $result[0] ?? null;
+
+    if (!$data && !empty($res_where)) {
+        $_SESSION['error'] = "You do not have permission to access this stability record.";
+        $ai_core->aiGoPage($redirection_url);
+        exit;
+    }
 }
 
 // Check for old session data (validation errors)
@@ -653,8 +712,20 @@ if (isset($_SESSION['old_post'])) {
     unset($_SESSION['old_post']);
 }
 
-// Fetch Active Companies for Dynamic Select2
-$companies = $ai_db->aiGetQueryObj("SELECT company_name, phone, email, address FROM tbl_vendors_companies WHERE status='active' ORDER BY company_name ASC");
+// Fetch Active Companies for Dynamic Select2 (Filtered by Branch for non-admin)
+$comp_where = " WHERE status='active'";
+$u_branch = trim($_SESSION['branch'] ?? '');
+if (isset($_SESSION['user_type']) && $_SESSION['user_type'] !== 'admin' && !empty($u_branch) && strtolower($u_branch) !== 'all') {
+    $u_branch_esc = addslashes($u_branch);
+    $b_obj = $ai_db->aiGetQueryObj("SELECT id FROM tbl_branches WHERE name='$u_branch_esc' LIMIT 1");
+    $b_id = !empty($b_obj) ? $b_obj[0]->id : 0;
+    $comp_where .= " AND (office_branch='$u_branch_esc'";
+    if ($b_id > 0) {
+        $comp_where .= " OR office_branch='$b_id'";
+    }
+    $comp_where .= ")";
+}
+$companies = $ai_db->aiGetQueryObj("SELECT company_name, phone, email, address FROM tbl_vendors_companies $comp_where ORDER BY company_name ASC");
 if (empty($companies)) {
     $companies = [];
 }
@@ -721,11 +792,13 @@ if (isset($_POST['btn_submit'])) {
         exit;
     }
 
+    $current_logged_user_id = $_SESSION['id'] ?? '';
+
     if ($mode === "add") {
-        $sql = "INSERT INTO $table SET company_name='$company_name', address='$address', email='$email', phone='$phone', load_type='$load_type', status='$status', assigned_date='$assigned_date', submitted_date='$submitted_date', stability_date='$stability_date', stability_file='$stability_file', drawing_file='$drawing_file', approval_date=" . ($approval_date ? "'$approval_date'" : "NULL") . ", validity_date=" . ($validity_date ? "'$validity_date'" : "NULL");
+        $sql = "INSERT INTO $table SET company_name='$company_name', address='$address', email='$email', phone='$phone', load_type='$load_type', status='$status', assigned_date='$assigned_date', submitted_date='$submitted_date', stability_date='$stability_date', stability_file='$stability_file', drawing_file='$drawing_file', approval_date=" . ($approval_date ? "'$approval_date'" : "NULL") . ", validity_date=" . ($validity_date ? "'$validity_date'" : "NULL") . ", created_by='$current_logged_user_id'";
         $msg = 1;
     } else {
-        $sql = "UPDATE $table SET company_name='$company_name', address='$address', email='$email', phone='$phone', load_type='$load_type', status='$status', assigned_date='$assigned_date', submitted_date='$submitted_date', stability_date='$stability_date', stability_file='$stability_file', drawing_file='$drawing_file', approval_date=" . ($approval_date ? "'$approval_date'" : "NULL") . ", validity_date=" . ($validity_date ? "'$validity_date'" : "NULL") . " WHERE id='$id'";
+        $sql = "UPDATE $table SET company_name='$company_name', address='$address', email='$email', phone='$phone', load_type='$load_type', status='$status', assigned_date='$assigned_date', submitted_date='$submitted_date', stability_date='$stability_date', stability_file='$stability_file', drawing_file='$drawing_file', approval_date=" . ($approval_date ? "'$approval_date'" : "NULL") . ", validity_date=" . ($validity_date ? "'$validity_date'" : "NULL") . ", updated_by='$current_logged_user_id' WHERE id='$id'";
         $msg = 2;
     }
 
@@ -801,6 +874,8 @@ if ($mode === 'list') {
         $where .= " AND (company_name LIKE '%$search%' OR phone LIKE '%$search%')";
     }
 
+    $where .= getStabilityBranchWhere();
+
     $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
     $limit = 10;
     $offset = ($page - 1) * $limit;
@@ -812,12 +887,13 @@ if ($mode === 'list') {
     $sql = "SELECT * FROM $table $where ORDER BY id DESC LIMIT $limit OFFSET $offset";
     $list_data = $ai_db->aiGetQueryObj($sql);
 
-    // Stats
+    // Stats (Filtered by Branch / User Access)
+    $stat_branch_where = getStabilityBranchWhere();
     $stats = [
-        'total' => count($ai_db->aiGetQueryObj("SELECT id FROM $table")),
-        'active' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE status != 'Deactive' AND status != 'Rejected' AND (validity_date >= CURDATE() OR validity_date IS NULL OR validity_date = '' OR validity_date = '0000-00-00')")),
-        'deactive' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE status = 'Deactive' OR status = 'Rejected' OR (validity_date < CURDATE() AND validity_date IS NOT NULL AND validity_date != '' AND validity_date != '0000-00-00')")),
-        'recent' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)"))
+        'total' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE 1=1 $stat_branch_where")),
+        'active' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE status != 'Deactive' AND status != 'Rejected' AND (validity_date >= CURDATE() OR validity_date IS NULL OR validity_date = '' OR validity_date = '0000-00-00') $stat_branch_where")),
+        'deactive' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE (status = 'Deactive' OR status = 'Rejected' OR (validity_date < CURDATE() AND validity_date IS NOT NULL AND validity_date != '' AND validity_date != '0000-00-00')) $stat_branch_where")),
+        'recent' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) $stat_branch_where"))
     ];
 }
 

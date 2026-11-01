@@ -28,6 +28,57 @@ $page_nm = "Factory Act Renewals";
 $table = "tbl_factory_renewals";
 $redirection_url = "factory_act_renewal.php";
 
+// --- ROLE & USER RESTRICTION HELPER ---
+function getFactoryRenewalBranchWhere($table_alias = 'r')
+{
+    global $ai_db;
+    $user_type = $_SESSION['user_type'] ?? '';
+    if ($user_type === 'admin') {
+        return ""; // Admin can view all records
+    }
+
+    $user_id = intval($_SESSION['id'] ?? 0);
+    $user_branch = trim($_SESSION['branch'] ?? '');
+    $prefix = $table_alias ? "$table_alias." : "";
+
+    // If logged-in user has a specific branch (e.g. Rajkot, Morbi, Ahmedabad)
+    if (!empty($user_branch) && strtolower($user_branch) !== 'all') {
+        $user_branch_esc = addslashes($user_branch);
+        $branch_obj = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_branches WHERE name='$user_branch_esc' LIMIT 1");
+        $branch_id = !empty($branch_obj) ? $branch_obj[0]->id : 0;
+
+        $branch_subquery = "SELECT company_code FROM tbl_vendors_companies WHERE (office_branch='$user_branch_esc'";
+        $branch_subquery_name = "SELECT company_name FROM tbl_vendors_companies WHERE (office_branch='$user_branch_esc'";
+        if ($branch_id > 0) {
+            $branch_subquery .= " OR office_branch='$branch_id'";
+            $branch_subquery_name .= " OR office_branch='$branch_id'";
+        }
+        $branch_subquery .= ") AND company_code != '' AND company_code IS NOT NULL";
+        $branch_subquery_name .= ") AND company_name != '' AND company_name IS NOT NULL";
+
+        // Renewal belongs to branch if its company in tbl_vendors_companies belongs to this branch,
+        // or if not linked to any company, fallback to renewal's own office_branch or user creation
+        $conditions = [];
+        $conditions[] = "({$prefix}company_code != '' AND {$prefix}company_code IS NOT NULL AND {$prefix}company_code IN ($branch_subquery))";
+        $conditions[] = "({$prefix}company_name != '' AND {$prefix}company_name IS NOT NULL AND {$prefix}company_name IN ($branch_subquery_name))";
+
+        // Also allow if created_by / updated_by is this user
+        if ($user_id > 0) {
+            $conditions[] = "{$prefix}created_by = '$user_id'";
+            $conditions[] = "{$prefix}updated_by = '$user_id'";
+        }
+
+        return " AND (" . implode(" OR ", $conditions) . ")";
+    }
+
+    // Default for branch manager/user without specific branch: show records they created/updated
+    if ($user_id > 0) {
+        return " AND ({$prefix}created_by = '$user_id' OR {$prefix}updated_by = '$user_id')";
+    }
+
+    return " AND 1=0";
+}
+
 $mode = $_REQUEST['mode'] ?? 'list';
 $id = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
 if (($mode === "edit" || $mode === "list") && !isset($_POST['btn_submit'])) {
@@ -553,6 +604,8 @@ if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
         $where .= " AND (r.company_name LIKE '%$search%' OR r.phone LIKE '%$search%')";
     }
 
+    $where .= getFactoryRenewalBranchWhere('r');
+
     $sql = "SELECT r.*, c.factory_license_number FROM $table r LEFT JOIN tbl_vendors_companies c ON (r.company_code = c.company_code AND r.company_code != '' AND r.company_code IS NOT NULL) $where ORDER BY r.id DESC";
     $renewals = $ai_db->aiGetQueryObj($sql);
     if (!is_array($renewals)) {
@@ -651,9 +704,11 @@ if (isset($_POST['btn_submit'])) {
         exit;
     }
 
+    $current_logged_user_id = $_SESSION['id'] ?? '';
+
     if ($mode === "add") {
         $file_part = $license_file ? ", license_file='$license_file'" : "";
-        $sql = "INSERT INTO $table SET company_name='$company_name', company_code='$company_code', address='$address', phone='$phone', email='$email', num_workers='$num_workers', horse_power='$horse_power', years_multiplier='$years_multiplier', total_amount='$total_amount', status='$status', renewal_date='$renewal_date', expiry_date='$expiry_date'$file_part";
+        $sql = "INSERT INTO $table SET company_name='$company_name', company_code='$company_code', address='$address', phone='$phone', email='$email', num_workers='$num_workers', horse_power='$horse_power', years_multiplier='$years_multiplier', total_amount='$total_amount', status='$status', renewal_date='$renewal_date', expiry_date='$expiry_date', created_by='$current_logged_user_id'$file_part";
         if ($ai_db->aiQuery($sql)) {
             $new_id = $ai_db->aiLastInsert();
             $h_file = $license_file ?: '';
@@ -662,7 +717,7 @@ if (isset($_POST['btn_submit'])) {
         $msg = 1;
     } else {
         $file_part = $license_file ? ", license_file='$license_file'" : "";
-        $sql = "UPDATE $table SET company_name='$company_name', company_code='$company_code', address='$address', phone='$phone', email='$email', num_workers='$num_workers', horse_power='$horse_power', years_multiplier='$years_multiplier', total_amount='$total_amount', status='$status', renewal_date='$renewal_date', expiry_date='$expiry_date'$file_part WHERE id='$id'";
+        $sql = "UPDATE $table SET company_name='$company_name', company_code='$company_code', address='$address', phone='$phone', email='$email', num_workers='$num_workers', horse_power='$horse_power', years_multiplier='$years_multiplier', total_amount='$total_amount', status='$status', renewal_date='$renewal_date', expiry_date='$expiry_date', updated_by='$current_logged_user_id'$file_part WHERE id='$id'";
         $ai_db->aiQuery($sql);
         $msg = 2;
     }
@@ -729,6 +784,8 @@ if ($mode === 'list') {
         $where .= " AND (r.company_name LIKE '%$search%' OR r.phone LIKE '%$search%')";
     }
 
+    $where .= getFactoryRenewalBranchWhere('r');
+
     $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
     $limit = 10;
     $offset = ($page - 1) * $limit;
@@ -740,19 +797,27 @@ if ($mode === 'list') {
     $sql = "SELECT r.*, c.factory_license_number FROM $table r LEFT JOIN tbl_vendors_companies c ON (r.company_code = c.company_code AND r.company_code != '' AND r.company_code IS NOT NULL) $where ORDER BY r.id DESC LIMIT $limit OFFSET $offset";
     $list_data = $ai_db->aiGetQueryObj($sql);
 
-    // Stats
+    // Stats (Filtered by Branch / User Access)
+    $stat_branch_where = getFactoryRenewalBranchWhere('');
     $stats = [
-        'total' => count($ai_db->aiGetQueryObj("SELECT id FROM $table")),
-        'active' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE status != 'Deactive' AND status != 'Expired' AND (expiry_date >= CURDATE() OR expiry_date IS NULL OR expiry_date = '' OR expiry_date = '0000-00-00')")),
-        'deactive' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE status = 'Deactive' OR status = 'Expired' OR (expiry_date < CURDATE() AND expiry_date IS NOT NULL AND expiry_date != '' AND expiry_date != '0000-00-00')")),
-        'today' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE DATE(created_at) = CURDATE()")),
+        'total' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE 1=1 $stat_branch_where")),
+        'active' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE status != 'Deactive' AND status != 'Expired' AND (expiry_date >= CURDATE() OR expiry_date IS NULL OR expiry_date = '' OR expiry_date = '0000-00-00') $stat_branch_where")),
+        'deactive' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE (status = 'Deactive' OR status = 'Expired' OR (expiry_date < CURDATE() AND expiry_date IS NOT NULL AND expiry_date != '' AND expiry_date != '0000-00-00')) $stat_branch_where")),
+        'today' => count($ai_db->aiGetQueryObj("SELECT id FROM $table WHERE DATE(created_at) = CURDATE() $stat_branch_where")),
     ];
 }
 
 // --- FETCH DATA FOR EDIT ---
 if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
-    $result = $ai_db->aiGetQueryObj("SELECT * FROM $table WHERE id='$id' LIMIT 1");
+    $res_where = getFactoryRenewalBranchWhere('');
+    $result = $ai_db->aiGetQueryObj("SELECT * FROM $table WHERE id='$id' $res_where LIMIT 1");
     $data = $result[0] ?? null;
+
+    if (!$data && !empty($res_where)) {
+        $_SESSION['error'] = "You do not have permission to access this renewal record.";
+        $ai_core->aiGoPage($redirection_url);
+        exit;
+    }
 }
 
 // Check for old session data (validation errors)
@@ -766,8 +831,20 @@ if (isset($_SESSION['old_post'])) {
     unset($_SESSION['old_post']);
 }
 
-// Fetch Active Companies for Dynamic Select2
-$companies = $ai_db->aiGetQueryObj("SELECT company_name, phone, email, address, company_code, factory_license_number FROM tbl_vendors_companies WHERE status='active' ORDER BY company_name ASC");
+// Fetch Active Companies for Dynamic Select2 (Filtered by Branch for non-admin)
+$comp_where = " WHERE status='active'";
+$u_branch = trim($_SESSION['branch'] ?? '');
+if (isset($_SESSION['user_type']) && $_SESSION['user_type'] !== 'admin' && !empty($u_branch) && strtolower($u_branch) !== 'all') {
+    $u_branch_esc = addslashes($u_branch);
+    $b_obj = $ai_db->aiGetQueryObj("SELECT id FROM tbl_branches WHERE name='$u_branch_esc' LIMIT 1");
+    $b_id = !empty($b_obj) ? $b_obj[0]->id : 0;
+    $comp_where .= " AND (office_branch='$u_branch_esc'";
+    if ($b_id > 0) {
+        $comp_where .= " OR office_branch='$b_id'";
+    }
+    $comp_where .= ")";
+}
+$companies = $ai_db->aiGetQueryObj("SELECT company_name, phone, email, address, company_code, factory_license_number FROM tbl_vendors_companies $comp_where ORDER BY company_name ASC");
 if (empty($companies)) {
     $companies = [];
 }
@@ -1310,7 +1387,7 @@ include 'includes/sidebar.php';
                     const compSelect = document.getElementById('company_name');
                     if (compSelect) {
                         // For select2 change event
-                        $(compSelect).on('change', function () {
+                        $(compSelect).on('change', function() {
                             handleCompanyChange(this);
                         });
                     }
@@ -1616,7 +1693,7 @@ include 'includes/sidebar.php';
                         url: `factory_act_renewal.php?action=ajax_get_history&id=${id}`,
                         type: 'GET',
                         dataType: 'json',
-                        success: function (res) {
+                        success: function(res) {
                             if (res.status === 'success') {
                                 if (res.data.length === 0) {
                                     tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">No history records found for this company.</td></tr>';
@@ -1651,7 +1728,7 @@ include 'includes/sidebar.php';
                                 toastr.error('Failed to load history.');
                             }
                         },
-                        error: function () {
+                        error: function() {
                             toastr.error('Connection error while fetching history.');
                         }
                     });
@@ -1672,7 +1749,7 @@ include 'includes/sidebar.php';
                         processData: false,
                         contentType: false,
                         dataType: 'json',
-                        success: function (data) {
+                        success: function(data) {
                             if (data.status === 'success') {
                                 toastr.success(data.message, 'Success');
                                 // Close modal
@@ -1684,11 +1761,11 @@ include 'includes/sidebar.php';
                                 toastr.error(data.message, 'Error');
                             }
                         },
-                        error: function (xhr) {
+                        error: function(xhr) {
                             console.error(xhr.responseText);
                             toastr.error('Failed to process renewal.', 'Server Error');
                         },
-                        complete: function () {
+                        complete: function() {
                             btnElement.innerHTML = originalHtml;
                             btnElement.disabled = false;
                         }

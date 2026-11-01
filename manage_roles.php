@@ -53,6 +53,7 @@ $system_modules = [
 
     // 7) Master
     'firm_types' => ['title' => 'Master: Firm Types', 'icon' => 'ti-settings'],
+    'branches' => ['title' => 'Master: Branches', 'icon' => 'ti-settings'],
     'company_types' => ['title' => 'Master: Company Types', 'icon' => 'ti-settings'],
     'medical_covers' => ['title' => 'Master: Medical Covers', 'icon' => 'ti-settings'],
     'subproducts' => ['title' => 'Master: Sub Products', 'icon' => 'ti-settings'],

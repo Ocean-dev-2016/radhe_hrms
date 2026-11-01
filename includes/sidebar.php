@@ -290,10 +290,10 @@ function hasPerm($module, $action = 'view')
                 <?php endif; ?> -->
 
                 <!-- 7. Master -->
-                <?php if ($user_role !== 'Plan Maker' && (hasPerm('firm_types') || hasPerm('company_types') || hasPerm('insurance_companies') || hasPerm('medical_covers') || hasPerm('subproducts') || hasPerm('segments'))): ?>
+                <?php if ($user_role !== 'Plan Maker' && (hasPerm('firm_types') || hasPerm('branches') || hasPerm('company_types') || hasPerm('insurance_companies') || hasPerm('medical_covers') || hasPerm('subproducts') || hasPerm('segments'))): ?>
                     <li class="submenu">
                         <a href="javascript:void(0);"
-                            class="<?= (in_array($current_page, ['firm_types.php', 'company_types.php', 'insurance_companies.php', 'medical_covers.php', 'subproducts.php', 'segments.php'])) ? 'active' : '' ?>">
+                            class="<?= (in_array($current_page, ['firm_types.php', 'branches.php', 'company_types.php', 'insurance_companies.php', 'medical_covers.php', 'subproducts.php', 'segments.php'])) ? 'active' : '' ?>">
                             <i class="ti ti-settings-cog"></i><span>Master</span>
                             <span class="menu-arrow"></span>
                         </a>
@@ -302,6 +302,12 @@ function hasPerm($module, $action = 'view')
                                 <li><a href="firm_types.php"
                                         class="<?= ($current_page == 'firm_types.php') ? 'active' : '' ?>"><i
                                             class="ti ti-category"></i><span>Firm Type</span></a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if (hasPerm('branches')): ?>
+                                <li><a href="branches.php"
+                                        class="<?= ($current_page == 'branches.php') ? 'active' : '' ?>"><i
+                                            class="ti ti-git-branch"></i><span>Branch</span></a>
                                 </li>
                             <?php endif; ?>
                             <?php if (hasPerm('company_types')): ?>

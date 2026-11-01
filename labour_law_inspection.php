@@ -32,6 +32,36 @@ if (!is_dir($docUrl)) {
     mkdir($docUrl, 0777, true);
 }
 
+// --- ROLE & USER RESTRICTION HELPER ---
+function getLabourInspectionBranchWhere($table_alias = 't') {
+    global $ai_db;
+    $user_type = $_SESSION['user_type'] ?? '';
+    if ($user_type === 'admin') {
+        return ""; // Admin can view all records
+    }
+
+    $user_branch = trim($_SESSION['branch'] ?? '');
+    $prefix = $table_alias ? "$table_alias." : "";
+
+    // Strictly filter purely based on company's office_branch
+    if (!empty($user_branch) && strtolower($user_branch) !== 'all') {
+        $user_branch_esc = addslashes($user_branch);
+        $branch_obj = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_branches WHERE LOWER(name)=LOWER('$user_branch_esc') LIMIT 1");
+        $branch_id = !empty($branch_obj) ? $branch_obj[0]->id : 0;
+
+        $branch_conditions = ["LOWER(TRIM(office_branch)) = LOWER(TRIM('$user_branch_esc'))"];
+        if ($branch_id > 0) {
+            $branch_conditions[] = "office_branch = '$branch_id'";
+        }
+
+        $branch_subquery = "SELECT id FROM tbl_vendors_companies WHERE (" . implode(" OR ", $branch_conditions) . ")";
+
+        return " AND {$prefix}company_id IN ($branch_subquery)";
+    }
+
+    return " AND 1=0";
+}
+
 $mode = $_REQUEST['mode'] ?? 'list';
 $id = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
 $data = null;
@@ -47,6 +77,8 @@ if (isset($_POST['ajax_fetch'])) {
     if (!empty($search)) {
         $where .= " AND (t.officer_name LIKE '%$search%' OR c.name LIKE '%$search%')";
     }
+
+    $where .= getLabourInspectionBranchWhere('t');
 
     $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table t LEFT JOIN tbl_vendors_companies c ON t.company_id = c.id $where");
     $total_records = $total_res[0]->total;
@@ -211,6 +243,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
         $search_esc = addslashes($search);
         $where .= " AND (t.officer_name LIKE '%$search_esc%' OR c.company_name LIKE '%$search_esc%')";
     }
+    $where .= getLabourInspectionBranchWhere('t');
 
     $sql = "SELECT t.*, c.company_name as company_name 
             FROM $table t 
@@ -271,22 +304,43 @@ if ($mode === "delete" && $id) {
 include 'includes/header.php';
 include 'includes/sidebar.php';
 
-// Fetch Companies for dropdown
-$companies = $ai_db->aiGetQueryObj("SELECT id, company_name as name FROM tbl_vendors_companies WHERE status='Active' ORDER BY company_name ASC");
+// Fetch Companies for dropdown (Filtered by Branch for non-admin)
+$comp_where = " WHERE status='Active'";
+$u_branch = trim($_SESSION['branch'] ?? '');
+if (isset($_SESSION['user_type']) && $_SESSION['user_type'] !== 'admin' && !empty($u_branch) && strtolower($u_branch) !== 'all') {
+    $u_branch_esc = addslashes($u_branch);
+    $b_obj = $ai_db->aiGetQueryObj("SELECT id FROM tbl_branches WHERE LOWER(name)=LOWER('$u_branch_esc') LIMIT 1");
+    $b_id = !empty($b_obj) ? $b_obj[0]->id : 0;
+    
+    $comp_branch_conds = ["LOWER(TRIM(office_branch)) = LOWER(TRIM('$u_branch_esc'))"];
+    if ($b_id > 0) {
+        $comp_branch_conds[] = "office_branch = '$b_id'";
+    }
+    $comp_where .= " AND (" . implode(" OR ", $comp_branch_conds) . ")";
+}
+$companies = $ai_db->aiGetQueryObj("SELECT id, company_name as name FROM tbl_vendors_companies $comp_where ORDER BY company_name ASC");
 
 // Fetch for Edit
 if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
-    $result = $ai_db->aiGetQueryObj("SELECT * FROM $table WHERE id='$id' LIMIT 1");
+    $res_where = getLabourInspectionBranchWhere('');
+    $result = $ai_db->aiGetQueryObj("SELECT * FROM $table WHERE id='$id' $res_where LIMIT 1");
     $data = $result[0] ?? null;
+
+    if (!$data && !empty($res_where)) {
+        $_SESSION['error'] = "You do not have permission to access this inspection record.";
+        $ai_core->aiGoPage($redirection_url);
+        exit;
+    }
 }
 
 // Initial List Data
 if ($mode === 'list') {
+    $branch_w_join = getLabourInspectionBranchWhere('t');
     $limit = 10;
-    $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table");
+    $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table t LEFT JOIN tbl_vendors_companies c ON t.company_id = c.id WHERE 1=1 $branch_w_join");
     $total_records = $total_res[0]->total;
     $total_pages = ceil($total_records / $limit);
-    $list_data = $ai_db->aiGetQueryObj("SELECT t.*, c.company_name as company_name FROM $table t LEFT JOIN tbl_vendors_companies c ON t.company_id = c.id ORDER BY t.id DESC LIMIT $limit");
+    $list_data = $ai_db->aiGetQueryObj("SELECT t.*, c.company_name as company_name FROM $table t LEFT JOIN tbl_vendors_companies c ON t.company_id = c.id WHERE 1=1 $branch_w_join ORDER BY t.id DESC LIMIT $limit");
 }
 ?>
 

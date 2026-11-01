@@ -19,7 +19,7 @@ if ($action == 'accept_plan_task' && $id) {
         $ai_db->aiQuery("UPDATE $table SET plan_approval_status='Task Accepted' WHERE id='$id'");
         $msg = "You have successfully accepted the plan making task. The administrator has been notified.";
     }
-    ?>
+?>
     <!DOCTYPE html>
     <html lang="en">
 
@@ -142,7 +142,7 @@ if ($action == 'accept_plan_task' && $id) {
     </body>
 
     </html>
-    <?php
+<?php
     exit;
 }
 
@@ -175,6 +175,33 @@ include 'includes/sidebar.php';
 $page_nm = "Factory ACT Quotation";
 $table = "tbl_factory_quotations";
 $redirection_url = "factory_act_quotation.php";
+
+// --- ROLE & USER RESTRICTION HELPER ---
+function getFactoryQuotationBranchWhere($table_alias = '')
+{
+    global $ai_db;
+    $user_type = $_SESSION['user_type'] ?? '';
+    if ($user_type === 'admin') {
+        return ""; // Admin can view all records
+    }
+
+    $user_id = intval($_SESSION['id'] ?? 0);
+    $user_role = $_SESSION['role'] ?? '';
+
+    // Plan Maker has their own assigned logic
+    if ($user_role === 'Plan Maker') {
+        return "";
+    }
+
+    $prefix = $table_alias ? "$table_alias." : "";
+
+    // For branch managers or employees: strictly show records created or updated by this user
+    if ($user_id > 0) {
+        return " AND ({$prefix}created_by = '$user_id' OR {$prefix}updated_by = '$user_id')";
+    }
+
+    return " AND 1=0";
+}
 
 // Sync mail_status for existing records that already had mail sent/approved/cancelled
 $ai_db->aiQuery("UPDATE $table SET mail_status='send' WHERE (mail_status IS NULL OR mail_status='' OR mail_status='pending') AND (LOWER(client_approval_status)='mail sent' OR LOWER(client_approval_status)='approved by client' OR LOWER(client_approval_status)='approved' OR LOWER(client_approval_status)='cancelled by client' OR LOWER(client_approval_status)='cancelled')");
@@ -1281,16 +1308,17 @@ if (isset($_POST['btn_submit'])) {
         if (!isset($data->total_amount))
             $data->total_amount = $_POST['total_amount'] ?? 0;
     } else {
+        $current_logged_user_id = $_SESSION['id'] ?? '';
         if ($mode === "add") {
             // Generate Unique Quotation Number
             $last_id_res = $ai_db->aiGetQueryObj("SELECT MAX(id) as max_id FROM $table");
             $next_id = ($last_id_res[0]->max_id ?? 0) + 1;
             $quotation_no = "RAD/QTN/" . date('Y') . "/" . str_pad($next_id, 4, '0', STR_PAD_LEFT);
 
-            $sql = "INSERT INTO $table SET quotation_no='$quotation_no', company_name='$company_name', owner_name='$owner_name', owner_address='$owner_address', address='$address', phone='$phone', email='$email', num_workers='$num_workers', horse_power='$horse_power', calc_amount='$calc_amount', years_multiplier='$years_multiplier', with_load='$with_load', stability_cert_amount='$stability_cert_amount', admin_charge='$admin_charge', consultancy_fees='$consultancy_fees', plan_charge='$plan_charge', excess_fees='$excess_fees', maked_status='$maked_status', total_amount='$total_amount', status='$status', mail_status='pending'";
+            $sql = "INSERT INTO $table SET quotation_no='$quotation_no', company_name='$company_name', owner_name='$owner_name', owner_address='$owner_address', address='$address', phone='$phone', email='$email', num_workers='$num_workers', horse_power='$horse_power', calc_amount='$calc_amount', years_multiplier='$years_multiplier', with_load='$with_load', stability_cert_amount='$stability_cert_amount', admin_charge='$admin_charge', consultancy_fees='$consultancy_fees', plan_charge='$plan_charge', excess_fees='$excess_fees', maked_status='$maked_status', total_amount='$total_amount', status='$status', mail_status='pending', created_by='$current_logged_user_id'";
             $msg = 1;
         } else {
-            $sql = "UPDATE $table SET company_name='$company_name', owner_name='$owner_name', owner_address='$owner_address', address='$address', phone='$phone', email='$email', num_workers='$num_workers', horse_power='$horse_power', calc_amount='$calc_amount', years_multiplier='$years_multiplier', with_load='$with_load', stability_cert_amount='$stability_cert_amount', admin_charge='$admin_charge', consultancy_fees='$consultancy_fees', plan_charge='$plan_charge', excess_fees='$excess_fees', maked_status='$maked_status', total_amount='$total_amount', status='$status' WHERE id='$id'";
+            $sql = "UPDATE $table SET company_name='$company_name', owner_name='$owner_name', owner_address='$owner_address', address='$address', phone='$phone', email='$email', num_workers='$num_workers', horse_power='$horse_power', calc_amount='$calc_amount', years_multiplier='$years_multiplier', with_load='$with_load', stability_cert_amount='$stability_cert_amount', admin_charge='$admin_charge', consultancy_fees='$consultancy_fees', plan_charge='$plan_charge', excess_fees='$excess_fees', maked_status='$maked_status', total_amount='$total_amount', status='$status', updated_by='$current_logged_user_id' WHERE id='$id'";
             $msg = 2;
         }
 
@@ -1432,6 +1460,8 @@ if ($mode === 'list') {
         $where .= " AND (company_name LIKE '%$search%' OR phone LIKE '%$search%' OR email LIKE '%$search%')";
     }
 
+    $where .= getFactoryQuotationBranchWhere();
+
     // Count total records for pagination
     $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table $where");
     $total_records = $total_res[0]->total;
@@ -1443,8 +1473,15 @@ if ($mode === 'list') {
 
 // --- FETCH DATA FOR EDIT ---
 if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
-    $result = $ai_db->aiGetQueryObj("SELECT * FROM $table WHERE id='$id' LIMIT 1");
+    $restrict_where = getFactoryQuotationBranchWhere();
+    $result = $ai_db->aiGetQueryObj("SELECT * FROM $table WHERE id='$id' $restrict_where LIMIT 1");
     $data = $result[0] ?? null;
+
+    if (!$data && !empty($restrict_where)) {
+        $_SESSION['error'] = "You do not have permission to access this quotation.";
+        $ai_core->aiGoPage($redirection_url);
+        exit;
+    }
     if ($data) {
         $data->num_workers = normalizeFactoryWorkers($data->num_workers ?? '');
         $data->horse_power = normalizeFactoryHorsePower($data->horse_power ?? '');
@@ -1565,7 +1602,7 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
                                                 $status_cls = 'bg-info';
                                                 break;
                                         }
-                                        ?>
+                                    ?>
                                         <tr>
                                             <td class="ps-4 fw-bold text-muted align-middle">
                                                 <?php echo $sr_no++; ?>
@@ -1695,7 +1732,7 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
                                                                     $stab_class = "bg-soft-danger text-danger";
                                                                 if ($stab_status == 'Submitted')
                                                                     $stab_class = "bg-soft-info text-info";
-                                                                ?>
+                                                            ?>
                                                                 <div
                                                                     class="d-flex align-items-center justify-content-between p-1 px-2 rounded bg-light border-start border-3 <?php echo str_replace('bg-soft-', 'border-', $stab_class); ?> mt-1">
                                                                     <div class="d-flex flex-column">
@@ -1715,7 +1752,7 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
                                                                     $lic_class = "bg-soft-warning text-warning";
                                                                     if ($lic_status == 'Final Approved')
                                                                         $lic_class = "bg-soft-success text-success";
-                                                                    ?>
+                                                                ?>
                                                                     <div
                                                                         class="d-flex align-items-center justify-content-between p-1 px-2 rounded bg-light border-start border-3 <?php echo str_replace('bg-soft-', 'border-', $lic_class); ?> mt-1">
                                                                         <span class="small fw-semibold text-muted">Licence:</span>
@@ -2037,7 +2074,7 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
                                         <option value="">Select HP</option>
                                         <?php foreach ($horse_power_options as $opt): ?>
                                             <option value="<?php echo $opt; ?>" <?php echo ($selected_horse_power === $opt) ? 'selected' : ''; ?>>
-                                                <?php echo $opt; ?>         <?php echo ($opt === '0') ? ' HP' : ' HP'; ?>
+                                                <?php echo $opt; ?> <?php echo ($opt === '0') ? ' HP' : ' HP'; ?>
                                             </option>
                                         <?php endforeach; ?>
                                         <?php if ($selected_horse_power !== '' && !in_array($selected_horse_power, $horse_power_options, true)): ?>
@@ -2204,12 +2241,15 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
 
                     const display_el = document.getElementById('display_total');
                     if (display_el) {
-                        display_el.innerText = total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        display_el.innerText = total.toLocaleString('en-IN', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
                     }
                 }
 
                 // Use pure JS to avoid jQuery order issues
-                document.addEventListener('DOMContentLoaded', function () {
+                document.addEventListener('DOMContentLoaded', function() {
                     const ids = ['with_load', 'num_workers', 'horse_power', 'years_multiplier'];
                     ids.forEach(id => {
                         const el = document.getElementById(id);
@@ -2351,7 +2391,7 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
         <?php endforeach; ?>
 
         <script>
-            document.addEventListener('DOMContentLoaded', function () {
+            document.addEventListener('DOMContentLoaded', function() {
                 <?php if (isset($_GET['msg']) && $_GET['msg'] == 'error_required' && isset($_GET['mode'])): ?>
                     if (typeof toastr !== 'undefined') toastr.error('Please fill all mandatory fields.', 'Validation Error');
                 <?php endif; ?>
@@ -2405,9 +2445,9 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
                 if (typeof toastr !== 'undefined') toastr.info('Uploading document and sending mail...', 'Please wait');
 
                 fetch(`factory_act_quotation.php?action=ajax_upload_and_send_stability&id=${id}`, {
-                    method: 'POST',
-                    body: formData
-                })
+                        method: 'POST',
+                        body: formData
+                    })
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
@@ -2492,9 +2532,9 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
                 btnElement.disabled = true;
 
                 fetch(`factory_act_quotation.php?action=ajax_final_approve&id=${id}`, {
-                    method: 'POST',
-                    body: formData
-                })
+                        method: 'POST',
+                        body: formData
+                    })
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
@@ -2529,7 +2569,7 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
                 if (typeof jQuery !== 'undefined') {
                     try {
                         $(`#${id}`).modal('hide');
-                    } catch (e) { }
+                    } catch (e) {}
                 }
 
                 setTimeout(() => {

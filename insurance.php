@@ -2,6 +2,44 @@
 include 'root/config.php';
 $ai_core->aiCheckLogin();
 
+// --- ROLE & USER RESTRICTION HELPER FOR INSURANCE ---
+function getInsuranceBranchWhere($table_alias = 't') {
+    global $ai_db;
+    $user_type = $_SESSION['user_type'] ?? '';
+    if ($user_type === 'admin') {
+        return ""; // Admin can view all records
+    }
+
+    $user_branch = trim($_SESSION['branch'] ?? '');
+    $prefix = $table_alias ? "$table_alias." : "";
+
+    // If logged-in user has a specific branch (e.g. Rajkot, Shapar, Morbi, etc.)
+    if (!empty($user_branch) && strtolower($user_branch) !== 'all') {
+        $user_branch_esc = addslashes($user_branch);
+        $branch_obj = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_branches WHERE LOWER(name)=LOWER('$user_branch_esc') LIMIT 1");
+        $branch_id = !empty($branch_obj) ? $branch_obj[0]->id : 0;
+
+        $branch_conditions = ["LOWER(TRIM(office_branch)) = LOWER(TRIM('$user_branch_esc'))"];
+        if ($branch_id > 0) {
+            $branch_conditions[] = "office_branch = '$branch_id'";
+        }
+        $branch_cond_sql = "(" . implode(" OR ", $branch_conditions) . ")";
+
+        $comp_subquery = "SELECT id FROM tbl_vendors_companies WHERE $branch_cond_sql";
+        $cons_subquery = "SELECT id FROM tbl_vendors_consumers WHERE $branch_cond_sql";
+
+        $conditions = [];
+        // Company matches branch
+        $conditions[] = "({$prefix}company_id IN ($comp_subquery))";
+        // Consumer matches branch
+        $conditions[] = "({$prefix}consumer_id IN ($cons_subquery))";
+
+        return " AND (" . implode(" OR ", $conditions) . ")";
+    }
+
+    return " AND 1=0";
+}
+
 $mode = $_REQUEST['mode'] ?? 'list';
 
 // ---- EARLY AJAX INTERCEPT (must be before header.php) ----
@@ -15,6 +53,7 @@ if ($mode === 'list' && isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == 1) {
     $offset = ($page_req - 1) * $limit;
 
     $where = " WHERE 1=1";
+    $where .= getInsuranceBranchWhere('t');
     $search = $_REQUEST['search'] ?? '';
     if (!empty($search)) {
         $where .= " AND (t.policy_no LIKE '%$search%' OR t.email LIKE '%$search%' OR t.mobile LIKE '%$search%' OR t.gst_no LIKE '%$search%' OR c.name LIKE '%$search%' OR cons.name LIKE '%$search%')";
@@ -946,6 +985,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
     require_once 'includes/xlsx_helper.php';
 
     $where = " WHERE 1=1";
+    $where .= getInsuranceBranchWhere('t');
     $search = $_REQUEST['search'] ?? '';
     if (!empty($search)) {
         $where .= " AND (t.policy_no LIKE '%$search%' OR t.email LIKE '%$search%' OR t.mobile LIKE '%$search%' OR t.gst_no LIKE '%$search%' OR c.name LIKE '%$search%' OR cons.name LIKE '%$search%')";
@@ -1238,6 +1278,7 @@ if ($mode === 'list') {
     }
 
     $where = " WHERE 1=1";
+    $where .= getInsuranceBranchWhere('t');
     $search = $_REQUEST['search'] ?? '';
     if (!empty($search)) {
         $where .= " AND (t.policy_no LIKE '%$search%' OR t.email LIKE '%$search%' OR t.mobile LIKE '%$search%' OR t.gst_no LIKE '%$search%' OR c.name LIKE '%$search%' OR cons.name LIKE '%$search%')";
@@ -1503,13 +1544,37 @@ if ($mode === 'list') {
 
 // --- FETCH DATA FOR EDIT ---
 if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
-    $result = $ai_db->aiGetQueryObj("SELECT * FROM $table WHERE id='$id' LIMIT 1");
+    $res_where = getInsuranceBranchWhere('');
+    $result = $ai_db->aiGetQueryObj("SELECT * FROM $table WHERE id='$id' $res_where LIMIT 1");
     $data = $result[0] ?? null;
+
+    if (!$data && !empty($res_where)) {
+        $_SESSION['error'] = "You do not have permission to access this insurance record.";
+        $ai_core->aiGoPage($redirection_url);
+        exit;
+    }
 }
 
-// Fetch Masters
-$companies = $ai_db->aiGetQueryObj("SELECT id, name, company_name, owner_name, email, phone, gst_no, pan_number FROM tbl_vendors_companies WHERE status='active' ORDER BY name ASC");
-$consumers = $ai_db->aiGetQueryObj("SELECT id, name, email, phone FROM tbl_vendors_consumers WHERE status='active' ORDER BY name ASC");
+// Fetch Masters (Filtered by Branch for non-admin)
+$comp_where = " WHERE status='active'";
+$cons_where = " WHERE status='active'";
+$u_branch = trim($_SESSION['branch'] ?? '');
+if (isset($_SESSION['user_type']) && $_SESSION['user_type'] !== 'admin' && !empty($u_branch) && strtolower($u_branch) !== 'all') {
+    $u_branch_esc = addslashes($u_branch);
+    $b_obj = $ai_db->aiGetQueryObj("SELECT id FROM tbl_branches WHERE LOWER(name)=LOWER('$u_branch_esc') LIMIT 1");
+    $b_id = !empty($b_obj) ? $b_obj[0]->id : 0;
+    
+    $branch_conds = ["LOWER(TRIM(office_branch)) = LOWER(TRIM('$u_branch_esc'))"];
+    if ($b_id > 0) {
+        $branch_conds[] = "office_branch = '$b_id'";
+    }
+    $branch_filter_sql = " AND (" . implode(" OR ", $branch_conds) . ")";
+    $comp_where .= $branch_filter_sql;
+    $cons_where .= $branch_filter_sql;
+}
+
+$companies = $ai_db->aiGetQueryObj("SELECT id, name, company_name, owner_name, email, phone, gst_no, pan_number FROM tbl_vendors_companies $comp_where ORDER BY name ASC");
+$consumers = $ai_db->aiGetQueryObj("SELECT id, name, email, phone FROM tbl_vendors_consumers $cons_where ORDER BY name ASC");
 $medical_covers = $ai_db->aiGetQueryObj("SELECT id, name, insurance_type FROM tbl_medical_covers WHERE status='active' ORDER BY name ASC");
 $insurance_companies_master = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_insurance_companies WHERE status='active' ORDER BY name ASC");
 $subproducts = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_subproducts WHERE status='active' ORDER BY name ASC");

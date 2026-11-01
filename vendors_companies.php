@@ -22,6 +22,32 @@ if ($mode == 'delete' && !$ai_core->aiCheckPermission('vendors_companies', 'dele
     $ai_core->aiGoPage("vendors_companies.php");
 }
 
+// --- ROLE & BRANCH RESTRICTION HELPER ---
+function getVendorCompanyBranchWhere($table_alias = 't') {
+    global $ai_db;
+    $user_type = $_SESSION['user_type'] ?? '';
+    if ($user_type === 'admin') {
+        return ""; // Admin can view all companies
+    }
+
+    $user_branch = trim($_SESSION['branch'] ?? '');
+    if (empty($user_branch) || strtolower($user_branch) === 'all') {
+        return ""; // If branch is All, can view all
+    }
+
+    $user_branch_esc = addslashes($user_branch);
+
+    // Find branch id if user_branch is branch name
+    $branch_obj = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_branches WHERE name='$user_branch_esc' LIMIT 1");
+    $branch_id = !empty($branch_obj) ? $branch_obj[0]->id : 0;
+
+    if ($branch_id > 0) {
+        return " AND ($table_alias.office_branch = '$user_branch_esc' OR $table_alias.office_branch = '$branch_id')";
+    } else {
+        return " AND ($table_alias.office_branch = '$user_branch_esc')";
+    }
+}
+
 // --- AJAX FETCH HANDLER ---
 if (isset($_POST['ajax_fetch'])) {
     $table = "tbl_vendors_companies";
@@ -39,14 +65,17 @@ if (isset($_POST['ajax_fetch'])) {
         $where .= " AND t.status = '$status_filter'";
     }
 
+    $where .= getVendorCompanyBranchWhere('t');
+
     $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table t $where");
     $total_records = $total_res[0]->total;
     $total_pages = ceil($total_records / $limit);
 
-    $sql = "SELECT t.*, ft.name as firm_type_name, ct.name as company_type_name 
+    $sql = "SELECT t.*, ft.name as firm_type_name, ct.name as company_type_name, b.name as branch_name 
             FROM $table t 
             LEFT JOIN tbl_firm_types ft ON t.firm_type = ft.id 
             LEFT JOIN tbl_company_types ct ON t.company_type = ct.id 
+            LEFT JOIN tbl_branches b ON (t.office_branch = b.id OR t.office_branch = b.name)
             $where ORDER BY t.id DESC LIMIT $limit OFFSET $offset";
     $list_data = $ai_db->aiGetQueryObj($sql);
 
@@ -61,7 +90,7 @@ if (isset($_POST['ajax_fetch'])) {
         $i = 1;
         foreach ($list_data as $row) {
             $current_sr_no = $offset + $i;
-            ?>
+?>
             <tr>
                 <td class="ps-4"><?php echo $current_sr_no; ?></td>
                 <td>
@@ -93,9 +122,9 @@ if (isset($_POST['ajax_fetch'])) {
                             <?php echo date('d-m-Y', strtotime($row->workstart_date)); ?>
                         </div>
                     <?php endif; ?>
-                    <?php if (!empty($row->office_branch)): ?>
+                    <?php if (!empty($row->branch_name) || !empty($row->office_branch)): ?>
                         <div class="small text-muted"><i class="ti ti-map-pin me-1 text-info"></i>Branch:
-                            <?php echo $row->office_branch; ?>
+                            <?php echo htmlspecialchars($row->branch_name ?: $row->office_branch); ?>
                         </div>
                     <?php endif; ?>
                 </td>
@@ -157,7 +186,7 @@ if (isset($_POST['ajax_fetch'])) {
                     </div>
                 </td>
             </tr>
-            <?php
+        <?php
             $i++;
         }
     }
@@ -209,7 +238,7 @@ if (isset($_POST['ajax_fetch'])) {
                 </li>
             </ul>
         </nav>
-    <?php endif;
+<?php endif;
     $pagination_html = ob_get_clean();
 
     $start_rec = $total_records > 0 ? $offset + 1 : 0;
@@ -341,6 +370,8 @@ if (isset($_POST['btn_submit'])) {
         exit;
     }
 
+    $current_logged_user_id = $_SESSION['id'] ?? '';
+
     $set_sql = "company_code='$company_code', 
                 company_name='$company_name', 
                 name='$company_name', 
@@ -373,10 +404,10 @@ if (isset($_POST['btn_submit'])) {
                 status='$status'";
 
     if ($mode === "add") {
-        $sql = "INSERT INTO $table SET $set_sql";
+        $sql = "INSERT INTO $table SET $set_sql, created_by='$current_logged_user_id'";
         $msg = 1;
     } else {
-        $sql = "UPDATE $table SET $set_sql WHERE id='$id'";
+        $sql = "UPDATE $table SET $set_sql, updated_by='$current_logged_user_id' WHERE id='$id'";
         $msg = 2;
     }
 
@@ -492,6 +523,7 @@ if (isset($_POST['btn_import'])) {
                 $workstart_date = normalizeVendorDateValue($workstart_date, '');
                 $ws_date_val = !empty($workstart_date) ? "'$workstart_date'" : "NULL";
 
+                $current_logged_user_id = $_SESSION['id'] ?? '';
                 $sql = "INSERT INTO $table SET 
                         company_name='$company_name', company_code='$company_code', owner_name='$owner_name', owner_address='$owner_address', 
                         designation='$designation', address='$address', phone='$phone', email='$email', 
@@ -503,7 +535,8 @@ if (isset($_POST['btn_import'])) {
                         esic_code='$esic_code', esic_password='$esic_password', 
                         lwf_id='$lwf_id', lwf_password='$lwf_password', 
                         ptrc_number='$ptrc_number', ptec_number='$ptec_number', 
-                        company_type='$company_type', status='$status'";
+                        company_type='$company_type', status='$status', 
+                        created_by='$current_logged_user_id'";
 
                 if ($ai_db->aiQuery($sql)) {
                     $count++;
@@ -540,6 +573,8 @@ if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
         $status_esc = addslashes($status_filter);
         $where .= " AND t.status = '$status_esc'";
     }
+
+    $where .= getVendorCompanyBranchWhere('t');
 
     $sql = "SELECT t.*, ft.name as firm_type_name, ct.name as company_type_name 
             FROM $table t 
@@ -656,19 +691,34 @@ $total_pages = 0;
 $page = 1;
 if ($mode === 'list') {
     $limit = 10;
-    $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table");
+    $branch_where = getVendorCompanyBranchWhere('t');
+    $init_where = " WHERE 1=1" . $branch_where;
+
+    $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table t $init_where");
     $total_records = $total_res[0]->total;
     $total_pages = ceil($total_records / $limit);
-    $list_data = $ai_db->aiGetQueryObj("SELECT t.*, ft.name as firm_type_name, ct.name as company_type_name 
+    $list_data = $ai_db->aiGetQueryObj("SELECT t.*, ft.name as firm_type_name, ct.name as company_type_name, b.name as branch_name 
                                         FROM $table t 
                                         LEFT JOIN tbl_firm_types ft ON t.firm_type = ft.id 
                                         LEFT JOIN tbl_company_types ct ON t.company_type = ct.id 
+                                        LEFT JOIN tbl_branches b ON (t.office_branch = b.id OR t.office_branch = b.name)
+                                        $init_where
                                         ORDER BY t.id DESC LIMIT $limit");
 }
 
 if (($mode === "edit" || $mode === "view") && $id && !isset($_POST['btn_submit'])) {
-    $result = $ai_db->aiGetQueryObj("SELECT * FROM $table WHERE id='$id' LIMIT 1");
+    $branch_access_check = getVendorCompanyBranchWhere('t');
+    $result = $ai_db->aiGetQueryObj("SELECT t.*, b.name as branch_name 
+                                      FROM $table t 
+                                      LEFT JOIN tbl_branches b ON (t.office_branch = b.id OR t.office_branch = b.name) 
+                                      WHERE t.id='$id' $branch_access_check LIMIT 1");
     $data = $result[0] ?? null;
+
+    if (!$data && !empty($branch_access_check)) {
+        $_SESSION['error'] = "You do not have access to companies outside your branch.";
+        $ai_core->aiGoPage($redirection_url);
+        exit;
+    }
 }
 
 // Check for old session data (validation errors)
@@ -691,6 +741,9 @@ $firm_types = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_firm_types WHERE s
 
 // Fetch Company Types for dropdown
 $company_types = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_company_types WHERE status='active' ORDER BY name ASC");
+
+// Fetch Branches for dropdown
+$branches_list = $ai_db->aiGetQueryObj("SELECT * FROM tbl_branches WHERE status='active' ORDER BY sort_order ASC, name ASC");
 ?>
 
 <div class="page-wrapper">
@@ -794,7 +847,7 @@ $company_types = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_company_types W
                                     $i = 1;
                                     foreach ($list_data as $row):
                                         $current_sr_no = ($page - 1) * 10 + $i;
-                                        ?>
+                                    ?>
                                         <tr>
                                             <td class="ps-4"><?php echo $current_sr_no; ?></td>
                                             <td>
@@ -842,10 +895,10 @@ $company_types = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_company_types W
                                                         Workstart: <?php echo date('d-m-Y', strtotime($row->workstart_date)); ?>
                                                     </div>
                                                 <?php endif; ?>
-                                                <?php if (!empty($row->office_branch)): ?>
+                                                <?php if (!empty($row->branch_name) || !empty($row->office_branch)): ?>
                                                     <div class="small text-muted">
                                                         <i class="ti ti-map-pin me-1"></i>
-                                                        Branch: <?php echo $row->office_branch; ?>
+                                                        Branch: <?php echo htmlspecialchars($row->branch_name ?: $row->office_branch); ?>
                                                     </div>
                                                 <?php endif; ?>
                                             </td>
@@ -905,7 +958,7 @@ $company_types = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_company_types W
                                                 </div>
                                             </td>
                                         </tr>
-                                        <?php
+                                    <?php
                                         $i++;
                                     endforeach; ?>
                                 <?php endif; ?>
@@ -1196,9 +1249,14 @@ $company_types = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_company_types W
                             <label class="form-label">Office Branch</label>
                             <select name="office_branch" class="form-select select2-no-search">
                                 <option value="">Select Branch</option>
-                                <option value="Rajkot" <?php echo ($data && ($data->office_branch ?? '') == 'Rajkot') ? 'selected' : ''; ?>>Rajkot</option>
-                                <option value="Morbi" <?php echo ($data && ($data->office_branch ?? '') == 'Morbi') ? 'selected' : ''; ?>>Morbi</option>
-                                <option value="Ahmedabad" <?php echo ($data && ($data->office_branch ?? '') == 'Ahmedabad') ? 'selected' : ''; ?>>Ahmedabad</option>
+                                <?php
+                                if (!empty($branches_list)) {
+                                    foreach ($branches_list as $b) {
+                                        $selected = ($data && ($data->office_branch ?? '') == $b->id) ? 'selected' : '';
+                                        echo "<option value=\"" . htmlspecialchars($b->id) . "\" $selected>" . htmlspecialchars($b->name) . "</option>";
+                                    }
+                                }
+                                ?>
                             </select>
                         </div>
 
@@ -1363,7 +1421,7 @@ $company_types = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_company_types W
                                     <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Office
                                         Branch</label>
                                     <p class="fw-medium"><i class="ti ti-map-pin me-2 text-success"></i>
-                                        <?php echo !empty($data->office_branch) ? htmlspecialchars($data->office_branch) : 'N/A'; ?>
+                                        <?php echo !empty($data->branch_name) ? htmlspecialchars($data->branch_name) : (!empty($data->office_branch) ? htmlspecialchars($data->office_branch) : 'N/A'); ?>
                                     </p>
                                 </div>
                                 <div class="col-md-12">
@@ -1683,9 +1741,9 @@ $company_types = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_company_types W
         formData.append('page', page);
 
         fetch('vendors_companies.php', {
-            method: 'POST',
-            body: formData
-        })
+                method: 'POST',
+                body: formData
+            })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
@@ -1698,7 +1756,7 @@ $company_types = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_company_types W
             });
     }
 
-    $(document).ready(function () {
+    $(document).ready(function() {
         toggleGSTCertificate();
         togglePANCard();
         if ($('.select2').length > 0) {
@@ -1715,19 +1773,21 @@ $company_types = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_company_types W
             });
         }
 
-        document.getElementById('filterForm')?.addEventListener('submit', function (e) {
+        document.getElementById('filterForm')?.addEventListener('submit', function(e) {
             e.preventDefault();
             loadData(1);
         });
 
-        $('.form-select').on('change', function () {
+        $('.form-select').on('change', function() {
             loadData(1);
         });
 
         let timeout = null;
-        document.getElementById('searchInput')?.addEventListener('keyup', function () {
+        document.getElementById('searchInput')?.addEventListener('keyup', function() {
             clearTimeout(timeout);
-            timeout = setTimeout(() => { loadData(1); }, 500);
+            timeout = setTimeout(() => {
+                loadData(1);
+            }, 500);
         });
 
         // Initialize visibility
@@ -1738,7 +1798,7 @@ $company_types = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_company_types W
     });
 
     // Toggle password visibility on form fields
-    $(document).on('click', '.toggle-form-password', function (e) {
+    $(document).on('click', '.toggle-form-password', function(e) {
         e.preventDefault();
         const input = $(this).closest('.input-group').find('input');
         const icon = $(this).find('i');
@@ -1752,7 +1812,7 @@ $company_types = $ai_db->aiGetQueryObj("SELECT id, name FROM tbl_company_types W
     });
 
     // Toggle password visibility on view details page
-    $(document).on('click', '.toggle-view-password', function (e) {
+    $(document).on('click', '.toggle-view-password', function(e) {
         e.preventDefault();
         const parent = $(this).parent();
         const textEl = parent.find('.password-text');

@@ -28,6 +28,26 @@ if ($mode == 'delete' && !$ai_core->aiCheckPermission('vendors_consumers', 'dele
 $page_nm = "Vendors - Consumers";
 $table = "tbl_vendors_consumers";
 $redirection_url = "vendors_consumers.php";
+
+// --- ROLE & USER RESTRICTION HELPER ---
+function getVendorConsumerBranchWhere($table_alias = '')
+{
+    global $ai_db;
+    $user_type = $_SESSION['user_type'] ?? '';
+    if ($user_type === 'admin') {
+        return ""; // Admin can view all consumers
+    }
+
+    $user_id = intval($_SESSION['id'] ?? 0);
+    $prefix = $table_alias ? "$table_alias." : "";
+
+    // For non-admin (Branch Manager / User), strictly show records created or updated by this logged-in user
+    if ($user_id > 0) {
+        return " AND ({$prefix}created_by = '$user_id' OR {$prefix}updated_by = '$user_id')";
+    }
+
+    return " AND 1=0"; // If no logged-in user id, deny access
+}
 // --- HANDLE POST ACTIONS ---
 if (isset($_POST['btn_submit'])) {
     $name = addslashes($_POST['name']);
@@ -50,11 +70,18 @@ if (isset($_POST['btn_submit'])) {
         exit;
     }
 
+    $branch = addslashes($_POST['office_branch'] ?? ($_SESSION['branch'] ?? 'Rajkot'));
+    if ($branch === 'All' || empty($branch)) {
+        $branch = 'Rajkot';
+    }
+
+    $current_logged_user_id = $_SESSION['id'] ?? '';
+
     if ($mode === "add") {
-        $sql = "INSERT INTO $table SET name='$name', email='$email', phone='$phone', address='$address', status='$status'";
+        $sql = "INSERT INTO $table SET name='$name', email='$email', phone='$phone', address='$address', status='$status', office_branch='$branch', created_by='$current_logged_user_id'";
         $msg = 1;
     } else {
-        $sql = "UPDATE $table SET name='$name', email='$email', phone='$phone', address='$address', status='$status' WHERE id='$id'";
+        $sql = "UPDATE $table SET name='$name', email='$email', phone='$phone', address='$address', status='$status', office_branch='$branch', updated_by='$current_logged_user_id' WHERE id='$id'";
         $msg = 2;
     }
 
@@ -112,7 +139,8 @@ if (isset($_POST['btn_import'])) {
                     $status = 'active';
                 }
 
-                $sql = "INSERT INTO $table SET name='$name', email='$email', phone='$phone', address='$address', status='$status'";
+                $current_logged_user_id = $_SESSION['id'] ?? '';
+                $sql = "INSERT INTO $table SET name='$name', email='$email', phone='$phone', address='$address', status='$status', created_by='$current_logged_user_id'";
                 if ($ai_db->aiQuery($sql)) {
                     $count++;
                 }
@@ -148,6 +176,8 @@ if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
         $status_esc = addslashes($status_filter);
         $where .= " AND status = '$status_esc'";
     }
+
+    $where .= getVendorConsumerBranchWhere();
 
     $sql = "SELECT * FROM $table $where ORDER BY id DESC";
     $consumers = $ai_db->aiGetQueryObj($sql);
@@ -218,6 +248,8 @@ if (isset($_POST['ajax_fetch'])) {
         $where .= " AND status = '$status_filter'";
     }
 
+    $where .= getVendorConsumerBranchWhere();
+
     $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table $where");
     $total_records = $total_res[0]->total;
     $total_pages = ceil($total_records / $limit);
@@ -233,7 +265,7 @@ if (isset($_POST['ajax_fetch'])) {
               </td></tr>';
     } else {
         foreach ($list_data as $row) {
-            ?>
+?>
             <tr>
                 <td class="ps-4">#<?php echo $row->id; ?></td>
                 <td><span class="fw-bold text-dark"><?php echo $row->name; ?></span></td>
@@ -264,7 +296,7 @@ if (isset($_POST['ajax_fetch'])) {
                     </div>
                 </td>
             </tr>
-            <?php
+        <?php
         }
     }
     $table_html = ob_get_clean();
@@ -315,7 +347,7 @@ if (isset($_POST['ajax_fetch'])) {
                 </li>
             </ul>
         </nav>
-    <?php endif;
+<?php endif;
     $pagination_html = ob_get_clean();
 
     echo json_encode([
@@ -337,15 +369,25 @@ $total_pages = 0;
 $page = 1;
 if ($mode === 'list') {
     $limit = 10;
-    $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table");
+    $branch_where = getVendorConsumerBranchWhere();
+    $init_where = " WHERE 1=1" . $branch_where;
+
+    $total_res = $ai_db->aiGetQueryObj("SELECT COUNT(*) as total FROM $table $init_where");
     $total_records = $total_res[0]->total;
     $total_pages = ceil($total_records / $limit);
-    $list_data = $ai_db->aiGetQueryObj("SELECT * FROM $table ORDER BY id DESC LIMIT $limit");
+    $list_data = $ai_db->aiGetQueryObj("SELECT * FROM $table $init_where ORDER BY id DESC LIMIT $limit");
 }
 
 if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
-    $result = $ai_db->aiGetQueryObj("SELECT * FROM $table WHERE id='$id' LIMIT 1");
+    $branch_check = getVendorConsumerBranchWhere();
+    $result = $ai_db->aiGetQueryObj("SELECT * FROM $table WHERE id='$id' $branch_check LIMIT 1");
     $data = $result[0] ?? null;
+
+    if (!$data && !empty($branch_check)) {
+        $_SESSION['error'] = "You do not have access to consumers outside your branch.";
+        $ai_core->aiGoPage($redirection_url);
+        exit;
+    }
 }
 ?>
 
@@ -631,7 +673,7 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
 <script src="assets/js/jquery-3.7.1.min.js"></script>
 <script src="assets/plugins/select2/js/select2.min.js"></script>
 <script>
-    $(document).ready(function () {
+    $(document).ready(function() {
         if ($('.select2').length > 0) {
             $('.select2').select2({
                 placeholder: "Select an option",
@@ -655,9 +697,9 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
         formData.append('page', page);
 
         fetch('vendors_consumers.php', {
-            method: 'POST',
-            body: formData
-        })
+                method: 'POST',
+                body: formData
+            })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
@@ -667,7 +709,7 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
             });
     }
 
-    document.getElementById('filterForm')?.addEventListener('submit', function (e) {
+    document.getElementById('filterForm')?.addEventListener('submit', function(e) {
         e.preventDefault();
         loadData(1);
     });
@@ -691,9 +733,11 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
     }
 
     let timeout = null;
-    document.getElementById('searchInput')?.addEventListener('keyup', function () {
+    document.getElementById('searchInput')?.addEventListener('keyup', function() {
         clearTimeout(timeout);
-        timeout = setTimeout(() => { loadData(1); }, 500);
+        timeout = setTimeout(() => {
+            loadData(1);
+        }, 500);
     });
 </script>
 

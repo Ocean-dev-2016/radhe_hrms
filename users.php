@@ -77,6 +77,8 @@ if (isset($_POST['ajax_fetch'])) {
                 $type_badge = '<span class="badge bg-soft-info text-info"><i class="ti ti-building me-1"></i>Companies</span>';
             elseif ($row->user_type == 'consumer')
                 $type_badge = '<span class="badge bg-soft-warning text-warning"><i class="ti ti-user me-1"></i>Consumer</span>';
+            elseif ($row->user_type == 'branch')
+                $type_badge = '<span class="badge bg-soft-success text-success"><i class="ti ti-git-branch me-1"></i>Branch</span>';
             elseif ($row->user_type == 'employee')
                 $type_badge = '<span class="badge bg-soft-purple text-purple"><i class="ti ti-id-badge me-1"></i>Employee</span>';
 
@@ -85,9 +87,11 @@ if (isset($_POST['ajax_fetch'])) {
                 $icon_bg = 'bg-soft-info text-info';
             if ($row->user_type == 'consumer')
                 $icon_bg = 'bg-soft-warning text-warning';
+            if ($row->user_type == 'branch')
+                $icon_bg = 'bg-soft-success text-success';
             if ($row->user_type == 'employee')
                 $icon_bg = 'bg-soft-purple text-purple';
-            ?>
+?>
             <tr>
                 <td class="ps-4 text-muted"><?php echo $current_sr_no; ?></td>
                 <td>
@@ -113,9 +117,12 @@ if (isset($_POST['ajax_fetch'])) {
                     <div class="small text-muted"><i class="ti ti-phone me-1"></i><?php echo $row->phone; ?></div>
                 </td>
                 <td>
-                    <?php if ($row->user_type == 'employee'): ?>
+                    <?php if ($row->user_type == 'employee' || $row->user_type == 'branch'): ?>
                         <div class="small fw-bold text-dark"><?php echo $row->role; ?></div>
                         <div class="small text-muted"><?php echo $row->dept; ?></div>
+                        <?php if (!empty($row->branch)): ?>
+                            <div class="small text-muted"><i class="ti ti-git-branch me-1 text-primary"></i><?php echo htmlspecialchars($row->branch); ?></div>
+                        <?php endif; ?>
                     <?php elseif ($row->user_type == 'companies'): ?>
                         <div class="small text-muted text-truncate" style="max-width: 150px;"><?php echo $row->address; ?></div>
                     <?php else: ?>
@@ -157,7 +164,7 @@ if (isset($_POST['ajax_fetch'])) {
                     </div>
                 </td>
             </tr>
-            <?php
+        <?php
             $i++;
         }
     }
@@ -209,7 +216,7 @@ if (isset($_POST['ajax_fetch'])) {
                 </li>
             </ul>
         </nav>
-    <?php endif;
+<?php endif;
     $pagination_html = ob_get_clean();
 
     $start_rec = $total_records > 0 ? $offset + 1 : 0;
@@ -241,6 +248,7 @@ if (isset($_POST['btn_submit'])) {
     $address = addslashes($_POST['address'] ?? '');
     $role = addslashes($_POST['role'] ?? '');
     $dept = addslashes($_POST['dept'] ?? '');
+    $branch = addslashes($_POST['branch'] ?? 'All');
     $join_date = $_POST['join_date'] ?? null;
     $status = $_POST['status'] ?? 'active';
 
@@ -277,6 +285,7 @@ if (isset($_POST['btn_submit'])) {
                 logo='$image', 
                 role='$role', 
                 dept='$dept', 
+                branch='$branch', 
                 join_date='$join_date', 
                 sort_order='$sort_order', 
                 status='$status'";
@@ -300,6 +309,7 @@ if (isset($_POST['btn_submit'])) {
                 logo='$image', 
                 role='$role', 
                 dept='$dept', 
+                branch='$branch', 
                 join_date='$join_date', 
                 status='$status' 
                 WHERE id='$id'";
@@ -376,6 +386,7 @@ include 'includes/sidebar.php';
                                     <option value="companies" <?php echo (isset($_GET['type']) && $_GET['type'] == 'companies') ? 'selected' : ''; ?>>Companies</option>
                                     <option value="consumer" <?php echo (isset($_GET['type']) && $_GET['type'] == 'consumer') ? 'selected' : ''; ?>>Consumer</option>
                                     <option value="employee" <?php echo (isset($_GET['type']) && $_GET['type'] == 'employee') ? 'selected' : ''; ?>>Employee</option>
+                                    <option value="branch" <?php echo (isset($_GET['type']) && $_GET['type'] == 'branch') ? 'selected' : ''; ?>>Branch</option>
                                 </select>
                             </div>
                             <div class="col-md-2">
@@ -469,6 +480,7 @@ include 'includes/sidebar.php';
                                 <option value="companies" <?php echo ($data && $data->user_type == 'companies') ? 'selected' : ''; ?>>Companies</option>
                                 <option value="consumer" <?php echo ($data && $data->user_type == 'consumer') ? 'selected' : ''; ?>>Consumer</option>
                                 <option value="employee" <?php echo ($data && $data->user_type == 'employee') ? 'selected' : ''; ?>>Employee</option>
+                                <option value="branch" <?php echo ($data && $data->user_type == 'branch') ? 'selected' : ''; ?>>Branch</option>
                             </select>
                         </div>
 
@@ -532,6 +544,22 @@ include 'includes/sidebar.php';
                         </div>
 
 
+
+                        <div class="col-md-3 employee-field" style="display: none;">
+                            <label class="form-label">Branch</label>
+                            <select name="branch" class="form-select">
+                                <option value="All" <?php echo ($data && ($data->branch ?? '') == 'All') ? 'selected' : ''; ?>>All Branches</option>
+                                <?php
+                                $branches = $ai_db->aiGetQueryObj("SELECT name FROM tbl_branches WHERE status='active' ORDER BY sort_order ASC, name ASC");
+                                if (!empty($branches)) {
+                                    foreach ($branches as $b) {
+                                        $selected = ($data && ($data->branch ?? '') == $b->name) ? 'selected' : '';
+                                        echo "<option value=\"" . htmlspecialchars($b->name) . "\" $selected>" . htmlspecialchars($b->name) . "</option>";
+                                    }
+                                }
+                                ?>
+                            </select>
+                        </div>
 
                         <div class="col-md-3 employee-field" style="display: none;">
                             <label class="form-label">Department</label>
@@ -643,7 +671,7 @@ include 'includes/sidebar.php';
                                     </div>
                                 <?php endif; ?>
 
-                                <?php if ($data->user_type == 'employee'): ?>
+                                <?php if ($data->user_type == 'employee' || $data->user_type == 'branch'): ?>
                                     <div class="col-md-6">
                                         <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Role</label>
                                         <p class="fw-medium"><i
@@ -653,6 +681,11 @@ include 'includes/sidebar.php';
                                         <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Department</label>
                                         <p class="fw-medium"><i
                                                 class="ti ti-building me-2 text-warning"></i><?php echo $data->dept; ?></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Branch</label>
+                                        <p class="fw-medium"><i
+                                                class="ti ti-git-branch me-2 text-primary"></i><?php echo !empty($data->branch) ? htmlspecialchars($data->branch) : 'All'; ?></p>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Join Date</label>
@@ -689,12 +722,12 @@ include 'includes/sidebar.php';
         const formWrapper = document.getElementById('formWrapper');
 
         // Remove old type classes
-        formWrapper.classList.remove('type-companies', 'type-consumer', 'type-employee');
+        formWrapper.classList.remove('type-companies', 'type-consumer', 'type-employee', 'type-branch');
         formWrapper.classList.add('type-' + type);
 
-        if (type === 'employee') {
+        if (type === 'employee' || type === 'branch') {
             employeeFields.forEach(f => f.style.display = 'block');
-            labelName.innerHTML = 'Employee Name <span class="text-danger">*</span>';
+            labelName.innerHTML = (type === 'branch' ? 'Branch Contact Person / Name' : 'Employee Name') + ' <span class="text-danger">*</span>';
 
             // Add required attributes
             document.getElementsByName('username')[0].required = true;
@@ -725,9 +758,9 @@ include 'includes/sidebar.php';
         formData.append('page', page);
 
         fetch('users.php', {
-            method: 'POST',
-            body: formData
-        })
+                method: 'POST',
+                body: formData
+            })
             .then(response => response.json())
             .then(data => {
                 hideLoader(); // Hide loader
@@ -758,17 +791,19 @@ include 'includes/sidebar.php';
 
     // Debounced search
     let timeout = null;
-    document.getElementById('searchInput')?.addEventListener('keyup', function () {
+    document.getElementById('searchInput')?.addEventListener('keyup', function() {
         clearTimeout(timeout);
-        timeout = setTimeout(() => { loadData(1); }, 500);
+        timeout = setTimeout(() => {
+            loadData(1);
+        }, 500);
     });
 
-    document.getElementById('filterForm')?.addEventListener('submit', function (e) {
+    document.getElementById('filterForm')?.addEventListener('submit', function(e) {
         e.preventDefault();
         loadData(1);
     });
 
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         if (document.getElementById('filterForm')) loadData(1);
         if (document.getElementById('user_type')) {
             $('#user_type').select2({

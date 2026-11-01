@@ -309,8 +309,8 @@ class AI_Core
 			return true;
 		}
 
-		// Check Employee Permissions
-		if (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'employee') {
+		// Check Employee & Branch Permissions
+		if (isset($_SESSION['user_type']) && ($_SESSION['user_type'] === 'employee' || $_SESSION['user_type'] === 'branch')) {
 			global $ai_db;
 			$role = $_SESSION['role'] ?? '';
 			if (empty($role))
