@@ -23,7 +23,8 @@ if ($id && $hash === md5($id . "radhe_secret")) {
 
     // Check if company already exists (matching both name and email for better test flexibility)
     $v_name = addslashes($data->company_name);
-    $check_vendor = $ai_db->aiGetQueryObj("SELECT id FROM $v_table WHERE company_name='$v_name' AND email='$v_email' LIMIT 1");
+    $v_office_branch = addslashes($data->office_branch ?? 'Rajkot');
+    $check_vendor = $ai_db->aiGetQueryObj("SELECT id, office_branch FROM $v_table WHERE company_name='$v_name' AND email='$v_email' LIMIT 1");
 
     if (empty($check_vendor)) {
         // Generate Company Code
@@ -45,8 +46,16 @@ if ($id && $hash === md5($id . "radhe_secret")) {
                   address='$v_address', 
                   phone='$v_phone', 
                   email='$v_email', 
+                  office_branch='$v_office_branch', 
                   status='active'";
         $ai_db->aiQuery($v_sql);
+    } else {
+        // If company already exists but office_branch is empty or was not set, update it from quotation
+        $existing_comp = $check_vendor[0];
+        if (empty($existing_comp->office_branch) && !empty($v_office_branch)) {
+            $exist_id = $existing_comp->id;
+            $ai_db->aiQuery("UPDATE $v_table SET office_branch='$v_office_branch' WHERE id='$exist_id'");
+        }
     }
 
     if ($data->client_approval_status === 'Approved by Client') {

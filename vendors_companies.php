@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 include 'root/config.php';
 $ai_core->aiCheckLogin();
 
@@ -23,7 +23,8 @@ if ($mode == 'delete' && !$ai_core->aiCheckPermission('vendors_companies', 'dele
 }
 
 // --- ROLE & BRANCH RESTRICTION HELPER ---
-function getVendorCompanyBranchWhere($table_alias = 't') {
+function getVendorCompanyBranchWhere($table_alias = 't')
+{
     global $ai_db;
     $user_type = $_SESSION['user_type'] ?? '';
     if ($user_type === 'admin') {
@@ -296,6 +297,7 @@ if (isset($_POST['btn_submit'])) {
     $lwf_password = addslashes($_POST['lwf_password'] ?? '');
     $ptrc_number = addslashes($_POST['ptrc_number'] ?? '');
     $ptec_number = addslashes($_POST['ptec_number'] ?? '');
+    $establishment_registration_number = addslashes($_POST['establishment_registration_number'] ?? '');
     $company_type = addslashes($_POST['company_type'] ?? '');
     $status = $_POST['status'] ?? 'active';
 
@@ -398,6 +400,7 @@ if (isset($_POST['btn_submit'])) {
                 lwf_password='$lwf_password', 
                 ptrc_number='$ptrc_number', 
                 ptec_number='$ptec_number', 
+                establishment_registration_number='$establishment_registration_number', 
                 company_type='$company_type', 
                 gst_certificate='$gst_certificate', 
                 pan_card='$pan_card', 
@@ -514,7 +517,8 @@ if (isset($_POST['btn_import'])) {
                 $lwf_password = addslashes($get_col_by_index_or_name($data_row, 22, 'LWF Password'));
                 $ptrc_number = addslashes($get_col_by_index_or_name($data_row, 23, 'PTRC Number'));
                 $ptec_number = addslashes($get_col_by_index_or_name($data_row, 24, 'PTEC Number'));
-                $status = addslashes($get_col_by_index_or_name($data_row, 25, 'Status'));
+                $establishment_registration_number = addslashes($get_col_by_index_or_name($data_row, 25, 'Establishment Registration Number'));
+                $status = addslashes($get_col_by_index_or_name($data_row, 26, 'Status'));
 
                 if (empty($status)) {
                     $status = 'active';
@@ -535,6 +539,7 @@ if (isset($_POST['btn_import'])) {
                         esic_code='$esic_code', esic_password='$esic_password', 
                         lwf_id='$lwf_id', lwf_password='$lwf_password', 
                         ptrc_number='$ptrc_number', ptec_number='$ptec_number', 
+                        establishment_registration_number='$establishment_registration_number', 
                         company_type='$company_type', status='$status', 
                         created_by='$current_logged_user_id'";
 
@@ -611,6 +616,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
         'LWF ID',
         'PTRC Number',
         'PTEC Number',
+        'Establishment Registration Number',
         'Status'
     ];
 
@@ -643,6 +649,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'export_excel') {
             $row->lwf_id ?? '',
             $row->ptrc_number ?? '',
             $row->ptec_number ?? '',
+            $row->establishment_registration_number ?? '',
             ucfirst($row->status ?? '')
         ];
     }
@@ -661,8 +668,8 @@ if (isset($_GET['action']) && $_GET['action'] == 'download_sample') {
     }
     ob_clean();
     require_once 'includes/xlsx_helper.php';
-    $sample_columns = ['Company Code', 'Company Name', 'Company Address', 'Owner Name', 'Owner Address', 'Designation', 'Firm Type', 'Type Of Company', 'Nature of Work', 'Phone Number', 'Email Address', 'GST Number', 'PAN Number', 'Factory License No.', 'Labour License No.', 'Workstart Date', 'Office Branch', 'PF Code', 'PF Password', 'ESIC Code', 'ESIC Password', 'LWF ID', 'LWF Password', 'PTRC Number', 'PTEC Number', 'Status'];
-    $sample_row = ['COMP001', 'Sample Company Ltd', 'Ahmedabad, Gujarat', 'John Doe', 'Mumbai, India', 'CEO', 'Pvt Ltd', 'Medium', 'Manufacturing', '9988776655', 'sample@example.com', '24AAAAA0000A1Z5', 'ABCDE1234F', 'FAC12345', 'LAB98765', '2026-06-22', 'Rajkot', 'PF12345', 'PFPass@123', 'ESIC98765', 'ESICPass@123', 'LWF456', 'LWFPass@123', 'PTRC789', 'PTEC789', 'active'];
+    $sample_columns = ['Company Code', 'Company Name', 'Company Address', 'Owner Name', 'Owner Address', 'Designation', 'Firm Type', 'Type Of Company', 'Nature of Work', 'Phone Number', 'Email Address', 'GST Number', 'PAN Number', 'Factory License No.', 'Labour License No.', 'Workstart Date', 'Office Branch', 'PF Code', 'PF Password', 'ESIC Code', 'ESIC Password', 'LWF ID', 'LWF Password', 'PTRC Number', 'PTEC Number', 'Establishment Registration Number', 'Status'];
+    $sample_row = ['COMP001', 'Sample Company Ltd', 'Ahmedabad, Gujarat', 'John Doe', 'Mumbai, India', 'CEO', 'Pvt Ltd', 'Medium', 'Manufacturing', '9988776655', 'sample@example.com', '24AAAAA0000A1Z5', 'ABCDE1234F', 'FAC12345', 'LAB98765', '2026-06-22', 'Rajkot', 'PF12345', 'PFPass@123', 'ESIC98765', 'ESICPass@123', 'LWF456', 'LWFPass@123', 'PTRC789', 'PTEC789', 'ESTREG12345', 'active'];
     download_sample_xlsx('sample_vendors_companies.xlsx', $sample_columns, [$sample_row]);
 }
 
@@ -1237,6 +1244,13 @@ $branches_list = $ai_db->aiGetQueryObj("SELECT * FROM tbl_branches WHERE status=
                                 value="<?php echo $data->ptec_number ?? ''; ?>" placeholder="Enter PTEC Number">
                         </div>
 
+                        <!-- Establishment Registration Number -->
+                        <div class="col-md-3">
+                            <label class="form-label">Establishment Registration Number</label>
+                            <input type="text" name="establishment_registration_number" class="form-control"
+                                value="<?php echo $data->establishment_registration_number ?? ''; ?>" placeholder="Enter Establishment Registration Number" maxlength="30">
+                        </div>
+
                         <!-- Workstart Date -->
                         <div class="col-md-3">
                             <label class="form-label">Workstart Date</label>
@@ -1245,21 +1259,44 @@ $branches_list = $ai_db->aiGetQueryObj("SELECT * FROM tbl_branches WHERE status=
                         </div>
 
                         <!-- Office Branch -->
-                        <div class="col-md-3">
-                            <label class="form-label">Office Branch</label>
-                            <select name="office_branch" class="form-select select2-no-search">
-                                <option value="">Select Branch</option>
-                                <?php
-                                if (!empty($branches_list)) {
-                                    foreach ($branches_list as $b) {
-                                        $selected = ($data && ($data->office_branch ?? '') == $b->id) ? 'selected' : '';
-                                        echo "<option value=\"" . htmlspecialchars($b->id) . "\" $selected>" . htmlspecialchars($b->name) . "</option>";
+                        <?php if (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'admin'): ?>
+                            <div class="col-md-3">
+                                <label class="form-label">Office Branch</label>
+                                <select name="office_branch" class="form-select select2-no-search">
+                                    <option value="">Select Branch</option>
+                                    <?php
+                                    if (!empty($branches_list)) {
+                                        foreach ($branches_list as $b) {
+                                            $curr_val = $data->office_branch ?? '';
+                                            $selected = ($data && ($curr_val == $b->id || strcasecmp(trim($curr_val), trim($b->name)) === 0)) ? 'selected' : '';
+                                            echo "<option value=\"" . htmlspecialchars($b->name) . "\" $selected>" . htmlspecialchars($b->name) . "</option>";
+                                        }
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                        <?php else: ?>
+                            <?php
+                            $user_branch = trim($_SESSION['branch'] ?? '');
+                            // If user is editing and company already has branch, keep existing company branch or default to user's branch
+                            $assigned_branch = ($data && !empty($data->office_branch)) ? $data->office_branch : $user_branch;
+                            // Resolve display name if stored as branch id
+                            $display_branch_name = $assigned_branch;
+                            if (!empty($branches_list)) {
+                                foreach ($branches_list as $b) {
+                                    if ($assigned_branch == $b->id || strcasecmp(trim($assigned_branch), trim($b->name)) === 0) {
+                                        $display_branch_name = $b->name;
+                                        break;
                                     }
                                 }
-                                ?>
-                            </select>
-                        </div>
-
+                            }
+                            ?>
+                            <div class="col-md-3">
+                                <label class="form-label">Office Branch</label>
+                                <input type="text" class="form-control" value="<?php echo strtoupper(htmlspecialchars($display_branch_name)); ?>" readonly style="background-color: #e9ecef; cursor: not-allowed;">
+                                <input type="hidden" name="office_branch" value="<?php echo htmlspecialchars($assigned_branch); ?>">
+                            </div>
+                        <?php endif; ?>
                         <!-- Status -->
                         <div class="col-md-3">
                             <label class="form-label">Status</label>
@@ -1484,7 +1521,7 @@ $branches_list = $ai_db->aiGetQueryObj("SELECT * FROM tbl_branches WHERE status=
                                             <span class="text-muted small d-block">PF Password</span>
                                             <span class="fw-bold d-flex align-items-center gap-2">
                                                 <span class="password-text"
-                                                    data-password="<?php echo !empty($data->pf_password) ? htmlspecialchars($data->pf_password) : 'N/A'; ?>"><?php echo !empty($data->pf_password) ? '••••••••' : 'N/A'; ?></span>
+                                                    data-password="<?php echo !empty($data->pf_password) ? htmlspecialchars($data->pf_password) : 'N/A'; ?>"><?php echo !empty($data->pf_password) ? '��������' : 'N/A'; ?></span>
                                                 <?php if (!empty($data->pf_password)): ?>
                                                     <a href="javascript:void(0)" class="text-muted toggle-view-password"><i
                                                             class="ti ti-eye"></i></a>
@@ -1500,7 +1537,7 @@ $branches_list = $ai_db->aiGetQueryObj("SELECT * FROM tbl_branches WHERE status=
                                             <span class="text-muted small d-block">ESIC Password</span>
                                             <span class="fw-bold d-flex align-items-center gap-2">
                                                 <span class="password-text"
-                                                    data-password="<?php echo !empty($data->esic_password) ? htmlspecialchars($data->esic_password) : 'N/A'; ?>"><?php echo !empty($data->esic_password) ? '••••••••' : 'N/A'; ?></span>
+                                                    data-password="<?php echo !empty($data->esic_password) ? htmlspecialchars($data->esic_password) : 'N/A'; ?>"><?php echo !empty($data->esic_password) ? '��������' : 'N/A'; ?></span>
                                                 <?php if (!empty($data->esic_password)): ?>
                                                     <a href="javascript:void(0)" class="text-muted toggle-view-password"><i
                                                             class="ti ti-eye"></i></a>
@@ -1516,7 +1553,7 @@ $branches_list = $ai_db->aiGetQueryObj("SELECT * FROM tbl_branches WHERE status=
                                             <span class="text-muted small d-block">LWF Password</span>
                                             <span class="fw-bold d-flex align-items-center gap-2">
                                                 <span class="password-text"
-                                                    data-password="<?php echo !empty($data->lwf_password) ? htmlspecialchars($data->lwf_password) : 'N/A'; ?>"><?php echo !empty($data->lwf_password) ? '••••••••' : 'N/A'; ?></span>
+                                                    data-password="<?php echo !empty($data->lwf_password) ? htmlspecialchars($data->lwf_password) : 'N/A'; ?>"><?php echo !empty($data->lwf_password) ? '��������' : 'N/A'; ?></span>
                                                 <?php if (!empty($data->lwf_password)): ?>
                                                     <a href="javascript:void(0)" class="text-muted toggle-view-password"><i
                                                             class="ti ti-eye"></i></a>
@@ -1532,6 +1569,11 @@ $branches_list = $ai_db->aiGetQueryObj("SELECT * FROM tbl_branches WHERE status=
                                             <span class="text-muted small d-block">PTEC Number</span>
                                             <span
                                                 class="fw-bold"><?php echo !empty($data->ptec_number) ? htmlspecialchars($data->ptec_number) : 'N/A'; ?></span>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <span class="text-muted small d-block">Establishment Registration Number</span>
+                                            <span
+                                                class="fw-bold"><?php echo !empty($data->establishment_registration_number) ? htmlspecialchars($data->establishment_registration_number) : 'N/A'; ?></span>
                                         </div>
                                     </div>
                                 </div>
@@ -1819,11 +1861,11 @@ $branches_list = $ai_db->aiGetQueryObj("SELECT * FROM tbl_branches WHERE status=
         const icon = $(this).find('i');
         const realPassword = textEl.data('password');
 
-        if (textEl.text().trim() === '••••••••') {
+        if (textEl.text().trim() === '��������') {
             textEl.text(realPassword);
             icon.removeClass('ti-eye').addClass('ti-eye-off');
         } else {
-            textEl.text('••••••••');
+            textEl.text('��������');
             icon.removeClass('ti-eye-off').addClass('ti-eye');
         }
     });

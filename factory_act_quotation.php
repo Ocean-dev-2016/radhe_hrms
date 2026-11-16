@@ -7,7 +7,7 @@ $action = $_GET['action'] ?? '';
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $table = "tbl_factory_quotations";
 $ai_db->aiQuery("ALTER TABLE $table ADD COLUMN IF NOT EXISTS mail_status VARCHAR(20) DEFAULT 'pending' AFTER status");
-
+$branches_list = $ai_db->aiGetQueryObj("SELECT * FROM tbl_branches WHERE status='active' ORDER BY sort_order ASC, name ASC");
 // --- STANDALONE HANDLER FOR TASK ACCEPTANCE (VIA EMAIL) ---
 if ($action == 'accept_plan_task' && $id) {
     // Check if already accepted
@@ -1300,6 +1300,7 @@ if (isset($_POST['btn_submit'])) {
     $maked_status = addslashes($_POST['maked_status']);
     $total_amount = $calc_amount + $stability_cert_amount + $admin_charge + $consultancy_fees + $plan_charge + $excess_fees;
     $status = addslashes($_POST['status'] ?? 'active');
+    $office_branch = addslashes($_POST['office_branch'] ?? '');
 
     if (empty($company_name) || empty($owner_name) || empty($address) || empty($phone) || empty($email) || $num_workers === "" || $horse_power === "" || empty($years_multiplier)) {
         $_SESSION['error'] = "Please fill all required fields marked with *";
@@ -1315,10 +1316,10 @@ if (isset($_POST['btn_submit'])) {
             $next_id = ($last_id_res[0]->max_id ?? 0) + 1;
             $quotation_no = "RAD/QTN/" . date('Y') . "/" . str_pad($next_id, 4, '0', STR_PAD_LEFT);
 
-            $sql = "INSERT INTO $table SET quotation_no='$quotation_no', company_name='$company_name', owner_name='$owner_name', owner_address='$owner_address', address='$address', phone='$phone', email='$email', num_workers='$num_workers', horse_power='$horse_power', calc_amount='$calc_amount', years_multiplier='$years_multiplier', with_load='$with_load', stability_cert_amount='$stability_cert_amount', admin_charge='$admin_charge', consultancy_fees='$consultancy_fees', plan_charge='$plan_charge', excess_fees='$excess_fees', maked_status='$maked_status', total_amount='$total_amount', status='$status', mail_status='pending', created_by='$current_logged_user_id'";
+            $sql = "INSERT INTO $table SET quotation_no='$quotation_no', company_name='$company_name', owner_name='$owner_name', owner_address='$owner_address', address='$address', phone='$phone', email='$email', num_workers='$num_workers', horse_power='$horse_power', calc_amount='$calc_amount', years_multiplier='$years_multiplier', with_load='$with_load', stability_cert_amount='$stability_cert_amount', admin_charge='$admin_charge', consultancy_fees='$consultancy_fees', plan_charge='$plan_charge', excess_fees='$excess_fees', maked_status='$maked_status', total_amount='$total_amount', status='$status', office_branch='$office_branch', mail_status='pending', created_by='$current_logged_user_id'";
             $msg = 1;
         } else {
-            $sql = "UPDATE $table SET company_name='$company_name', owner_name='$owner_name', owner_address='$owner_address', address='$address', phone='$phone', email='$email', num_workers='$num_workers', horse_power='$horse_power', calc_amount='$calc_amount', years_multiplier='$years_multiplier', with_load='$with_load', stability_cert_amount='$stability_cert_amount', admin_charge='$admin_charge', consultancy_fees='$consultancy_fees', plan_charge='$plan_charge', excess_fees='$excess_fees', maked_status='$maked_status', total_amount='$total_amount', status='$status', updated_by='$current_logged_user_id' WHERE id='$id'";
+            $sql = "UPDATE $table SET company_name='$company_name', owner_name='$owner_name', owner_address='$owner_address', address='$address', phone='$phone', email='$email', num_workers='$num_workers', horse_power='$horse_power', calc_amount='$calc_amount', years_multiplier='$years_multiplier', with_load='$with_load', stability_cert_amount='$stability_cert_amount', admin_charge='$admin_charge', consultancy_fees='$consultancy_fees', plan_charge='$plan_charge', excess_fees='$excess_fees', maked_status='$maked_status', total_amount='$total_amount', status='$status', office_branch='$office_branch', updated_by='$current_logged_user_id' WHERE id='$id'";
             $msg = 2;
         }
 
@@ -1977,8 +1978,7 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
 
                 <div class="form-card-standard">
                     <div class="row" id="formWrapper">
-                        <div
-                            class="col-xl-<?php echo (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'admin') ? '8 border-end pe-xl-4' : '12'; ?>">
+                        <div class="col-xl-8 border-end pe-xl-4">
                             <h5 class="card-title mt-0 mb-4 text-primary fw-bold">Company & Configuration</h5>
                             <?php
                             $selected_num_workers = $data ? $data->num_workers : '';
@@ -2098,79 +2098,102 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
                                         <option value="inactive" <?php echo (($data->status ?? 'active') == 'inactive') ? 'selected' : ''; ?>>Inactive</option>
                                     </select>
                                 </div>
+                                <?php if (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'admin'): ?>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Office Branch</label>
+                                        <select name="office_branch" class="form-select select2-no-search">
+                                            <option value="">Select Branch</option>
+                                            <?php
+                                            if (!empty($branches_list)) {
+                                                foreach ($branches_list as $b) {
+                                                    $curr_val = $data->office_branch ?? '';
+                                                    $selected = ($data && ($curr_val == $b->id || strcasecmp(trim($curr_val), trim($b->name)) === 0)) ? 'selected' : '';
+                                                    echo "<option value=\"" . htmlspecialchars($b->name) . "\" $selected>" . htmlspecialchars($b->name) . "</option>";
+                                                }
+                                            }
+                                            ?>
+                                        </select>
+                                    </div>
+                                <?php else: ?>
+                                    <?php
+                                    $user_branch = trim($_SESSION['branch'] ?? '');
+                                    // If user is editing and company already has branch, keep existing company branch or default to user's branch
+                                    $assigned_branch = ($data && !empty($data->office_branch)) ? $data->office_branch : $user_branch;
+                                    ?>
+                                    <input type="hidden" name="office_branch" value="<?php echo htmlspecialchars($assigned_branch); ?>">
+
+                                <?php endif; ?>
                             </div>
                         </div>
 
-                        <?php if (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'admin'): ?>
-                            <div class="col-xl-4 ps-xl-4">
-                                <h5 class="card-title mt-0 mb-4 text-primary fw-bold">Financial Summary</h5>
-                                <div class="bg-light p-3 rounded-3 mb-4">
-                                    <div class="mb-3">
-                                        <label class="form-label small fw-bold">Calculated Amount</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-white">₹</span>
-                                            <input type="number" step="0.01" name="calc_amount" id="calc_amount"
-                                                class="form-control bg-light" readonly
-                                                value="<?php echo $data->calc_amount ?? '0'; ?>">
-                                        </div>
-                                    </div>
-                                    <div class="row g-3">
-                                        <div class="col-6">
-                                            <label class="form-label small fw-bold">Stability Cert.</label>
-                                            <input type="number" step="0.01" name="stability_cert_amount"
-                                                id="stability_cert_amount" class="form-control"
-                                                value="<?php echo $data->stability_cert_amount ?? '0'; ?>"
-                                                oninput="runTotalCalc()">
-                                        </div>
-                                        <div class="col-6">
-                                            <label class="form-label small fw-bold">Admin Charge</label>
-                                            <input type="number" step="0.01" name="admin_charge" id="admin_charge"
-                                                class="form-control" value="<?php echo $data->admin_charge ?? '0'; ?>"
-                                                oninput="runTotalCalc()">
-                                        </div>
-                                        <div class="col-6">
-                                            <label class="form-label small fw-bold">Consultancy</label>
-                                            <input type="number" step="0.01" name="consultancy_fees" id="consultancy_fees"
-                                                class="form-control" value="<?php echo $data->consultancy_fees ?? '0'; ?>"
-                                                oninput="runTotalCalc()">
-                                        </div>
-                                        <div class="col-6">
-                                            <label class="form-label small fw-bold">Plan Charge</label>
-                                            <input type="number" step="0.01" name="plan_charge" id="plan_charge"
-                                                class="form-control" value="<?php echo $data->plan_charge ?? '0'; ?>"
-                                                oninput="runTotalCalc()">
-                                        </div>
-                                        <div class="col-6">
-                                            <label class="form-label small fw-bold">Excess Fees</label>
-                                            <input type="number" step="0.01" name="excess_fees" id="excess_fees"
-                                                class="form-control" value="<?php echo $data->excess_fees ?? '0'; ?>"
-                                                oninput="runTotalCalc()">
-                                        </div>
-                                    </div>
-                                </div>
 
+                        <div class="col-xl-4 ps-xl-4">
+                            <h5 class="card-title mt-0 mb-4 text-primary fw-bold">Financial Summary</h5>
+                            <div class="bg-light p-3 rounded-3 mb-4">
                                 <div class="mb-3">
-                                    <label class="form-label">Maked Status</label>
-                                    <select name="maked_status" class="form-select select2-no-search">
-                                        <option value="Maked" <?php echo ($data && $data->maked_status == 'Maked') ? 'selected' : ''; ?>>Maked</option>
-                                        <option value="Pending" <?php echo ($data && $data->maked_status == 'Pending') ? 'selected' : ''; ?>>Pending</option>
-                                    </select>
+                                    <label class="form-label small fw-bold">Calculated Amount</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white">₹</span>
+                                        <input type="number" step="0.01" name="calc_amount" id="calc_amount"
+                                            class="form-control bg-light" readonly
+                                            value="<?php echo $data->calc_amount ?? '0'; ?>">
+                                    </div>
                                 </div>
-
-                                <div class="card bg-primary text-white border-0 shadow-sm mt-4">
-                                    <div class="card-body p-3 text-center">
-                                        <label class="form-label fw-bold mb-1 opacity-75">Total Quotation Amount</label>
-                                        <div class="h3 mb-0 fw-bold">₹ <span
-                                                id="display_total"><?php echo number_format($data->total_amount ?? 0, 2); ?></span>
-                                        </div>
-                                        <input type="hidden" name="total_amount" id="total_amount"
-                                            value="<?php echo $data->total_amount ?? '0'; ?>">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold">Stability Cert.</label>
+                                        <input type="number" step="0.01" name="stability_cert_amount"
+                                            id="stability_cert_amount" class="form-control"
+                                            value="<?php echo $data->stability_cert_amount ?? '0'; ?>"
+                                            oninput="runTotalCalc()">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold">Admin Charge</label>
+                                        <input type="number" step="0.01" name="admin_charge" id="admin_charge"
+                                            class="form-control" value="<?php echo $data->admin_charge ?? '0'; ?>"
+                                            oninput="runTotalCalc()">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold">Consultancy</label>
+                                        <input type="number" step="0.01" name="consultancy_fees" id="consultancy_fees"
+                                            class="form-control" value="<?php echo $data->consultancy_fees ?? '0'; ?>"
+                                            oninput="runTotalCalc()">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold">Plan Charge</label>
+                                        <input type="number" step="0.01" name="plan_charge" id="plan_charge"
+                                            class="form-control" value="<?php echo $data->plan_charge ?? '0'; ?>"
+                                            oninput="runTotalCalc()">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold">Excess Fees</label>
+                                        <input type="number" step="0.01" name="excess_fees" id="excess_fees"
+                                            class="form-control" value="<?php echo $data->excess_fees ?? '0'; ?>"
+                                            oninput="runTotalCalc()">
                                     </div>
                                 </div>
                             </div>
-                        <?php else: ?>
-                            <!-- Keep hidden inputs so that submission works -->
-                            <input type="hidden" name="calc_amount" id="calc_amount"
+
+                            <div class="mb-3">
+                                <label class="form-label">Maked Status</label>
+                                <select name="maked_status" class="form-select select2-no-search">
+                                    <option value="Maked" <?php echo ($data && $data->maked_status == 'Maked') ? 'selected' : ''; ?>>Maked</option>
+                                    <option value="Pending" <?php echo ($data && $data->maked_status == 'Pending') ? 'selected' : ''; ?>>Pending</option>
+                                </select>
+                            </div>
+
+                            <div class="card bg-primary text-white border-0 shadow-sm mt-4">
+                                <div class="card-body p-3 text-center">
+                                    <label class="form-label fw-bold mb-1 opacity-75">Total Quotation Amount</label>
+                                    <div class="h3 mb-0 fw-bold">₹ <span
+                                            id="display_total"><?php echo number_format($data->total_amount ?? 0, 2); ?></span>
+                                    </div>
+                                    <input type="hidden" name="total_amount" id="total_amount"
+                                        value="<?php echo $data->total_amount ?? '0'; ?>">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- <input type="hidden" name="calc_amount" id="calc_amount"
                                 value="<?php echo $data->calc_amount ?? '0'; ?>">
                             <input type="hidden" name="stability_cert_amount" id="stability_cert_amount"
                                 value="<?php echo $data->stability_cert_amount ?? '0'; ?>">
@@ -2184,8 +2207,7 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
                                 value="<?php echo $data->excess_fees ?? '0'; ?>">
                             <input type="hidden" name="total_amount" id="total_amount"
                                 value="<?php echo $data->total_amount ?? '0'; ?>">
-                            <input type="hidden" name="maked_status" value="<?php echo $data->maked_status ?? 'Pending'; ?>">
-                        <?php endif; ?>
+                            <input type="hidden" name="maked_status" value="<?php echo $data->maked_status ?? 'Pending'; ?>"> -->
                     </div>
 
                     <div class="form-action-btns mt-4 pt-4 border-top">

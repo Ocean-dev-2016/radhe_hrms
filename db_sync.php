@@ -113,6 +113,13 @@ header('Content-Type: text/html; charset=utf-8');
             echo "<div class='error'><strong>Notice:</strong> Could not alter <code>user_type</code> ENUM: " . mysqli_error($ai_conn) . "</div>";
         }
 
+        // Check and Add establishment_registration_number to tbl_vendors_companies
+        $col_est_reg = $ai_db->aiGetQueryObj("SHOW COLUMNS FROM `tbl_vendors_companies` LIKE 'establishment_registration_number'");
+        if (empty($col_est_reg)) {
+            $ai_db->aiQuery("ALTER TABLE `tbl_vendors_companies` ADD COLUMN `establishment_registration_number` VARCHAR(255) NULL AFTER `ptec_number`");
+            echo "<div class='info'><strong>Updated:</strong> Added <code>establishment_registration_number</code> column to <code>tbl_vendors_companies</code> table.</div>";
+        }
+
         // Check and Add created_by & updated_by columns to tbl_vendors_companies
         $col_created_by = $ai_db->aiGetQueryObj("SHOW COLUMNS FROM `tbl_vendors_companies` LIKE 'created_by'");
         if (empty($col_created_by)) {
