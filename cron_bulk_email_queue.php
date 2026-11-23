@@ -94,7 +94,8 @@ foreach ($pending as $item) {
         $attachments[] = $item->attachment;
     }
     // If testing: override destination email
-    $item->to_email = "arti.ocean1997@gmail.com";
+    //$item->to_email = "arti.ocean1997@gmail.com";
+    $item->to_email = "info@radheconsultancy.co.in";
     $res = $mailer->sendMail($item->to_email, $item->subject, $item->body_html, $attachments);
 
     // Log entry preparation

@@ -11,13 +11,12 @@ if (!$ai_core->aiCheckPermission('bulk_email', 'view')) {
 $page_nm = "Bulk Email";
 $redirection_url = "bulk_email.php";
 
-// Fetch active companies with email
-$companies = $ai_db->aiGetQueryObj("SELECT id, company_name, email FROM tbl_vendors_companies WHERE status='active' AND email IS NOT NULL AND TRIM(email) != '' ORDER BY company_name ASC");
+// Fetch active companies with email and criteria fields
+$companies = $ai_db->aiGetQueryObj("SELECT id, company_name, email, pf_code, esic_code, lwf_id, factory_license_number, establishment_registration_number FROM tbl_vendors_companies WHERE status='active' AND email IS NOT NULL AND TRIM(email) != '' ORDER BY company_name ASC");
 if (empty($companies)) {
     $companies = [];
 }
 
-//$companies = array("company_name" => "Arti", "email" => "arti.ocean1997@gmail.com", "id" => "355");
 
 // Handle Form Submission
 if (isset($_POST['send_bulk_mail'])) {
@@ -25,17 +24,34 @@ if (isset($_POST['send_bulk_mail'])) {
     if (!is_array($company_ids)) {
         $company_ids = !empty($company_ids) ? [$company_ids] : [];
     }
+    $company_filter_type = trim($_POST['company_filter_type'] ?? 'all');
     $title = trim($_POST['title'] ?? '');
     $description = trim($_POST['description'] ?? '');
 
     $recipients = [];
 
     if (in_array('all', $company_ids)) {
-        foreach ($companies as $comp) {
-            $comp_emails = array_filter(array_map('trim', preg_split('/[,;\s]+/', $comp->email)));
-            foreach ($comp_emails as $em) {
-                if (filter_var($em, FILTER_VALIDATE_EMAIL)) {
-                    $recipients[] = $em;
+        $filter_clause = "";
+        if ($company_filter_type === 'pf') {
+            $filter_clause = " AND pf_code IS NOT NULL AND TRIM(pf_code) != '' AND TRIM(pf_code) != '0'";
+        } elseif ($company_filter_type === 'esic') {
+            $filter_clause = " AND esic_code IS NOT NULL AND TRIM(esic_code) != '' AND TRIM(esic_code) != '0'";
+        } elseif ($company_filter_type === 'lwf') {
+            $filter_clause = " AND lwf_id IS NOT NULL AND TRIM(lwf_id) != '' AND TRIM(lwf_id) != '0'";
+        } elseif ($company_filter_type === 'factory_act') {
+            $filter_clause = " AND factory_license_number IS NOT NULL AND TRIM(factory_license_number) != '' AND TRIM(factory_license_number) != '0'";
+        } elseif ($company_filter_type === 'establishment') {
+            $filter_clause = " AND establishment_registration_number IS NOT NULL AND TRIM(establishment_registration_number) != '' AND TRIM(establishment_registration_number) != '0'";
+        }
+        
+        $all_active_companies = $ai_db->aiGetQueryObj("SELECT id, company_name, email FROM tbl_vendors_companies WHERE status='active' AND email IS NOT NULL AND TRIM(email) != '' $filter_clause ORDER BY company_name ASC");
+        if (!empty($all_active_companies)) {
+            foreach ($all_active_companies as $comp) {
+                $comp_emails = array_filter(array_map('trim', preg_split('/[,;\s]+/', $comp->email)));
+                foreach ($comp_emails as $em) {
+                    if (filter_var($em, FILTER_VALIDATE_EMAIL)) {
+                        $recipients[] = $em;
+                    }
                 }
             }
         }
@@ -107,7 +123,7 @@ if (isset($_POST['send_bulk_mail'])) {
 
     if (!empty($uploaded_file_name)) {
         $email_html .= "<div style='margin-top: 24px; padding: 12px 16px; background-color: #f1f5f9; border-radius: 8px; font-size: 13px; color: #475569;'>
-            <i style='font-style: normal;'>📎 <strong>Attached Document:</strong> " . htmlspecialchars($_FILES['attachment_file']['name']) . "</i>
+            <i style='font-style: normal;'>?? <strong>Attached Document:</strong> " . htmlspecialchars($_FILES['attachment_file']['name']) . "</i>
         </div>";
     }
 
@@ -124,6 +140,7 @@ if (isset($_POST['send_bulk_mail'])) {
         description LONGTEXT NULL,
         attachment VARCHAR(255) NULL,
         to_email TEXT NULL,
+        filter_type VARCHAR(100) DEFAULT 'All',
         from_email VARCHAR(255) NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -153,12 +170,22 @@ if (isset($_POST['send_bulk_mail'])) {
     $desc_esc = addslashes($description);
     $attach_esc = addslashes($uploaded_file_name);
     $to_email_esc = addslashes($to_email_stored);
+    $filter_type_map = [
+        'all' => 'All',
+        'pf' => 'PF',
+        'esic' => 'ESIC',
+        'lwf' => 'LWF',
+        'factory_act' => 'Factory Act.',
+        'establishment' => 'Establishment Registration Number'
+    ];
+    $filter_label = $filter_type_map[$company_filter_type] ?? ucfirst($company_filter_type);
+    $filter_type_esc = addslashes($filter_label);
     $from_email_esc = addslashes($from_email);
 
     $ai_db->aiQuery("INSERT INTO tbl_bulk_email_logs 
-        (title, description, attachment, to_email, from_email, created_at) 
+        (title, description, attachment, to_email, filter_type, from_email, created_at) 
         VALUES 
-        ('$title_esc', '$desc_esc', '$attach_esc', '$to_email_esc', '$from_email_esc', NOW())");
+        ('$title_esc', '$desc_esc', '$attach_esc', '$to_email_esc', '$filter_type_esc', '$from_email_esc', NOW())");
 
     if ($success_count > 0) {
         $_SESSION['success'] = "Bulk Email sent successfully to {$success_count} recipient(s)!" . ($fail_count > 0 ? " ({$fail_count} failed)" : "");
@@ -255,11 +282,57 @@ include 'includes/sidebar.php';
                     </div>
                     <div class="card-body p-4 email-normal-case">
                         <form method="POST" action="bulk_email.php" enctype="multipart/form-data" id="bulkEmailForm">
+                            <!-- Filter Type Radio Buttons -->
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold text-dark mb-2">
+                                    Filter Companies By
+                                </label>
+                                <div class="d-flex flex-wrap gap-3 p-3 bg-light rounded-3 border">
+                                    <div class="form-check">
+                                        <input class="form-check-input filter-type-radio" type="radio" name="company_filter_type" id="filter_all" value="all" checked onchange="filterCompaniesByCriteria('all')">
+                                        <label class="form-check-label fw-semibold text-dark" for="filter_all">
+                                            All
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input filter-type-radio" type="radio" name="company_filter_type" id="filter_pf" value="pf" onchange="filterCompaniesByCriteria('pf')">
+                                        <label class="form-check-label fw-semibold text-dark" for="filter_pf">
+                                            PF
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input filter-type-radio" type="radio" name="company_filter_type" id="filter_esic" value="esic" onchange="filterCompaniesByCriteria('esic')">
+                                        <label class="form-check-label fw-semibold text-dark" for="filter_esic">
+                                            ESIC
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input filter-type-radio" type="radio" name="company_filter_type" id="filter_lwf" value="lwf" onchange="filterCompaniesByCriteria('lwf')">
+                                        <label class="form-check-label fw-semibold text-dark" for="filter_lwf">
+                                            LWF
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input filter-type-radio" type="radio" name="company_filter_type" id="filter_factory_act" value="factory_act" onchange="filterCompaniesByCriteria('factory_act')">
+                                        <label class="form-check-label fw-semibold text-dark" for="filter_factory_act">
+                                            Factory Act.
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input filter-type-radio" type="radio" name="company_filter_type" id="filter_establishment" value="establishment" onchange="filterCompaniesByCriteria('establishment')">
+                                        <label class="form-check-label fw-semibold text-dark" for="filter_establishment">
+                                            Establishment Registration Number
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Company Dropdown (Multiple Selection) -->
                             <div class="mb-4">
                                 <div class="d-flex align-items-center justify-content-between mb-2">
                                     <label class="form-label fw-semibold text-dark mb-0">
                                         Select Companies <span class="text-danger">*</span>
+                                        <span id="filteredCompanyCount" class="badge bg-soft-primary text-primary ms-2 fs-12"></span>
                                     </label>
                                     <div>
                                         <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none me-2" onclick="selectAllCompanies()">Select All</button>
@@ -440,6 +513,20 @@ include 'includes/sidebar.php';
 <script src="assets/plugins/quill/quill.min.js"></script>
 
 <script>
+    // Master list of companies with criteria data
+    const allCompaniesData = <?php echo json_encode(array_map(function($c) {
+        return [
+            'id' => (string) $c->id,
+            'company_name' => (string) $c->company_name,
+            'email' => (string) $c->email,
+            'pf_code' => trim((string) ($c->pf_code ?? '')),
+            'esic_code' => trim((string) ($c->esic_code ?? '')),
+            'lwf_id' => trim((string) ($c->lwf_id ?? '')),
+            'factory_license_number' => trim((string) ($c->factory_license_number ?? '')),
+            'establishment_registration_number' => trim((string) ($c->establishment_registration_number ?? ''))
+        ];
+    }, $companies)); ?>;
+
     let quill;
     document.addEventListener("DOMContentLoaded", function() {
         // Initialize Quill Rich Text Editor
@@ -483,7 +570,53 @@ include 'includes/sidebar.php';
                 }
             }
         });
+
+        // Initial count display
+        updateCompanyCountBadge(allCompaniesData.length);
     });
+
+    function filterCompaniesByCriteria(criteria) {
+        let filtered = [];
+
+        if (criteria === 'all') {
+            filtered = allCompaniesData;
+        } else if (criteria === 'pf') {
+            filtered = allCompaniesData.filter(c => c.pf_code !== '' && c.pf_code !== '0');
+        } else if (criteria === 'esic') {
+            filtered = allCompaniesData.filter(c => c.esic_code !== '' && c.esic_code !== '0');
+        } else if (criteria === 'lwf') {
+            filtered = allCompaniesData.filter(c => c.lwf_id !== '' && c.lwf_id !== '0');
+        } else if (criteria === 'factory_act') {
+            filtered = allCompaniesData.filter(c => c.factory_license_number !== '' && c.factory_license_number !== '0');
+        } else if (criteria === 'establishment') {
+            filtered = allCompaniesData.filter(c => c.establishment_registration_number !== '' && c.establishment_registration_number !== '0');
+        }
+
+        // Rebuild select options
+        const $select = $('#company_id');
+        $select.empty();
+
+        // Add "All Companies (Broadcast to All)" option
+        $select.append(new Option('-- All Companies (Broadcast to All Filtered) --', 'all', false, false));
+
+        filtered.forEach(c => {
+            const label = c.company_name + ' (' + c.email + ')';
+            $select.append(new Option(label, c.id, false, false));
+        });
+
+        // Clear previous selections and trigger change
+        $select.val(null).trigger('change');
+
+        // Update count badge
+        updateCompanyCountBadge(filtered.length);
+    }
+
+    function updateCompanyCountBadge(count) {
+        const badge = document.getElementById('filteredCompanyCount');
+        if (badge) {
+            badge.textContent = count + ' Companies Available';
+        }
+    }
 
     function selectAllCompanies() {
         $('#company_id').val(['all']).trigger('change');
@@ -500,6 +633,8 @@ include 'includes/sidebar.php';
         if (quill) {
             quill.setText('');
         }
+        document.getElementById('filter_all').checked = true;
+        filterCompaniesByCriteria('all');
         clearCompanies();
     }
 

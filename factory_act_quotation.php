@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 include_once 'root/config.php';
 ob_start();
 require_once 'root/ai_core/class.mailer.php';
@@ -2119,8 +2119,22 @@ if (($mode === "edit") && $id && !isset($_POST['btn_submit'])) {
                                     $user_branch = trim($_SESSION['branch'] ?? '');
                                     // If user is editing and company already has branch, keep existing company branch or default to user's branch
                                     $assigned_branch = ($data && !empty($data->office_branch)) ? $data->office_branch : $user_branch;
+                                    // Resolve display name if stored as branch id
+                                    $display_branch_name = $assigned_branch;
+                                    if (!empty($branches_list)) {
+                                        foreach ($branches_list as $b) {
+                                            if ($assigned_branch == $b->id || strcasecmp(trim($assigned_branch), trim($b->name)) === 0) {
+                                                $display_branch_name = $b->name;
+                                                break;
+                                            }
+                                        }
+                                    }
                                     ?>
-                                    <input type="hidden" name="office_branch" value="<?php echo htmlspecialchars($assigned_branch); ?>">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Office Branch</label>
+                                        <input type="text" class="form-control" value="<?php echo strtoupper(htmlspecialchars($display_branch_name)); ?>" readonly style="background-color: #e9ecef; cursor: not-allowed;">
+                                        <input type="hidden" name="office_branch" value="<?php echo htmlspecialchars($assigned_branch); ?>">
+                                    </div>
 
                                 <?php endif; ?>
                             </div>

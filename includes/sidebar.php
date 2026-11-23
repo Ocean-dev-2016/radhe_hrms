@@ -392,12 +392,26 @@ function hasPerm($module, $action = 'view')
                     </li>
                 <?php endif; ?>
 
-                <!-- Bulk Email -->
+                <!-- Email Menu -->
                 <?php if ($user_role !== 'Plan Maker' && ($user_type === 'admin' || hasPerm('bulk_email'))): ?>
-                    <li>
-                        <a href="bulk_email.php" class="<?= ($current_page == 'bulk_email.php') ? 'active' : '' ?>">
-                            <i class="ti ti-mail-fast"></i><span>Bulk Email</span>
+                    <li class="submenu">
+                        <a href="javascript:void(0);"
+                            class="<?= ($current_page == 'bulk_email.php' || $current_page == 'bulk_email_status.php') ? 'active' : '' ?>">
+                            <i class="ti ti-mail-fast"></i><span>Email</span>
+                            <span class="menu-arrow"></span>
                         </a>
+                        <ul>
+                            <li>
+                                <a href="bulk_email.php" class="<?= ($current_page == 'bulk_email.php') ? 'active' : '' ?>">
+                                    <i class="ti ti-send"></i><span>Bulk Email</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="bulk_email_status.php" class="<?= ($current_page == 'bulk_email_status.php') ? 'active' : '' ?>">
+                                    <i class="ti ti-list-check"></i><span>Bulk Email Status</span>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                 <?php endif; ?>
 

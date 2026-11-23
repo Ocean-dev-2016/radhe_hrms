@@ -32,6 +32,8 @@ if ($action === 'prepare_bulk_email') {
     $title = trim($_POST['title'] ?? '');
     $description = trim($_POST['description'] ?? '');
 
+    $company_filter_type = trim($_POST['company_filter_type'] ?? 'all');
+
     if (empty($company_ids)) {
         echo json_encode(['status' => 'error', 'message' => 'Please select at least one company.']);
         exit;
@@ -51,7 +53,20 @@ if ($action === 'prepare_bulk_email') {
     $recipients_data = [];
 
     if (in_array('all', $company_ids)) {
-        $all_comps = $ai_db->aiGetQueryObj("SELECT id, company_name, email FROM tbl_vendors_companies WHERE status='active' AND email IS NOT NULL AND TRIM(email) != '' ORDER BY company_name ASC");
+        $filter_clause = "";
+        if ($company_filter_type === 'pf') {
+            $filter_clause = " AND pf_code IS NOT NULL AND TRIM(pf_code) != '' AND TRIM(pf_code) != '0'";
+        } elseif ($company_filter_type === 'esic') {
+            $filter_clause = " AND esic_code IS NOT NULL AND TRIM(esic_code) != '' AND TRIM(esic_code) != '0'";
+        } elseif ($company_filter_type === 'lwf') {
+            $filter_clause = " AND lwf_id IS NOT NULL AND TRIM(lwf_id) != '' AND TRIM(lwf_id) != '0'";
+        } elseif ($company_filter_type === 'factory_act') {
+            $filter_clause = " AND factory_license_number IS NOT NULL AND TRIM(factory_license_number) != '' AND TRIM(factory_license_number) != '0'";
+        } elseif ($company_filter_type === 'establishment') {
+            $filter_clause = " AND establishment_registration_number IS NOT NULL AND TRIM(establishment_registration_number) != '' AND TRIM(establishment_registration_number) != '0'";
+        }
+
+        $all_comps = $ai_db->aiGetQueryObj("SELECT id, company_name, email FROM tbl_vendors_companies WHERE status='active' AND email IS NOT NULL AND TRIM(email) != '' $filter_clause ORDER BY company_name ASC");
         if (!empty($all_comps)) {
             foreach ($all_comps as $comp) {
                 $comp_emails = array_filter(array_map('trim', preg_split('/[,;\s]+/', $comp->email)));
@@ -191,6 +206,7 @@ if ($action === 'prepare_bulk_email') {
         `description` LONGTEXT NULL,
         `attachment` VARCHAR(255) NULL,
         `to_email` TEXT NULL,
+        `filter_type` VARCHAR(100) DEFAULT 'All',
         `from_email` VARCHAR(255) NULL,
         `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -222,12 +238,22 @@ if ($action === 'prepare_bulk_email') {
     $desc_esc = addslashes($description);
     $attach_esc = addslashes($uploaded_file_name);
     $to_email_esc = addslashes($to_email_stored);
+    $filter_type_map = [
+        'all' => 'All',
+        'pf' => 'PF',
+        'esic' => 'ESIC',
+        'lwf' => 'LWF',
+        'factory_act' => 'Factory Act.',
+        'establishment' => 'Establishment Registration Number'
+    ];
+    $filter_label = $filter_type_map[$company_filter_type] ?? ucfirst($company_filter_type);
+    $filter_type_esc = addslashes($filter_label);
     $from_email_esc = addslashes($from_email);
 
     $ai_db->aiQuery("INSERT INTO tbl_bulk_email_logs 
-        (title, description, attachment, to_email, from_email, created_at) 
+        (title, description, attachment, to_email, filter_type, from_email, created_at) 
         VALUES 
-        ('$title_esc', '$desc_esc', '$attach_esc', '$to_email_esc', '$from_email_esc', NOW())");
+        ('$title_esc', '$desc_esc', '$attach_esc', '$to_email_esc', '$filter_type_esc', '$from_email_esc', NOW())");
     $log_id = $ai_db->aiLastInsert();
 
     // Insert all recipients into tbl_email_queue with status = 'pending'
@@ -305,7 +331,8 @@ if ($action === 'send_bulk_batch') {
 
     foreach ($batch as $rec) {
         @set_time_limit(30); // reset 30s per individual email to completely prevent timeout
-        $rec['email'] = "arti.ocean1997@gmail.com";
+        //$rec['email'] = "arti.ocean1997@gmail.com";
+        $rec['email'] = "info@radheconsultancy.co.in";
         $to_addr = is_array($rec) ? $rec['email'] : $rec;
         if (empty($to_addr)) {
             continue;
@@ -333,6 +360,7 @@ if ($action === 'send_bulk_batch') {
             description LONGTEXT NULL,
             attachment VARCHAR(255) NULL,
             to_email TEXT NULL,
+            filter_type VARCHAR(100) DEFAULT 'All',
             from_email VARCHAR(255) NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -345,12 +373,23 @@ if ($action === 'send_bulk_batch') {
         $desc_esc = addslashes($job['description']);
         $attach_esc = addslashes($job['uploaded_file_name']);
         $to_email_esc = addslashes($to_email_stored);
+        $job_filter = $job['company_filter_type'] ?? 'All';
+        $filter_type_map = [
+            'all' => 'All',
+            'pf' => 'PF',
+            'esic' => 'ESIC',
+            'lwf' => 'LWF',
+            'factory_act' => 'Factory Act.',
+            'establishment' => 'Establishment Registration Number'
+        ];
+        $filter_label = $filter_type_map[$job_filter] ?? ucfirst($job_filter);
+        $filter_type_esc = addslashes($filter_label);
         $from_email_esc = addslashes($from_email);
 
         $ai_db->aiQuery("INSERT INTO tbl_bulk_email_logs 
-            (title, description, attachment, to_email, from_email, created_at) 
+            (title, description, attachment, to_email, filter_type, from_email, created_at) 
             VALUES 
-            ('$title_esc', '$desc_esc', '$attach_esc', '$to_email_esc', '$from_email_esc', NOW())");
+            ('$title_esc', '$desc_esc', '$attach_esc', '$to_email_esc', '$filter_type_esc', '$from_email_esc', NOW())");
 
         // Clean up job session after completion
         unset($_SESSION['bulk_email_job'][$job_id]);

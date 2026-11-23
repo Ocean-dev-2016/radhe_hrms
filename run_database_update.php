@@ -48,6 +48,7 @@ $queries = [
     "ALTER TABLE tbl_vendors_companies ADD COLUMN IF NOT EXISTS ptrc_number VARCHAR(255) DEFAULT '' AFTER lwf_password",
     "ALTER TABLE tbl_vendors_companies ADD COLUMN IF NOT EXISTS ptec_number VARCHAR(255) DEFAULT '' AFTER ptrc_number",
     "ALTER TABLE tbl_vendors_companies ADD COLUMN IF NOT EXISTS establishment_registration_number VARCHAR(255) DEFAULT '' AFTER ptec_number",
+    "ALTER TABLE tbl_bulk_email_logs ADD COLUMN IF NOT EXISTS filter_type VARCHAR(100) DEFAULT 'All' AFTER to_email",
     "ALTER TABLE tbl_factory_quotations ADD COLUMN IF NOT EXISTS mail_status VARCHAR(20) DEFAULT 'pending' AFTER status",
     "UPDATE tbl_factory_quotations SET mail_status='send' WHERE LOWER(client_approval_status)='mail sent' AND (mail_status IS NULL OR mail_status='' OR mail_status='pending')"
 ];

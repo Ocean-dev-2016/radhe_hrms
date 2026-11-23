@@ -113,6 +113,13 @@ header('Content-Type: text/html; charset=utf-8');
             echo "<div class='error'><strong>Notice:</strong> Could not alter <code>user_type</code> ENUM: " . mysqli_error($ai_conn) . "</div>";
         }
 
+        // Check and Add filter_type column to tbl_bulk_email_logs
+        $col_filter_type = $ai_db->aiGetQueryObj("SHOW COLUMNS FROM `tbl_bulk_email_logs` LIKE 'filter_type'");
+        if (empty($col_filter_type)) {
+            $ai_db->aiQuery("ALTER TABLE `tbl_bulk_email_logs` ADD COLUMN `filter_type` VARCHAR(100) DEFAULT 'All' AFTER `to_email`");
+            echo "<div class='info'><strong>Updated:</strong> Added <code>filter_type</code> column to <code>tbl_bulk_email_logs</code> table.</div>";
+        }
+
         // Check and Add establishment_registration_number to tbl_vendors_companies
         $col_est_reg = $ai_db->aiGetQueryObj("SHOW COLUMNS FROM `tbl_vendors_companies` LIKE 'establishment_registration_number'");
         if (empty($col_est_reg)) {
