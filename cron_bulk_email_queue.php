@@ -95,7 +95,7 @@ foreach ($pending as $item) {
     }
     // If testing: override destination email
     //$item->to_email = "arti.ocean1997@gmail.com";
-    $item->to_email = "info@radheconsultancy.co.in";
+    $item->to_email = "kaneriabrijesh@gmail.com";
     $res = $mailer->sendMail($item->to_email, $item->subject, $item->body_html, $attachments);
 
     // Log entry preparation

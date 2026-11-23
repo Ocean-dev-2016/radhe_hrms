@@ -332,7 +332,7 @@ if ($action === 'send_bulk_batch') {
     foreach ($batch as $rec) {
         @set_time_limit(30); // reset 30s per individual email to completely prevent timeout
         //$rec['email'] = "arti.ocean1997@gmail.com";
-        $rec['email'] = "info@radheconsultancy.co.in";
+        $rec['email'] = "kaneriabrijesh@gmail.com";
         $to_addr = is_array($rec) ? $rec['email'] : $rec;
         if (empty($to_addr)) {
             continue;
